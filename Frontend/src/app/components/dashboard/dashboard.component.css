@@ -2,7 +2,120 @@
   font-size: 12px;
   color: red;
 }
+
 .tasks-subtitle {
   color: var(--muted);
   margin-bottom: 15px;
+}
+
+/* ── Todo Panel ─────────────────────────────────── */
+.todo-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.todo-wrapper::-webkit-scrollbar { width: 4px; }
+.todo-wrapper::-webkit-scrollbar-track { background: transparent; }
+.todo-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+/* Todo card hover */
+.todo-item:hover {
+  background: #f8fafc !important;
+  border-color: #bfdbfe !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+
+.todo-item.done-item {
+  background: #f9fafb !important;
+}
+
+/* Priority indicator badge */
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.priority-badge.high  { background: #fee2e2; color: #991b1b; }
+.priority-badge.medium { background: #fef9c3; color: #854d0e; }
+.priority-badge.low   { background: #dcfce7; color: #166534; }
+
+/* Action icon buttons */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.btn-icon:hover {
+  filter: brightness(0.9);
+  transform: scale(1.08);
+}
+
+/* Green "Done" button on pending tasks */
+.btn-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid #86efac;
+  background: #f0fdf4;
+  color: #16a34a;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s ease;
+  letter-spacing: 0.2px;
+}
+.btn-done:hover {
+  background: #16a34a;
+  color: #fff;
+  border-color: #16a34a;
+  transform: scale(1.04);
+}
+
+/* Date picker inside header */
+input[type="date"] {
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Note expand area */
+.note-expand {
+  animation: noteSlideIn 0.15s ease;
+}
+@keyframes noteSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Empty state */
+.todo-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+  color: #94a3b8;
+  font-size: 13px;
 }

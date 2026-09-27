@@ -17,5 +17,6 @@ export const RestUrl = {
     UNREAD_COUNT: '/notifications/unread-count',
     READ_ALL: '/notifications/read-all',
     READ_SINGLE: (id: number | string) => `/notifications/${id}/read`
-  }
+  },
+  TODOS: '/todos'
 };

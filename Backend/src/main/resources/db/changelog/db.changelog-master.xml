@@ -16,5 +16,6 @@
     <include file="db/changelog/changes/v9_audit_columns.sql" />
     <include file="db/changelog/changes/v10_public_notifications.sql" />
     <include file="db/changelog/changes/v11_permission_system.sql" />
+    <include file="db/changelog/changes/v12_todo_goals.sql" />
 
 </databaseChangeLog>
