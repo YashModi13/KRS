@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+    <include file="db/changelog/changes/v1_init_schema.sql" />
+    <include file="db/changelog/changes/v2_update_admin_password.sql" />
+    <include file="db/changelog/changes/v3_update_admin_password_fix.sql" />
+    <include file="db/changelog/changes/v4_domain_schema.sql" />
+    <include file="db/changelog/changes/v5_extended_schema.sql" />
+    <include file="db/changelog/changes/v6_project_locations.sql" />
+    <include file="db/changelog/changes/v7_update_admin_credentials.sql" />
+    <include file="db/changelog/changes/v8_notifications.sql" />
+    <include file="db/changelog/changes/v9_audit_columns.sql" />
+    <include file="db/changelog/changes/v10_public_notifications.sql" />
+    <include file="db/changelog/changes/v11_permission_system.sql" />
+
+</databaseChangeLog>

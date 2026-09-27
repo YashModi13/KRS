@@ -1,0 +1,353 @@
+<div class="header-flex" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <!-- List Mode Header -->
+  <div *ngIf="mode === 'list'">
+    <h1 class="page-title">{{pageTitle}}</h1>
+    <p class="page-sub">{{pageSubTitle}}</p>
+  </div>
+
+  <!-- Detail Mode Header (Breadcrumb) -->
+  <div *ngIf="mode === 'detail'">
+    <h1 class="page-title" style="display: flex; align-items: center;">
+      <span (click)="mode = 'list'" style="color: #64748b; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Projects</span> 
+      <span style="color: #cbd5e1; margin: 0 10px;">/</span> 
+      <span style="font-size: 20px;">{{selectedProject?.tenderId}} - {{selectedProject?.nameOfWork}}</span>
+    </h1>
+    <p class="page-sub">Project Details & Locations</p>
+  </div>
+
+  <!-- Create Mode Header (Breadcrumb) -->
+  <div *ngIf="mode === 'create'">
+    <h1 class="page-title" style="display: flex; align-items: center;">
+      <span (click)="mode = 'list'" style="color: #64748b; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Projects</span> 
+      <span style="color: #cbd5e1; margin: 0 10px;">/</span> 
+      <span style="font-size: 20px;">Create New Project</span>
+    </h1>
+    <p class="page-sub">Register a new master project</p>
+  </div>
+  <!-- Action Buttons in Header -->
+  <div *ngIf="mode === 'list'" style="display: flex; gap: 12px; align-items: center;">
+    <button class="btn btn-primary btn-add" (click)="mode = 'create'">+ Add Project</button>
+    <div style="position: relative;">
+      <button class="btn btn-export" (click)="toggleExportMenu($event)">
+        <span style="margin-right: 6px;">📥</span> Export <span style="font-size: 10px; margin-left: 4px;">▼</span>
+      </button>
+      
+      <div class="filter-popup" *ngIf="exportMenuOpen" (click)="$event.stopPropagation()" style="top: 100%; right: 0; margin-top: 8px; width: 180px; padding: 8px 0; border-radius: 8px;">
+        <div class="dropdown-item" (click)="exportData('csv')" style="padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 500; color: #1e293b; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
+          Export as CSV (.csv)
+        </div>
+        <div class="dropdown-item" (click)="exportData('excel')" style="padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 500; color: #1e293b; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
+          Export as Excel (.xlsx)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIST MODE -->
+<div class="card p-0" *ngIf="mode === 'list'">
+  <div class="table-responsive">
+    <table class="master-table">
+      <thead>
+        <tr>
+          <th (click)="onSort('packageNo')" style="cursor: pointer;">Package No. <span *ngIf="sortBy==='packageNo'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th (click)="onSort('tenderId')" style="cursor: pointer;">Tender ID <span *ngIf="sortBy==='tenderId'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th (click)="onSort('nameOfWork')" style="cursor: pointer;">Project Title & Location <span *ngIf="sortBy==='nameOfWork'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th (click)="onSort('id')" style="cursor: pointer;">Engineer <span *ngIf="sortBy==='id'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th (click)="onSort('id')" style="cursor: pointer;">Contractor <span *ngIf="sortBy==='id'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-right" (click)="onSort('estimatedTenderCost')" style="cursor: pointer;">Tender Amt <span *ngIf="sortBy==='estimatedTenderCost'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-right" (click)="onSort('tenderedCost')" style="cursor: pointer;">Agreement Amt <span *ngIf="sortBy==='tenderedCost'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-right" (click)="onSort('id')" style="cursor: pointer;">Variance <span *ngIf="sortBy==='id'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-center" (click)="onSort('workOrderDate')" style="cursor: pointer;">Start Date <span *ngIf="sortBy==='workOrderDate'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-center" (click)="onSort('id')" style="cursor: pointer;">Timeline <span *ngIf="sortBy==='id'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-center" (click)="onSort('id')" style="cursor: pointer;">Status <span *ngIf="sortBy==='id'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-center">Actions</th>
+        </tr>
+        <tr class="filter-row">
+          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['packageNo']" placeholder="🔍 Package" class="col-filter"></td>
+          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['tenderId']" placeholder="🔍 Tender" class="col-filter"></td>
+          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['nameOfWork']" placeholder="🔍 Title" class="col-filter"></td>
+          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['engineer']" placeholder="🔍 Eng." class="col-filter"></td>
+          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['contractor']" placeholder="🔍 Cont." class="col-filter"></td>
+          <td style="position: relative;">
+            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Amt Range" 
+              (click)="toggleFilter('tenderAmtPicker', $event)"
+              [value]="(filters['tenderAmtMin'] ? '≥'+filters['tenderAmtMin'] : '') + (filters['tenderAmtMin'] && filters['tenderAmtMax'] ? ' - ' : '') + (filters['tenderAmtMax'] ? '≤'+filters['tenderAmtMax'] : '')">
+            
+            <div class="filter-popup" *ngIf="activeFilterMenu === 'tenderAmtPicker'" (click)="$event.stopPropagation()">
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Amount</label>
+              <input type="number" [(ngModel)]="filters['tenderAmtMin']" class="col-filter" style="margin-bottom: 8px;">
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Amount</label>
+              <input type="number" [(ngModel)]="filters['tenderAmtMax']" class="col-filter" style="margin-bottom: 12px;">
+              <div class="filter-popup-actions">
+                <button class="btn-filter-clear" (click)="clearFilter('tenderAmt')">Clear</button>
+                <button class="btn-filter-apply" (click)="applyFilters()">Apply</button>
+              </div>
+            </div>
+          </td>
+          <td style="position: relative;">
+            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Amt Range" 
+              (click)="toggleFilter('agreementAmtPicker', $event)"
+              [value]="(filters['agreementAmtMin'] ? '≥'+filters['agreementAmtMin'] : '') + (filters['agreementAmtMin'] && filters['agreementAmtMax'] ? ' - ' : '') + (filters['agreementAmtMax'] ? '≤'+filters['agreementAmtMax'] : '')">
+            
+            <div class="filter-popup" *ngIf="activeFilterMenu === 'agreementAmtPicker'" (click)="$event.stopPropagation()">
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Amount</label>
+              <input type="number" [(ngModel)]="filters['agreementAmtMin']" class="col-filter" style="margin-bottom: 8px;">
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Amount</label>
+              <input type="number" [(ngModel)]="filters['agreementAmtMax']" class="col-filter" style="margin-bottom: 12px;">
+              <div class="filter-popup-actions">
+                <button class="btn-filter-clear" (click)="clearFilter('agreementAmt')">Clear</button>
+                <button class="btn-filter-apply" (click)="applyFilters()">Apply</button>
+              </div>
+            </div>
+          </td>
+          <td style="position: relative;">
+            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Var. Range" 
+              (click)="toggleFilter('variancePicker', $event)"
+              [value]="(filters['varianceMin'] ? '≥'+filters['varianceMin']+'%' : '') + (filters['varianceMin'] && filters['varianceMax'] ? ' - ' : '') + (filters['varianceMax'] ? '≤'+filters['varianceMax']+'%' : '')">
+            
+            <div class="filter-popup" *ngIf="activeFilterMenu === 'variancePicker'" (click)="$event.stopPropagation()">
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min %</label>
+              <input type="number" [(ngModel)]="filters['varianceMin']" class="col-filter" style="margin-bottom: 8px;">
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max %</label>
+              <input type="number" [(ngModel)]="filters['varianceMax']" class="col-filter" style="margin-bottom: 12px;">
+              <div class="filter-popup-actions">
+                <button class="btn-filter-clear" (click)="clearFilter('variance')">Clear</button>
+                <button class="btn-filter-apply" (click)="applyFilters()">Apply</button>
+              </div>
+            </div>
+          </td>
+          <td style="position: relative;">
+            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Date Range 📅" 
+              (click)="toggleFilter('datePicker', $event)"
+              [value]="(filters['startDateMin'] ? filters['startDateMin'] : '') + (filters['startDateMin'] && filters['startDateMax'] ? ' - ' : '') + (filters['startDateMax'] ? filters['startDateMax'] : '')">
+            
+            <div class="filter-popup" *ngIf="activeFilterMenu === 'datePicker'" (click)="$event.stopPropagation()" style="left: auto; right: 0;">
+              <div style="margin-bottom: 8px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">From Date</label>
+                <input type="date" [(ngModel)]="filters['startDateMin']" class="col-filter">
+              </div>
+              <div style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">To Date</label>
+                <input type="date" [(ngModel)]="filters['startDateMax']" class="col-filter">
+              </div>
+              <div class="filter-popup-actions">
+                <button class="btn-filter-clear" (click)="clearFilter('startDate')">Clear</button>
+                <button class="btn-filter-apply" (click)="applyFilters()">Apply</button>
+              </div>
+            </div>
+          </td>
+          <td style="position: relative;">
+            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Days Range" 
+              (click)="toggleFilter('timelinePicker', $event)"
+              [value]="(filters['timelineMin'] ? '≥'+filters['timelineMin']+'d' : '') + (filters['timelineMin'] && filters['timelineMax'] ? ' - ' : '') + (filters['timelineMax'] ? '≤'+filters['timelineMax']+'d' : '')">
+            
+            <div class="filter-popup" *ngIf="activeFilterMenu === 'timelinePicker'" (click)="$event.stopPropagation()" style="left: auto; right: 0;">
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Days</label>
+              <input type="number" [(ngModel)]="filters['timelineMin']" class="col-filter" style="margin-bottom: 8px;">
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Days</label>
+              <input type="number" [(ngModel)]="filters['timelineMax']" class="col-filter" style="margin-bottom: 12px;">
+              <div class="filter-popup-actions">
+                <button class="btn-filter-clear" (click)="clearFilter('timeline')">Clear</button>
+                <button class="btn-filter-apply" (click)="applyFilters()">Apply</button>
+              </div>
+            </div>
+          </td>
+          <td>
+            <select class="col-filter" [(ngModel)]="filters['status']" (change)="applyFilters()">
+              <option value="">All</option>
+              <option value="Running">Running</option>
+              <option value="Delayed">Delayed</option>
+              <option value="Completed">Completed</option>
+              <option value="Hold">Hold</option>
+              <option value="Not Started">Not Started</option>
+            </select>
+          </td>
+          <td></td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="isLoading">
+          <td colspan="12" style="text-align: center; padding: 60px;">
+            <div class="notif-loading" style="display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 14px;">
+              <div class="spinner" style="width: 32px; height: 32px; border-width: 3px;"></div>
+              <span>Fetching project data...</span>
+            </div>
+          </td>
+        </tr>
+        <ng-container *ngIf="!isLoading">
+          <tr *ngFor="let p of projects" (click)="viewDetails(p.id!)" class="clickable-row">
+            <td>
+              <div class="main-text highlighted font-weight-600">{{p.packageNo || 'N/A'}}</div>
+            </td>
+            <td>
+              <div class="main-text font-weight-500" style="color: #475569;">{{p.tenderId || 'N/A'}}</div>
+            </td>
+            <td>
+              <div class="tooltip-wrapper" [attr.data-tooltip]="p.nameOfWork || p.workOrderNumber || 'N/A'">
+                <div class="main-text font-weight-600 truncate-text" style="max-width: 180px;">{{p.nameOfWork || p.workOrderNumber || 'N/A'}}</div>
+              </div><br>
+              <div class="tooltip-wrapper" [attr.data-tooltip]="p.villageName || 'N/A'">
+                <div class="sub-text truncate-text" style="max-width: 180px;">{{p.villageName || 'N/A'}}</div>
+              </div>
+            </td>
+            <td>
+              <div class="main-text">Raj Patel</div>
+            </td>
+            <td>
+              <div class="tooltip-wrapper" data-tooltip="Shree Ram Constructions">
+                <div class="main-text truncate-text" style="max-width: 150px;">Shree Ram Const.</div>
+              </div>
+            </td>
+            <td class="text-right font-weight-600" style="color: #475569;">{{p.estimatedTenderCost | currency:'INR':'symbol':'1.0-0'}}</td>
+            <td class="text-right font-weight-600" style="color: #0f172a;">{{p.tenderedCost | currency:'INR':'symbol':'1.0-0'}}</td>
+            
+            <td class="text-right font-weight-600" [ngClass]="getAboveBelow(p.estimatedTenderCost, p.tenderedCost).class">
+              {{getAboveBelow(p.estimatedTenderCost, p.tenderedCost).text}}
+            </td>
+            
+            <td class="text-center text-sm font-weight-500" style="color: #475569;">{{p.workOrderDate | date:'dd MMM yyyy'}}</td>
+            
+            <td class="text-center">
+              <span class="badge" [ngClass]="$any(p)._daysLeft < -30 ? 'badge-overdue' : 'badge-delayed'">
+                {{ $any(p)._daysLeft }} Days
+              </span>
+            </td>
+            
+            <td class="text-center">
+              <span class="badge" [ngClass]="'badge-' + $any(p)._status.toLowerCase().replace(' ', '')">{{$any(p)._status}}</span>
+            </td>
+            
+            <td class="text-center actions-cell">
+              <button class="btn-icon edit" title="Edit" (click)="$event.stopPropagation()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+              <button class="btn-icon del" title="Delete" (click)="$event.stopPropagation()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="projects.length === 0">
+            <td colspan="12" style="text-align: center; color: #7f8c8d; padding: 40px;">No projects found.</td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid #e1e8ed;">
+    <div class="limit-selector" style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 13px; color: #64748b; font-weight: 500;">Rows per page:</span>
+      <select [ngModel]="limit" (ngModelChange)="onLimitChange($event)" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d8e0; cursor: pointer; background-color: #f8fafc; font-weight: 500;">
+        <option [value]="10">10</option>
+        <option [value]="25">25</option>
+        <option [value]="50">50</option>
+        <option [value]="100">100</option>
+      </select>
+    </div>
+    
+    <div class="page-controls" style="display: flex; align-items: center; gap: 20px;">
+      <span style="font-size: 13px; color: #64748b; font-weight: 500;">{{showingText}}</span>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" [disabled]="offset === 0" (click)="prevPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="offset === 0 ? '0.5' : '1'">Previous</button>
+        <button class="btn btn-secondary" [disabled]="offset + limit >= totalRecords" (click)="nextPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="offset + limit >= totalRecords ? '0.5' : '1'">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODE -->
+<div class="detail-container" *ngIf="mode === 'detail' && selectedProject">
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-hdr">Project: {{selectedProject.tenderId}} - {{selectedProject.nameOfWork}}</div>
+    <div class="card-body">
+      <div class="grid grid-3">
+        <div class="detail-item"><strong>Department:</strong> {{selectedProject.departmentName || 'N/A'}}</div>
+        <div class="detail-item"><strong>Package No:</strong> {{selectedProject.packageNo || 'N/A'}}</div>
+        <div class="detail-item"><strong>Work Order No:</strong> {{selectedProject.workOrderNumber || 'N/A'}}</div>
+        <div class="detail-item"><strong>Estimated Cost:</strong> ₹{{selectedProject.estimatedTenderCost | number}}</div>
+        <div class="detail-item"><strong>Tendered Cost:</strong> ₹{{selectedProject.tenderedCost | number}}</div>
+        <div class="detail-item"><strong>Work Order Date:</strong> {{selectedProject.workOrderDate || 'N/A'}}</div>
+        <div class="detail-item"><strong>Defects Liability:</strong> {{selectedProject.defectsLiabilityPeriod || 'N/A'}}</div>
+        <div class="detail-item"><strong>Security Deposit Amt:</strong> ₹{{selectedProject.securityDepositAmount | number}}</div>
+        <div class="detail-item"><strong>Retention Money/Bill:</strong> ₹{{selectedProject.retentionMoneyPerBill | number}}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">Project Locations (Schools / Sites)</div>
+    <div class="card-body">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Block</th>
+            <th>School ID</th>
+            <th>School Name</th>
+            <th>Head</th>
+            <th>New ACR</th>
+            <th>Shed</th>
+            <th>Repairing</th>
+            <th>CWSN Toilet</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let loc of selectedProject.locations">
+            <td>{{loc.block}}</td>
+            <td>{{loc.schoolId}}</td>
+            <td>{{loc.schoolName}}</td>
+            <td>{{loc.head}}</td>
+            <td>{{loc.newAcr || '-'}}</td>
+            <td>{{loc.shed || '-'}}</td>
+            <td>{{loc.repairing || '-'}}</td>
+            <td>{{loc.cwsnToilet || '-'}}</td>
+          </tr>
+          <tr *ngIf="!selectedProject.locations || selectedProject.locations.length === 0">
+            <td colspan="8" style="text-align: center; color: #7f8c8d; padding: 20px;">No locations added yet.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE MODE -->
+<div class="card" *ngIf="mode === 'create'">
+  <div class="card-hdr">Project Detail Registration</div>
+  <div class="card-body">
+    <div class="grid grid-3">
+      <div class="form-group">
+        <label>Work Order Number</label>
+        <input type="text" [(ngModel)]="projectData.workOrderNumber" placeholder="Enter No.">
+      </div>
+      <div class="form-group">
+        <label>Name of Work</label>
+        <input type="text" [(ngModel)]="projectData.nameOfWork" placeholder="Project Title">
+      </div>
+      <div class="form-group">
+        <label>Tender ID</label>
+        <input type="text" [(ngModel)]="projectData.tenderId" placeholder="Tender ID">
+      </div>
+      <div class="form-group">
+        <label>Department Name</label>
+        <input type="text" [(ngModel)]="projectData.departmentName" placeholder="E.g. Education Dept">
+      </div>
+      <div class="form-group">
+        <label>Security Deposit Amount</label>
+        <input type="number" [(ngModel)]="projectData.securityDepositAmount">
+      </div>
+      <div class="form-group">
+        <label>Retention Money Per Bill</label>
+        <input type="number" [(ngModel)]="projectData.retentionMoneyPerBill">
+      </div>
+    </div>
+    
+    <div class="alert-box success" *ngIf="saveSuccess" style="margin-top: 20px;">
+      Project details saved successfully!
+    </div>
+
+    <div class="form-submit-wrapper" style="margin-top: 20px;">
+      <button class="btn btn-primary" (click)="saveProject()">Save Project Detail</button>
+    </div>
+  </div>
+</div>

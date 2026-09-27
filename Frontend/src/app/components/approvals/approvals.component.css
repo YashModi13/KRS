@@ -1,0 +1,11 @@
+.inner-card {
+  margin-bottom: 0;
+}
+.inner-card-hdr {
+  background: #f8fafc;
+}
+.info-note {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}

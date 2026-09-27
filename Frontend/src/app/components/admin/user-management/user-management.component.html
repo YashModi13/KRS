@@ -1,0 +1,381 @@
+<div class="header-flex" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <div>
+    <h1 class="page-title">User Management</h1>
+    <p class="page-sub">Manage users and assign roles</p>
+  </div>
+  <div style="display: flex; gap: 12px; align-items: center;">
+    <button class="btn btn-primary btn-add" (click)="openAddUser()">+ Add User</button>
+  </div>
+</div>
+
+<div class="card p-0" (click)="closeDropdown()" style="overflow: visible;">
+  <div class="table-responsive">
+    <table class="master-table">
+      <thead>
+        <tr>
+          <th (click)="toggleSort('username')" class="sortable-header">
+            Username
+            <span *ngIf="sortColumn === 'username'" class="sort-icon">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+          </th>
+          <th (click)="toggleSort('email')" class="sortable-header">
+            Email
+            <span *ngIf="sortColumn === 'email'" class="sort-icon">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+          </th>
+          <th (click)="toggleSort('isActive')" class="text-center sortable-header">
+            Status
+            <span *ngIf="sortColumn === 'isActive'" class="sort-icon">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+          </th>
+          <th>Roles</th>
+          <th class="text-center">Actions</th>
+        </tr>
+        <tr class="filter-row">
+          <td><input type="text" class="col-filter" placeholder="Search Username..." [(ngModel)]="filters.username" (input)="onFilterChange()"></td>
+          <td><input type="text" class="col-filter" placeholder="Search Email..." [(ngModel)]="filters.email" (input)="onFilterChange()"></td>
+          <td class="text-center">
+            <select class="col-filter" [(ngModel)]="filters.status" (change)="onFilterChange()" style="text-align-last: center;">
+              <option value="">All</option>
+              <option [ngValue]="true">Active</option>
+              <option [ngValue]="false">Inactive</option>
+            </select>
+          </td>
+          <td>
+            <select class="col-filter" [(ngModel)]="filters.roleId" (change)="onFilterChange()" style="text-align-last: center;">
+              <option value="">All Roles</option>
+              <option *ngFor="let role of roles" [ngValue]="role.id">{{role.name}}</option>
+            </select>
+          </td>
+          <td></td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users" class="clickable-row">
+          <td>
+            <div class="main-text font-weight-600">{{user.username}}</div>
+          </td>
+          <td>
+            <div class="text-sm font-weight-500" style="color: #475569;">{{user.email}}</div>
+          </td>
+          <td class="text-center">
+            <span class="badge" [ngClass]="user.isActive ? 'badge-completed' : 'badge-overdue'">
+              {{user.isActive ? 'Active' : 'Inactive'}}
+            </span>
+          </td>
+          <td>
+            <span class="badge badge-running" *ngFor="let role of user.roles" style="margin-right: 4px;">{{role.name}}</span>
+          </td>
+          <td class="text-center actions-cell" style="position: relative;">
+            <button class="btn-icon" (click)="toggleDropdown(user.username, $event)" title="Options">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+            </button>
+            <div class="dropdown-menu" *ngIf="openDropdownUsername === user.username" (click)="$event.stopPropagation()">
+              <div class="dropdown-item" (click)="editUser(user); closeDropdown()">
+                <span class="icon">✏️</span> Change Profile
+              </div>
+              <div class="dropdown-item" (click)="editPermissions(user); closeDropdown()">
+                <span class="icon">🔒</span> Permissions
+              </div>
+              <div class="dropdown-item" (click)="openChangePassword(user); closeDropdown()">
+                <span class="icon">🔑</span> Change Password
+              </div>
+              <div class="dropdown-item" (click)="toggleActive(user); closeDropdown()">
+                <span class="icon">{{user.isActive ? '❌' : '✅'}}</span> 
+                {{user.isActive ? 'Deactivate' : 'Activate'}}
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="users.length === 0">
+          <td colspan="5" style="text-align: center; color: #7f8c8d; padding: 40px;">No users found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid #e1e8ed;">
+    <div class="limit-selector" style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 13px; color: #64748b; font-weight: 500;">Rows per page:</span>
+      <select [ngModel]="limit" (ngModelChange)="changePageLimit($event)" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d8e0; cursor: pointer; background-color: #f8fafc; font-weight: 500;">
+        <option [ngValue]="10">10</option>
+        <option [ngValue]="25">25</option>
+        <option [ngValue]="50">50</option>
+        <option [ngValue]="100">100</option>
+      </select>
+    </div>
+    
+    <div class="page-controls" style="display: flex; align-items: center; gap: 20px;">
+      <span style="font-size: 13px; color: #64748b; font-weight: 500;">Showing {{offset + 1}} - {{ (offset + limit) > totalUsers ? totalUsers : (offset + limit) }} of {{totalUsers}}</span>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" [disabled]="offset === 0" (click)="prevPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="offset === 0 ? '0.5' : '1'">Previous</button>
+        <button class="btn btn-secondary" [disabled]="offset + limit >= totalUsers" (click)="nextPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="offset + limit >= totalUsers ? '0.5' : '1'">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Roles Modal -->
+<div class="modal-overlay" *ngIf="editingUser" (click)="isRoleDropdownOpen = false">
+  <div class="krs-modal card" style="width: 600px; padding: 35px; border-radius: 16px; background: white; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: visible !important; position: relative;" (click)="$event.stopPropagation()">
+    <div style="margin-bottom: 25px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+      <h3 style="margin: 0 0 5px 0; font-size: 24px; font-weight: 700; color: #0f172a;">Change Profile</h3>
+      <p style="margin: 0; color: #64748b; font-size: 15px;">Update details for <strong style="color: #0f2342;">{{editingUser.username}}</strong></p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+      <div class="form-group" style="margin: 0;">
+        <label for="edit-username" style="font-weight: 600; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Username</label>
+        <input type="text" id="edit-username" [(ngModel)]="editingUser.username" (input)="validateUsername()" class="form-control" placeholder="Enter username" style="height: 48px; border-radius: 8px; font-size: 16px;" [ngStyle]="{'border-color': usernameError ? '#dc2626' : '#cbd5e1'}">
+        <div *ngIf="usernameError" style="color: #dc2626; font-size: 13px; margin-top: 4px; font-weight: 500;">{{usernameError}}</div>
+        <div *ngIf="isUsernameValidating" style="color: #64748b; font-size: 13px; margin-top: 4px;">Validating...</div>
+      </div>
+
+      <div class="form-group" style="margin: 0;">
+        <label for="edit-email" style="font-weight: 600; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Email Address</label>
+        <input type="email" id="edit-email" [(ngModel)]="editingUser.email" (input)="validateEmail()" class="form-control" placeholder="Enter email" style="height: 48px; border-radius: 8px; font-size: 16px;" [ngStyle]="{'border-color': emailError ? '#dc2626' : '#cbd5e1'}">
+        <div *ngIf="emailError" style="color: #dc2626; font-size: 13px; margin-top: 4px; font-weight: 500;">{{emailError}}</div>
+        <div *ngIf="isEmailValidating" style="color: #64748b; font-size: 13px; margin-top: 4px;">Validating...</div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 35px;">
+      <label style="font-weight: 600; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Assign Role</label>
+      
+      <!-- Premium Inline Pill Selector -->
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px;">
+        <div *ngFor="let role of roles" 
+             (click)="toggleRole(role)" 
+             style="padding: 10px 18px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; border: 2px solid transparent;"
+             [ngStyle]="hasRole(role.id) ? {
+               'background-color': '#eff6ff', 
+               'color': '#2563eb', 
+               'border-color': '#bfdbfe',
+               'box-shadow': '0 2px 4px rgba(37,99,235,0.1)'
+             } : {
+               'background-color': '#f8fafc', 
+               'color': '#64748b',
+               'border-color': '#e2e8f0'
+             }"
+             onmouseover="if(!this.style.backgroundColor.includes('rgb(239')) this.style.borderColor='#cbd5e1'" 
+             onmouseout="if(!this.style.backgroundColor.includes('rgb(239')) this.style.borderColor='#e2e8f0'">
+          
+          <div style="width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: white; transition: all 0.2s; border: 2px solid;"
+               [ngStyle]="{'border-color': hasRole(role.id) ? '#2563eb' : '#cbd5e1'}">
+            <div *ngIf="hasRole(role.id)" style="width: 8px; height: 8px; border-radius: 50%; background-color: #2563eb;"></div>
+          </div>
+          {{role.name}}
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="display: flex; justify-content: flex-end; gap: 16px;">
+      <button class="btn-secondary" (click)="cancelEdit()" style="padding: 12px 24px; font-size: 15px; font-weight: 600; border-radius: 8px;">Cancel</button>
+      <button class="btn-primary" (click)="saveUser()" style="padding: 12px 24px; font-size: 15px; font-weight: 600; border-radius: 8px;" [disabled]="usernameError || emailError || isUsernameValidating || isEmailValidating || !editingUser.username || !editingUser.email" [style.opacity]="(usernameError || emailError || isUsernameValidating || isEmailValidating || !editingUser.username || !editingUser.email) ? '0.5' : '1'" [style.cursor]="(usernameError || emailError || isUsernameValidating || isEmailValidating || !editingUser.username || !editingUser.email) ? 'not-allowed' : 'pointer'">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-overlay" *ngIf="changingPasswordUser">
+  <div class="modal card" style="width: 650px; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+    <div style="margin-bottom: 30px;">
+      <h3 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 700; color: #0f172a;">Change Password</h3>
+      <p style="margin: 0; font-size: 18px; color: #64748b;">Set a new secure password for <strong style="color: #0f172a;">{{changingPasswordUser.username}}</strong></p>
+    </div>
+    
+    <div class="form-group" style="margin-bottom: 24px;">
+      <label for="change-password" style="font-weight: 600; font-size: 16px; color: #334155; margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 0.5px;">New Password</label>
+      <div style="position: relative; display: flex; align-items: center;">
+        <input [type]="showNewPassword ? 'text' : 'password'" id="change-password" [(ngModel)]="changingPasswordUser.password" (input)="validatePassword()" class="form-control" placeholder="Enter new password" style="padding-right: 50px; height: 56px; font-size: 18px; border-radius: 10px; width: 100%;">
+        <button type="button" (click)="showNewPassword = !showNewPassword" style="position: absolute; right: 16px; background: none; border: none; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; padding: 0; outline: none; transition: color 0.2s;" title="Toggle Password Visibility">
+          <svg *ngIf="!showNewPassword" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <svg *ngIf="showNewPassword" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 30px;">
+      <label for="confirm-password" style="font-weight: 600; font-size: 16px; color: #334155; margin-bottom: 10px; display: block; text-transform: uppercase; letter-spacing: 0.5px;">Confirm Password</label>
+      <div style="position: relative; display: flex; align-items: center;">
+        <input [type]="showConfirmPassword ? 'text' : 'password'" id="confirm-password" [(ngModel)]="confirmPassword" (input)="validatePassword()" class="form-control" placeholder="Re-enter password" style="padding-right: 50px; height: 56px; font-size: 18px; border-radius: 10px; width: 100%;">
+        <button type="button" (click)="showConfirmPassword = !showConfirmPassword" style="position: absolute; right: 16px; background: none; border: none; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; padding: 0; outline: none; transition: color 0.2s;" title="Toggle Password Visibility">
+          <svg *ngIf="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <svg *ngIf="showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Requirements & Auto Gen -->
+    <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 40px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <span style="font-size: 15px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Requirements</span>
+        <button type="button" (click)="generatePassword()" style="font-size: 15px; font-weight: 600; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; outline: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          Auto Generate
+        </button>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 16px; color: #334155;">
+        <div style="display: flex; align-items: center; gap: 10px;" [ngStyle]="{'color': passwordValidation.length ? '#16a34a' : '#64748b'}">
+          <span style="font-size: 20px; font-weight: bold; width: 20px; text-align: center;">{{passwordValidation.length ? '✓' : '○'}}</span> Min 8 Chars
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;" [ngStyle]="{'color': passwordValidation.upper ? '#16a34a' : '#64748b'}">
+          <span style="font-size: 20px; font-weight: bold; width: 20px; text-align: center;">{{passwordValidation.upper ? '✓' : '○'}}</span> 1 Uppercase
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;" [ngStyle]="{'color': passwordValidation.lower ? '#16a34a' : '#64748b'}">
+          <span style="font-size: 20px; font-weight: bold; width: 20px; text-align: center;">{{passwordValidation.lower ? '✓' : '○'}}</span> 1 Lowercase
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;" [ngStyle]="{'color': passwordValidation.number ? '#16a34a' : '#64748b'}">
+          <span style="font-size: 20px; font-weight: bold; width: 20px; text-align: center;">{{passwordValidation.number ? '✓' : '○'}}</span> 1 Number
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;" [ngStyle]="{'color': passwordValidation.special ? '#16a34a' : '#64748b'}">
+          <span style="font-size: 20px; font-weight: bold; width: 20px; text-align: center;">{{passwordValidation.special ? '✓' : '○'}}</span> 1 Special Char
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;" [ngStyle]="{'color': passwordValidation.match ? '#16a34a' : (confirmPassword.length > 0 ? '#dc2626' : '#64748b')}">
+          <span style="font-size: 20px; font-weight: bold; width: 20px; text-align: center;">{{passwordValidation.match ? '✓' : (confirmPassword.length > 0 ? '✗' : '○')}}</span> Match
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <button type="button" class="btn-text" style="color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer; background: none; border: none; font-size: 15px;" (click)="copyCredentials()" [disabled]="!changingPasswordUser.password" [style.opacity]="changingPasswordUser.password ? '1' : '0.5'">
+        <svg *ngIf="!isCopied" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <svg *ngIf="isCopied" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span [ngStyle]="{'color': isCopied ? '#16a34a' : 'inherit'}">{{ isCopied ? 'Copied to Clipboard!' : 'Copy to Share' }}</span>
+      </button>
+
+      <div style="display: flex; gap: 16px;">
+        <button class="btn-secondary" style="padding: 14px 28px; font-size: 16px;" (click)="cancelChangePassword()">Cancel</button>
+        <button class="btn-primary" style="padding: 14px 28px; font-size: 16px;" [disabled]="!isPasswordValid" [style.opacity]="isPasswordValid ? '1' : '0.5'" [style.cursor]="isPasswordValid ? 'pointer' : 'not-allowed'" (click)="savePassword()">Update Password</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-overlay" *ngIf="addingUser">
+  <div class="krs-modal card" style="width: 700px; padding: 40px; border-radius: 20px; background: white; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: visible !important; position: relative;" (click)="$event.stopPropagation()">
+    <div style="margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
+      <h3 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #0f172a;">Add New User</h3>
+      <p style="margin: 0; color: #64748b; font-size: 16px;">Create a new user account and set their credentials.</p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+      <div class="form-group" style="margin: 0;">
+        <label for="add-username" style="font-weight: 600; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Username</label>
+        <input type="text" id="add-username" [(ngModel)]="addingUser.username" (input)="validateUsername()" class="form-control" placeholder="Enter username" style="height: 48px; border-radius: 8px; font-size: 16px;" [ngStyle]="{'border-color': usernameError ? '#dc2626' : '#cbd5e1'}">
+        <div *ngIf="usernameError" style="color: #dc2626; font-size: 13px; margin-top: 4px; font-weight: 500;">{{usernameError}}</div>
+        <div *ngIf="isUsernameValidating" style="color: #64748b; font-size: 13px; margin-top: 4px;">Validating...</div>
+      </div>
+
+      <div class="form-group" style="margin: 0;">
+        <label for="add-email" style="font-weight: 600; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Email Address</label>
+        <input type="email" id="add-email" [(ngModel)]="addingUser.email" (input)="validateEmail()" class="form-control" placeholder="Enter email" style="height: 48px; border-radius: 8px; font-size: 16px;" [ngStyle]="{'border-color': emailError ? '#dc2626' : '#cbd5e1'}">
+        <div *ngIf="emailError" style="color: #dc2626; font-size: 13px; margin-top: 4px; font-weight: 500;">{{emailError}}</div>
+        <div *ngIf="isEmailValidating" style="color: #64748b; font-size: 13px; margin-top: 4px;">Validating...</div>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 24px;">
+      <label style="font-weight: 600; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Assign Role</label>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px;">
+        <div *ngFor="let role of roles" 
+             (click)="toggleRole(role)" 
+             style="padding: 10px 18px; border-radius: 999px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; border: 2px solid transparent;"
+             [ngStyle]="hasRole(role.id) ? {
+               'background-color': '#eff6ff', 
+               'color': '#2563eb', 
+               'border-color': '#bfdbfe',
+               'box-shadow': '0 2px 4px rgba(37,99,235,0.1)'
+             } : {
+               'background-color': '#f8fafc', 
+               'color': '#64748b',
+               'border-color': '#e2e8f0'
+             }"
+             onmouseover="if(!this.style.backgroundColor.includes('rgb(239')) this.style.borderColor='#cbd5e1'" 
+             onmouseout="if(!this.style.backgroundColor.includes('rgb(239')) this.style.borderColor='#e2e8f0'">
+          
+          <div style="width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: white; transition: all 0.2s; border: 2px solid;"
+               [ngStyle]="{'border-color': hasRole(role.id) ? '#2563eb' : '#cbd5e1'}">
+            <div *ngIf="hasRole(role.id)" style="width: 8px; height: 8px; border-radius: 50%; background-color: #2563eb;"></div>
+          </div>
+          {{role.name}}
+        </div>
+      </div>
+    </div>
+
+    <!-- Password Section -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+      <div class="form-group" style="margin: 0;">
+        <label for="add-password" style="font-weight: 600; font-size: 14px; color: #334155; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px;">Password</label>
+        <div style="position: relative; display: flex; align-items: center;">
+          <input [type]="showNewPassword ? 'text' : 'password'" id="add-password" [(ngModel)]="addingUser.password" (input)="validatePassword()" class="form-control" placeholder="Set password" style="padding-right: 40px; height: 48px; font-size: 16px; border-radius: 8px; width: 100%;">
+          <button type="button" (click)="showNewPassword = !showNewPassword" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; padding: 0; outline: none; transition: color 0.2s;" title="Toggle Password Visibility">
+            <svg *ngIf="!showNewPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg *ngIf="showNewPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          </button>
+        </div>
+      </div>
+      <div class="form-group" style="margin: 0;">
+        <label for="add-confirm-password" style="font-weight: 600; font-size: 14px; color: #334155; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px;">Confirm Password</label>
+        <div style="position: relative; display: flex; align-items: center;">
+          <input [type]="showConfirmPassword ? 'text' : 'password'" id="add-confirm-password" [(ngModel)]="confirmPassword" (input)="validatePassword()" class="form-control" placeholder="Re-enter password" style="padding-right: 40px; height: 48px; font-size: 16px; border-radius: 8px; width: 100%;">
+          <button type="button" (click)="showConfirmPassword = !showConfirmPassword" style="position: absolute; right: 12px; background: none; border: none; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; padding: 0; outline: none; transition: color 0.2s;" title="Toggle Password Visibility">
+            <svg *ngIf="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg *ngIf="showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Password Requirements & Auto Gen -->
+    <div style="background-color: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <span style="font-size: 14px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Password Requirements</span>
+        <button type="button" (click)="generatePassword()" style="font-size: 13px; font-weight: 600; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 6px; transition: all 0.2s; outline: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          Auto Generate
+        </button>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 14px; color: #334155;">
+        <div style="display: flex; align-items: center; gap: 8px;" [ngStyle]="{'color': passwordValidation.length ? '#16a34a' : '#64748b'}">
+          <span style="font-size: 16px; font-weight: bold; width: 16px; text-align: center;">{{passwordValidation.length ? '✓' : '○'}}</span> Min 8 Chars
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;" [ngStyle]="{'color': passwordValidation.upper ? '#16a34a' : '#64748b'}">
+          <span style="font-size: 16px; font-weight: bold; width: 16px; text-align: center;">{{passwordValidation.upper ? '✓' : '○'}}</span> 1 Uppercase
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;" [ngStyle]="{'color': passwordValidation.lower ? '#16a34a' : '#64748b'}">
+          <span style="font-size: 16px; font-weight: bold; width: 16px; text-align: center;">{{passwordValidation.lower ? '✓' : '○'}}</span> 1 Lowercase
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;" [ngStyle]="{'color': passwordValidation.number ? '#16a34a' : '#64748b'}">
+          <span style="font-size: 16px; font-weight: bold; width: 16px; text-align: center;">{{passwordValidation.number ? '✓' : '○'}}</span> 1 Number
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;" [ngStyle]="{'color': passwordValidation.special ? '#16a34a' : '#64748b'}">
+          <span style="font-size: 16px; font-weight: bold; width: 16px; text-align: center;">{{passwordValidation.special ? '✓' : '○'}}</span> 1 Special Char
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;" [ngStyle]="{'color': passwordValidation.match ? '#16a34a' : (confirmPassword.length > 0 ? '#dc2626' : '#64748b')}">
+          <span style="font-size: 16px; font-weight: bold; width: 16px; text-align: center;">{{passwordValidation.match ? '✓' : (confirmPassword.length > 0 ? '✗' : '○')}}</span> Match
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <!-- Copy Credentials Button (Disabled until valid) -->
+      <button type="button" class="btn-text" style="color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer; background: none; border: none; font-size: 15px;" 
+              (click)="copyCredentials()" 
+              [disabled]="!isPasswordValid || usernameError || emailError || !addingUser.username || !addingUser.email || (addingUser.roles?.length || 0) === 0" 
+              [style.opacity]="(isPasswordValid && !usernameError && !emailError && addingUser.username && addingUser.email && (addingUser.roles?.length || 0) > 0) ? '1' : '0.5'"
+              title="Fill all details correctly to copy credentials">
+        <svg *ngIf="!isCopied" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <svg *ngIf="isCopied" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span [ngStyle]="{'color': isCopied ? '#16a34a' : 'inherit'}">{{ isCopied ? 'Copied to Clipboard!' : 'Copy to Share' }}</span>
+      </button>
+
+      <div style="display: flex; gap: 16px;">
+        <button class="btn-secondary" (click)="cancelAdd()" style="padding: 12px 24px; font-size: 15px; font-weight: 600; border-radius: 8px;">Cancel</button>
+        <button class="btn-primary" (click)="createUser()" style="padding: 12px 24px; font-size: 15px; font-weight: 600; border-radius: 8px;" 
+                [disabled]="!isPasswordValid || usernameError || emailError || isUsernameValidating || isEmailValidating || !addingUser.username || !addingUser.email" 
+                [style.opacity]="(!isPasswordValid || usernameError || emailError || isUsernameValidating || isEmailValidating || !addingUser.username || !addingUser.email) ? '0.5' : '1'" 
+                [style.cursor]="(!isPasswordValid || usernameError || emailError || isUsernameValidating || isEmailValidating || !addingUser.username || !addingUser.email) ? 'not-allowed' : 'pointer'">Create User</button>
+      </div>
+    </div>
+  </div>
+</div>

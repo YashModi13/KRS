@@ -1,0 +1,132 @@
+<div class="header-flex" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <div>
+    <h1 class="page-title">Role Management</h1>
+    <p class="page-sub">Manage roles in the system</p>
+  </div>
+  <div style="display: flex; gap: 12px; align-items: center;">
+    <button class="btn btn-primary btn-add" (click)="createRole()">+ Add Role</button>
+  </div>
+</div>
+
+<div class="card p-0" (click)="closeDropdown()" style="overflow: visible;">
+  <div class="table-responsive">
+    <table class="master-table">
+      <thead>
+        <tr>
+          <th (click)="toggleSort('name')" class="sortable-header" style="width: 25%;">
+            Name
+            <span *ngIf="sortColumn === 'name'" class="sort-icon">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+          </th>
+          <th (click)="toggleSort('description')" class="sortable-header" style="width: 45%;">
+            Description
+            <span *ngIf="sortColumn === 'description'" class="sort-icon">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+          </th>
+          <th style="width: 15%;">Status</th>
+          <th class="text-center" style="width: 15%;">Actions</th>
+        </tr>
+        <tr class="filter-row">
+          <td><input type="text" class="col-filter" placeholder="Search Role..." [(ngModel)]="filters.name" (input)="onFilterChange()"></td>
+          <td><input type="text" class="col-filter" placeholder="Search Description..." [(ngModel)]="filters.description" (input)="onFilterChange()"></td>
+          <td>
+            <select class="col-filter" [(ngModel)]="filters.status" (change)="onFilterChange()">
+              <option value="">All</option>
+              <option [ngValue]="true">Active</option>
+              <option [ngValue]="false">Inactive</option>
+            </select>
+          </td>
+          <td></td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let role of roles" class="clickable-row">
+          <td>
+            <div class="main-text font-weight-600">{{role.name}}</div>
+          </td>
+          <td>
+            <div class="text-sm font-weight-500" style="color: #475569;">{{role.description}}</div>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="{'badge-completed': role.isActive, 'badge-overdue': !role.isActive}">
+              {{role.isActive ? 'Active' : 'Inactive'}}
+            </span>
+          </td>
+          <td class="text-center actions-cell">
+            <div style="position: relative; display: inline-block;">
+              <button class="btn-icon" (click)="toggleDropdown(role.name, $event)" title="Options">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+              </button>
+              <div class="dropdown-menu" *ngIf="openDropdownRoleName === role.name" (click)="$event.stopPropagation()">
+                <div class="dropdown-item" (click)="editRole(role); closeDropdown()">
+                  <span class="icon">✏️</span> Edit Role
+                </div>
+                <div class="dropdown-item" (click)="editPermissions(role); closeDropdown()">
+                  <span class="icon">🔒</span> Permissions
+                </div>
+                <div class="dropdown-item" (click)="toggleActive(role); closeDropdown()">
+                  <span class="icon">{{role.isActive ? '❌' : '✅'}}</span> 
+                  {{role.isActive ? 'Deactivate' : 'Activate'}}
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="roles.length === 0">
+          <td colspan="4" style="text-align: center; color: #7f8c8d; padding: 40px;">No roles found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid #e1e8ed;">
+    <div class="limit-selector" style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 13px; color: #64748b; font-weight: 500;">Rows per page:</span>
+      <select [ngModel]="limit" (ngModelChange)="changePageLimit($event)" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d8e0; cursor: pointer; background-color: #f8fafc; font-weight: 500;">
+        <option [ngValue]="10">10</option>
+        <option [ngValue]="25">25</option>
+        <option [ngValue]="50">50</option>
+        <option [ngValue]="100">100</option>
+      </select>
+    </div>
+    
+    <div class="page-controls" style="display: flex; align-items: center; gap: 20px;">
+      <span style="font-size: 13px; color: #64748b; font-weight: 500;">Showing {{totalRoles === 0 ? 0 : offset + 1}} - {{ (offset + limit) > totalRoles ? totalRoles : (offset + limit) }} of {{totalRoles}}</span>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" [disabled]="offset === 0" (click)="prevPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="offset === 0 ? '0.5' : '1'">Previous</button>
+        <button class="btn btn-secondary" [disabled]="offset + limit >= totalRoles" (click)="nextPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="offset + limit >= totalRoles ? '0.5' : '1'">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Role Modal (Premium Design) -->
+<div class="modal-overlay" *ngIf="editingRole">
+  <div class="krs-modal card" style="width: 500px; padding: 40px; border-radius: 20px; background: white; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); position: relative;" (click)="$event.stopPropagation()">
+    <div style="margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
+      <h3 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: #0f172a;">{{ isNew ? 'Create New Role' : 'Edit Role' }}</h3>
+      <p style="margin: 0; color: #64748b; font-size: 16px;">{{ isNew ? 'Add a new role to the system.' : 'Update the details of this role.' }}</p>
+    </div>
+    
+    <div class="form-group" style="margin-bottom: 24px;">
+      <label for="role-name" style="font-weight: 600; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Role Name</label>
+      <input type="text" id="role-name" [(ngModel)]="editingRole.name" (input)="validateName()" class="form-control" placeholder="e.g. MANAGER" style="height: 48px; border-radius: 8px; font-size: 16px;" [ngStyle]="{'border-color': nameError ? '#dc2626' : '#cbd5e1'}">
+      <div *ngIf="nameError" style="color: #dc2626; font-size: 13px; margin-top: 4px; font-weight: 500;">{{nameError}}</div>
+      <div *ngIf="isNameValidating" style="color: #64748b; font-size: 13px; margin-top: 4px;">Validating...</div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 32px;">
+      <label for="role-desc" style="font-weight: 600; color: #334155; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Description</label>
+      <textarea id="role-desc" [(ngModel)]="editingRole.description" class="form-control" placeholder="Provide a brief description of what this role can do" style="min-height: 100px; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 16px;">
+      <button class="btn-secondary" (click)="cancelEdit()" style="padding: 12px 24px; font-size: 15px; font-weight: 600; border-radius: 8px;">Cancel</button>
+      <button class="btn-primary" (click)="saveRole()" style="padding: 12px 24px; font-size: 15px; font-weight: 600; border-radius: 8px;" 
+              [disabled]="nameError || isNameValidating || !editingRole.name" 
+              [style.opacity]="(nameError || isNameValidating || !editingRole.name) ? '0.5' : '1'" 
+              [style.cursor]="(nameError || isNameValidating || !editingRole.name) ? 'not-allowed' : 'pointer'">
+        {{ isNew ? 'Create Role' : 'Save Changes' }}
+      </button>
+    </div>
+  </div>
+</div>
+

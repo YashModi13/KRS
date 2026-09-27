@@ -1,0 +1,136 @@
+<!-- ===== GLOBAL TOAST NOTIFICATION ===== -->
+<div *ngIf="toast" class="global-toast" [class.global-toast-success]="toast.type === 'success'" [class.global-toast-error]="toast.type === 'error'">
+  <div class="global-toast-icon">
+    <svg *ngIf="toast.type === 'success'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <svg *ngIf="toast.type === 'error'" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+  </div>
+  <span class="global-toast-msg">{{ toast.message }}</span>
+  <button class="global-toast-close" (click)="toastService.clear()">✕</button>
+</div>
+<!-- ======================================= -->
+
+<ng-container *ngIf="authService.isLoggedIn(); else unauthTemplate">
+  <div class="layout-wrapper" *ngIf="title">
+    <!-- Header -->
+    <header class="hdr">
+      <div class="header-left">
+        <button class="toggle-btn" (click)="toggleSidebar()" title="Toggle Sidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <div class="logo">
+          <img src="assets/logo.jpg" alt="KRS Logo" class="app-logo">
+          {{title}} <span class="sub" *ngIf="subTitle">{{subTitle}}</span>
+        </div>
+      </div>
+
+      <div class="user-profile">
+        <button class="notify-btn" (click)="toggleNotifications()" title="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <div class="notification-badge" *ngIf="unreadCount > 0">{{unreadCount}}</div>
+        </button>
+
+        <div class="user-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="user-info">
+          <span class="user-name">{{loggedInUser || 'User'}}</span>
+          <span class="user-role">{{loggedInRole || 'Administrator'}}</span>
+        </div>
+        <button class="logout-btn" (click)="logout()" title="Logout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <!-- Notification Right Sidebar -->
+      <aside class="notif-sidebar" [class.open]="isNotifOpen">
+        <div class="notif-hdr">
+          <h3>Notifications</h3>
+          <button class="btn-text" (click)="markAllAsRead()" *ngIf="unreadCount > 0">Mark all as read</button>
+        </div>
+        <div class="notif-list" (scroll)="onScroll($event)">
+          <div *ngIf="notifications.length === 0 && !isLoading" class="empty-notif">No new notifications</div>
+          
+          <div class="notif-item" *ngFor="let notif of notifications" [class.unread]="!notif.isRead" [class.expanded-card]="notif.isExpanded" (click)="toggleNotification(notif)">
+            <div class="notif-icon">
+              <span *ngIf="notif.type === 'TIME_LIMIT'">⏳</span>
+              <span *ngIf="notif.type !== 'TIME_LIMIT'">🔔</span>
+            </div>
+            <div class="notif-content">
+              <div class="notif-msg" [class.expanded]="notif.isExpanded">{{notif.message}}</div>
+              <div class="notif-meta">{{timeAgo(notif.createdAt)}}</div>
+            </div>
+            <div class="unread-dot" *ngIf="!notif.isRead"></div>
+          </div>
+          
+          <div class="notif-loading" *ngIf="isLoading">
+            <div class="spinner"></div> Loading...
+          </div>
+        </div>
+      </aside>
+
+      <!-- Sidebar -->
+      <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+        <div class="nav-section">Overview</div>
+        <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">📊</span> <span class="nav-text">Dashboard</span>
+        </a>
+        
+        <div class="nav-section">Projects</div>
+        <a routerLink="/projects" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">🏗</span> <span class="nav-text">Projects</span>
+        </a>
+        <a routerLink="/ra-bills" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">💰</span> <span class="nav-text">RA Bills</span>
+        </a>
+        <a routerLink="/approvals" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">✅</span> <span class="nav-text">Approvals</span><span class="nav-badge">0</span>
+        </a>
+        <a routerLink="/eot" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">⏱</span> <span class="nav-text">Time Extensions</span>
+        </a>
+
+        <div class="nav-section">Field</div>
+        <a routerLink="/visits" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">🚗</span> <span class="nav-text">Site Visits</span>
+        </a>
+        <a routerLink="/hindrance" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">⚠️</span> <span class="nav-text">Hindrance</span><span class="nav-badge">0</span>
+        </a>
+        <a routerLink="/materials" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">🧱</span> <span class="nav-text">Material & Quality</span>
+        </a>
+
+        <div class="nav-section">Finance</div>
+        <a routerLink="/payments" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">🏦</span> <span class="nav-text">Payments</span>
+        </a>
+        <a routerLink="/completion" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">🎓</span> <span class="nav-text">Completion</span>
+        </a>
+
+        <div class="nav-section">Admin</div>
+        <a routerLink="/admin/users" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">👥</span> <span class="nav-text">User Management</span>
+        </a>
+        <a routerLink="/admin/roles" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">🛡️</span> <span class="nav-text">Role Management</span>
+        </a>
+        <a routerLink="/settings" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">⚙️</span> <span class="nav-text">Settings</span>
+        </a>
+      </aside>
+
+      <!-- Main Content Route -->
+      <main class="main-content">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Render just the router outlet (e.g., Login page) without the layout shell -->
+<ng-template #unauthTemplate>
+  <router-outlet></router-outlet>
+</ng-template>

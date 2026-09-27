@@ -1,0 +1,763 @@
+cat > /mnt/user-data/outputs/School_Construction_PM_v2.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>School Construction PM – Gujarat PWD</title>
+<style>
+:root{
+  --navy:#0f2342;--blue:#1a3a6b;--accent:#2563eb;--accent2:#3b82f6;
+  --sky:#dbeafe;--green:#16a34a;--green-l:#dcfce7;
+  --yellow:#ca8a04;--yellow-l:#fef9c3;--orange:#ea580c;--orange-l:#ffedd5;
+  --red:#dc2626;--red-l:#fee2e2;--grey:#6b7280;--grey-l:#f3f4f6;
+  --white:#fff;--bg:#f0f4f8;--border:#e2e8f0;--text:#1e293b;--muted:#64748b;
+  --sidebar:220px;--hdr:60px;--r:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+#hdr{height:var(--hdr);background:var(--navy);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;border-bottom:2px solid var(--accent)}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;font-weight:700;font-size:15px}
+.logo .sub{font-weight:400;font-size:11px;color:#94a3b8;margin-left:6px}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hdr-date{color:#94a3b8;font-size:11px}
+.btn-hdr{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:var(--r);padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn-hdr:hover{background:rgba(255,255,255,.18)}
+#app{display:flex;flex:1;overflow:hidden}
+#sidebar{width:var(--sidebar);background:var(--blue);flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto}
+.nav-section{padding:14px 12px 5px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 16px;color:#c8d7ef;cursor:pointer;font-size:13px;border-left:3px solid transparent;transition:all .15s;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.active{background:rgba(37,99,235,.35);color:#fff;border-left-color:var(--accent2);font-weight:600}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;min-width:18px;text-align:center}
+#main{flex:1;overflow-y:auto;padding:20px}
+.page-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:3px}
+.page-sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:11px;margin-bottom:18px}
+.kpi-card{background:var(--white);border-radius:var(--r);padding:13px 15px;box-shadow:var(--shadow);border-left:4px solid var(--accent)}
+.kpi-card.green{border-left-color:var(--green)}.kpi-card.red{border-left-color:var(--red)}
+.kpi-card.yellow{border-left-color:var(--yellow)}.kpi-card.orange{border-left-color:var(--orange)}
+.kpi-card.grey{border-left-color:var(--grey)}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:5px}
+.kpi-value{font-size:24px;font-weight:700;color:var(--text);line-height:1}
+.card{background:var(--white);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:15px}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--border)}
+.card-title{font-weight:700;font-size:14px}
+.card-body{padding:15px 17px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--navy)}
+thead th{padding:9px 11px;text-align:left;font-weight:600;font-size:11px;color:#c8d7ef;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:hover{background:#f8faff}
+tbody td{padding:8px 11px;color:var(--text);vertical-align:middle}
+.badge{display:inline-block;font-size:11px;font-weight:700;border-radius:12px;padding:2px 9px;white-space:nowrap}
+.badge-running{background:var(--sky);color:#1e40af}
+.badge-completed{background:var(--green-l);color:#166534}
+.badge-delayed{background:var(--red-l);color:#991b1b}
+.badge-hold{background:var(--yellow-l);color:#854d0e}
+.badge-notstarted{background:var(--grey-l);color:var(--grey)}
+.badge-paid{background:var(--green-l);color:#166534}
+.badge-pending{background:var(--red-l);color:#991b1b}
+.badge-passed{background:var(--yellow-l);color:#854d0e}
+.badge-yes{background:var(--green-l);color:#166534}
+.badge-no{background:var(--red-l);color:#991b1b}
+.badge-grey{background:var(--grey-l);color:var(--grey)}
+.prog-wrap{display:flex;align-items:center;gap:7px}
+.prog-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;min-width:50px}
+.prog-fill{height:100%;border-radius:3px}
+.prog-label{font-size:12px;font-weight:600;min-width:32px;text-align:right}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--white);border-radius:12px;width:760px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-sm{width:500px}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:700}
+.modal-body{padding:18px 22px;overflow-y:auto;flex:1}
+.modal-ftr{padding:13px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:9px;align-items:center}
+.close-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;padding:2px;line-height:1}
+.close-btn:hover{color:var(--text)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.form-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group.full{grid-column:1/-1}
+label.fl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+input,select,textarea{border:1px solid var(--border);border-radius:var(--r);padding:7px 9px;font-size:13px;color:var(--text);background:#fff;width:100%;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+textarea{resize:vertical;min-height:60px}
+.btn-save{background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:8px 22px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-save:hover{background:#1d4ed8}
+.btn-cancel{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--r);padding:8px 16px;font-size:13px;cursor:pointer}
+.btn-cancel:hover{background:var(--grey-l)}
+.btn-del-modal{background:var(--red-l);color:var(--red);border:none;border-radius:var(--r);padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer}
+.toolbar{display:flex;align-items:center;gap:9px;margin-bottom:13px;flex-wrap:wrap}
+.btn-primary{background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:7px 15px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-primary:hover{background:#1d4ed8}
+.search-box{position:relative}
+.search-box input{padding-left:30px;width:190px}
+.search-box::before{content:'🔍';position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px}
+select.filter{width:auto;padding:7px 9px;font-size:13px}
+.btn-sm{font-size:11px;padding:3px 9px;border-radius:5px;border:none;cursor:pointer;font-weight:600}
+.btn-edit{background:var(--sky);color:#1e40af}.btn-edit:hover{background:#bfdbfe}
+.btn-del-sm{background:var(--red-l);color:var(--red)}.btn-del-sm:hover{background:#fecaca}
+.tag{display:inline-block;font-size:10px;font-weight:700;border-radius:4px;padding:2px 6px;margin-right:3px}
+.tag-blue{background:var(--sky);color:#1e40af}
+.days-pill{display:inline-block;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700}
+.days-pill.red{background:var(--red-l);color:var(--red)}
+.days-pill.orange{background:var(--orange-l);color:var(--orange)}
+.days-pill.yellow{background:var(--yellow-l);color:var(--yellow)}
+.days-pill.green{background:var(--green-l);color:var(--green)}
+.above{color:var(--red);font-weight:700}.below{color:var(--green);font-weight:700}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px}
+.chart-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.chart-bar-label{width:90px;font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chart-bar-track{flex:1;height:13px;background:var(--border);border-radius:3px;overflow:hidden}
+.chart-bar-fill{height:100%;border-radius:3px}
+.chart-bar-val{width:36px;font-size:11px;font-weight:700;color:var(--text);text-align:right;flex-shrink:0}
+.donut-wrap{display:flex;align-items:center;gap:18px}
+.donut-legend{display:flex;flex-direction:column;gap:7px}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:12px}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.list-box{background:var(--white);border-radius:var(--r);box-shadow:var(--shadow);padding:15px}
+.list-box h3{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:8px}
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.list-item:last-child{border-bottom:none}
+.add-row{display:flex;gap:7px;margin-top:10px}
+.add-row input{flex:1;font-size:12px;padding:6px 8px}
+.add-row button{background:var(--accent);color:#fff;border:none;border-radius:var(--r);padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.withheld-col{color:#7c3aed;font-weight:600}
+#toast{position:fixed;bottom:22px;right:22px;background:var(--text);color:#fff;padding:11px 18px;border-radius:var(--r);font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.show{opacity:1}
+.empty{text-align:center;padding:36px 20px;color:var(--muted)}
+.empty-icon{font-size:36px;margin-bottom:9px}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+</style>
+</head>
+<body>
+<div id="hdr">
+  <div class="logo">
+    <svg width="30" height="30" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="6" fill="#2563eb"/><path d="M6 24V14l10-8 10 8v10H20v-7h-8v7H6z" fill="#fff" opacity=".9"/><rect x="13" y="20" width="6" height="4" rx="1" fill="#bfdbfe"/></svg>
+    School Construction PM
+    <span class="sub">Gujarat PWD · Offline</span>
+  </div>
+  <div class="hdr-right">
+    <span class="hdr-date" id="hdr-date"></span>
+    <button class="btn-hdr" onclick="exportData()">⬇ Export</button>
+    <label class="btn-hdr" style="cursor:pointer">⬆ Import<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+  </div>
+</div>
+<div id="app">
+<div id="sidebar">
+  <div class="nav-section">Overview</div>
+  <div class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard"><span class="nav-icon">📊</span>Dashboard</div>
+  <div class="nav-section">Projects</div>
+  <div class="nav-item" onclick="nav('projects')" id="nav-projects"><span class="nav-icon">🏗</span>Master Register</div>
+  <div class="nav-item" onclick="nav('ra')" id="nav-ra"><span class="nav-icon">💰</span>RA Bills</div>
+  <div class="nav-item" onclick="nav('approvals')" id="nav-approvals"><span class="nav-icon">✅</span>Approvals<span class="nav-badge" id="badge-approvals">0</span></div>
+  <div class="nav-item" onclick="nav('eot')" id="nav-eot"><span class="nav-icon">⏱</span>Time Extensions</div>
+  <div class="nav-section">Field</div>
+  <div class="nav-item" onclick="nav('visits')" id="nav-visits"><span class="nav-icon">🚗</span>Site Visits</div>
+  <div class="nav-item" onclick="nav('hindrance')" id="nav-hindrance"><span class="nav-icon">⚠️</span>Hindrance<span class="nav-badge" id="badge-hindrance">0</span></div>
+  <div class="nav-item" onclick="nav('materials')" id="nav-materials"><span class="nav-icon">🧱</span>Material & Quality</div>
+  <div class="nav-section">Finance</div>
+  <div class="nav-item" onclick="nav('payments')" id="nav-payments"><span class="nav-icon">🏦</span>Payments</div>
+  <div class="nav-item" onclick="nav('completion')" id="nav-completion"><span class="nav-icon">🎓</span>Completion</div>
+  <div class="nav-section">Admin</div>
+  <div class="nav-item" onclick="nav('settings')" id="nav-settings"><span class="nav-icon">⚙️</span>Settings</div>
+</div>
+<div id="main"></div>
+</div>
+<div id="toast"></div>
+<script>
+const S={load(k){try{return JSON.parse(localStorage.getItem('scpm_'+k)||'null')}catch{return null}},save(k,v){localStorage.setItem('scpm_'+k,JSON.stringify(v))}};
+const DL={
+  packages:['PKG-01 – Daskroi Schools','PKG-02 – Detroj Schools','PKG-03 – Borsad Schools','PKG-04 – Matar Schools','PKG-05 – Kadi Schools','PKG-06 – Patan Schools','PKG-07 – Banaskantha Schools'],
+  contractors:['Shree Ram Constructions','Jay Ambe Infra','Sai Developers','Gujarat Builders','Narmada Infra','Mahadev Constructions','Toran Infra','Jai Hind Projects'],
+  engineers:['Raj Patel','Amit Shah','Nilesh Joshi','Priya Desai','Ketan Mehta','Suresh Prajapati','Dhara Trivedi'],
+  talukas:['Daskroi','Detroj','Borsad','Matar','Kadi','Patan','Danta','Modasa','Bhuj','Olpad'],
+  districts:['Ahmedabad','Gandhinagar','Anand','Kheda','Mehsana','Patan','Banaskantha','Sabarkantha','Kutch','Surat'],
+  statuses:['Running','Completed','Delayed','Hold','Not Started'],
+  materials:['Cement','Steel','Sand','Aggregate','Tiles','Paint','Doors','Windows','Electrical','Plumbing'],
+  hindrance_cats:['Rain','Labour','Material','Drawing','Payment','School Activity','Utility','Permission','Other'],
+  mat_statuses:['Approved','Rejected','Pending','On Order','Received'],
+  quality:['Good','Average','Poor'],
+  safety:['Satisfactory','Needs Improvement','Unsafe']
+};
+const DD={
+  projects:[
+    {id:1,pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',village:'Ranip',taluka:'Daskroi',district:'Ahmedabad',wo_no:'WO/2024/001',wo_date:'2024-04-01',tender_amt:3800000,amount:3500000,sd:175000,rm:350000,contractor:'Shree Ram Constructions',engineer:'Raj Patel',start:'2024-04-15',duration:365,ext:'No',revised_date:'',status:'Running',phys:65,fin:58,ra_count:3,final_bill:'No',cc:'No',handover:'No',remarks:'On track'},
+    {id:2,pkg:'PKG-01 – Daskroi Schools',school:'Bright Future School',village:'Naroda',taluka:'Daskroi',district:'Ahmedabad',wo_no:'WO/2024/002',wo_date:'2024-04-01',tender_amt:3000000,amount:2800000,sd:140000,rm:280000,contractor:'Shree Ram Constructions',engineer:'Raj Patel',start:'2024-04-15',duration:365,ext:'No',revised_date:'',status:'Running',phys:80,fin:72,ra_count:4,final_bill:'No',cc:'No',handover:'No',remarks:''},
+    {id:3,pkg:'PKG-02 – Detroj Schools',school:'Sardar Patel Vidyalay',village:'Detroj',taluka:'Detroj',district:'Ahmedabad',wo_no:'WO/2024/003',wo_date:'2024-03-15',tender_amt:4000000,amount:4200000,sd:210000,rm:420000,contractor:'Jay Ambe Infra',engineer:'Amit Shah',start:'2024-03-20',duration:365,ext:'No',revised_date:'',status:'Delayed',phys:40,fin:35,ra_count:2,final_bill:'No',cc:'No',handover:'No',remarks:'Slow progress'},
+    {id:4,pkg:'PKG-02 – Detroj Schools',school:'Gandhi Primary School',village:'Khatraj',taluka:'Detroj',district:'Ahmedabad',wo_no:'WO/2024/004',wo_date:'2024-03-15',tender_amt:3200000,amount:3100000,sd:155000,rm:310000,contractor:'Jay Ambe Infra',engineer:'Amit Shah',start:'2024-03-20',duration:365,ext:'Yes',revised_date:'2025-06-30',status:'Running',phys:55,fin:48,ra_count:3,final_bill:'No',cc:'No',handover:'No',remarks:'EOT approved'},
+    {id:5,pkg:'PKG-03 – Borsad Schools',school:'Vivekanand School',village:'Borsad',taluka:'Borsad',district:'Anand',wo_no:'WO/2024/005',wo_date:'2024-05-01',tender_amt:2600000,amount:2500000,sd:125000,rm:250000,contractor:'Sai Developers',engineer:'Nilesh Joshi',start:'2024-05-10',duration:300,ext:'No',revised_date:'',status:'Completed',phys:100,fin:100,ra_count:5,final_bill:'Yes',cc:'Yes',handover:'Yes',remarks:'Handed over'},
+    {id:6,pkg:'PKG-03 – Borsad Schools',school:'Subhash School',village:'Anklav',taluka:'Borsad',district:'Anand',wo_no:'WO/2024/006',wo_date:'2024-05-01',tender_amt:1750000,amount:1800000,sd:90000,rm:180000,contractor:'Sai Developers',engineer:'Nilesh Joshi',start:'2024-05-10',duration:300,ext:'No',revised_date:'',status:'Completed',phys:100,fin:100,ra_count:4,final_bill:'Yes',cc:'Yes',handover:'Yes',remarks:''},
+    {id:7,pkg:'PKG-04 – Matar Schools',school:'Tagore Vidyalay',village:'Matar',taluka:'Matar',district:'Kheda',wo_no:'WO/2024/007',wo_date:'2024-06-01',tender_amt:4000000,amount:3800000,sd:190000,rm:380000,contractor:'Gujarat Builders',engineer:'Priya Desai',start:'2024-06-15',duration:400,ext:'No',revised_date:'',status:'Running',phys:30,fin:25,ra_count:1,final_bill:'No',cc:'No',handover:'No',remarks:''},
+    {id:8,pkg:'PKG-05 – Kadi Schools',school:'Nehruvian School',village:'Kadi',taluka:'Kadi',district:'Mehsana',wo_no:'WO/2024/008',wo_date:'2024-07-01',tender_amt:4500000,amount:4500000,sd:225000,rm:450000,contractor:'Narmada Infra',engineer:'Ketan Mehta',start:'2024-07-10',duration:400,ext:'No',revised_date:'',status:'Not Started',phys:0,fin:0,ra_count:0,final_bill:'No',cc:'No',handover:'No',remarks:'Mobilisation pending'},
+    {id:9,pkg:'PKG-06 – Patan Schools',school:'Ambedkar School',village:'Patan',taluka:'Patan',district:'Patan',wo_no:'WO/2024/009',wo_date:'2024-02-01',tender_amt:5500000,amount:5200000,sd:260000,rm:520000,contractor:'Mahadev Constructions',engineer:'Suresh Prajapati',start:'2024-02-15',duration:450,ext:'Yes',revised_date:'2025-07-15',status:'Delayed',phys:50,fin:42,ra_count:3,final_bill:'No',cc:'No',handover:'No',remarks:'Labour shortage'},
+    {id:10,pkg:'PKG-07 – Banaskantha Schools',school:'Swami Vivekanand PS',village:'Danta',taluka:'Danta',district:'Banaskantha',wo_no:'WO/2024/010',wo_date:'2024-08-01',tender_amt:2200000,amount:2200000,sd:110000,rm:220000,contractor:'Toran Infra',engineer:'Dhara Trivedi',start:'2024-08-15',duration:300,ext:'No',revised_date:'',status:'Hold',phys:20,fin:15,ra_count:1,final_bill:'No',cc:'No',handover:'No',remarks:'Land dispute'}
+  ],
+  ra:[
+    {id:1,pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',bill_no:'RA-01',sub_date:'2024-07-01',amount:500000,passed_date:'2024-07-20',pay_date:'2024-08-05',gst:90000,withheld:25000,remarks:''},
+    {id:2,pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',bill_no:'RA-02',sub_date:'2024-09-01',amount:650000,passed_date:'2024-09-18',pay_date:'2024-10-02',gst:117000,withheld:0,remarks:''},
+    {id:3,pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',bill_no:'RA-03',sub_date:'2024-11-01',amount:750000,passed_date:'2024-11-20',pay_date:'',gst:135000,withheld:37500,remarks:'Awaiting payment'},
+    {id:4,pkg:'PKG-01 – Daskroi Schools',school:'Bright Future School',bill_no:'RA-01',sub_date:'2024-07-15',amount:420000,passed_date:'2024-08-02',pay_date:'2024-08-18',gst:75600,withheld:0,remarks:''},
+    {id:5,pkg:'PKG-02 – Detroj Schools',school:'Sardar Patel Vidyalay',bill_no:'RA-01',sub_date:'2024-06-01',amount:380000,passed_date:'2024-06-22',pay_date:'2024-07-08',gst:68400,withheld:0,remarks:''},
+    {id:6,pkg:'PKG-02 – Detroj Schools',school:'Sardar Patel Vidyalay',bill_no:'RA-02',sub_date:'2024-09-01',amount:450000,passed_date:'',pay_date:'',gst:81000,withheld:22500,remarks:'Pending approval'},
+    {id:7,pkg:'PKG-03 – Borsad Schools',school:'Vivekanand School',bill_no:'RA-01',sub_date:'2024-06-01',amount:600000,passed_date:'2024-06-20',pay_date:'2024-07-05',gst:108000,withheld:0,remarks:''},
+    {id:8,pkg:'PKG-06 – Patan Schools',school:'Ambedkar School',bill_no:'RA-01',sub_date:'2024-05-01',amount:800000,passed_date:'2024-05-22',pay_date:'2024-06-08',gst:144000,withheld:40000,remarks:''},
+    {id:9,pkg:'PKG-07 – Banaskantha Schools',school:'Swami Vivekanand PS',bill_no:'RA-01',sub_date:'2024-10-01',amount:200000,passed_date:'',pay_date:'',gst:36000,withheld:10000,remarks:'On hold'}
+  ],
+  approvals:[
+    {id:1,pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',date:'2024-04-20',ts:'Yes',aa:'Yes',da:'Yes',er:'No',eia:'No',ra_appr:'Yes',tea:'No',ca:'No',mb:'No',ccc:'No',remarks:'TS done'},
+    {id:2,pkg:'PKG-01 – Daskroi Schools',school:'Bright Future School',date:'2024-04-22',ts:'Yes',aa:'Yes',da:'Yes',er:'Yes',eia:'No',ra_appr:'Yes',tea:'No',ca:'No',mb:'Yes',ccc:'No',remarks:''},
+    {id:3,pkg:'PKG-02 – Detroj Schools',school:'Sardar Patel Vidyalay',date:'2024-03-25',ts:'Yes',aa:'Yes',da:'No',er:'No',eia:'No',ra_appr:'No',tea:'No',ca:'No',mb:'No',ccc:'No',remarks:'Drawing pending'},
+    {id:4,pkg:'PKG-03 – Borsad Schools',school:'Vivekanand School',date:'2024-05-15',ts:'Yes',aa:'Yes',da:'Yes',er:'Yes',eia:'Yes',ra_appr:'Yes',tea:'Yes',ca:'Yes',mb:'Yes',ccc:'Yes',remarks:'Completed'},
+    {id:5,pkg:'PKG-06 – Patan Schools',school:'Ambedkar School',date:'2024-02-20',ts:'Yes',aa:'Yes',da:'Yes',er:'Yes',eia:'No',ra_appr:'Yes',tea:'Yes',ca:'No',mb:'No',ccc:'No',remarks:''},
+    {id:6,pkg:'PKG-04 – Matar Schools',school:'Tagore Vidyalay',date:'2024-06-20',ts:'Yes',aa:'No',da:'No',er:'No',eia:'No',ra_appr:'No',tea:'No',ca:'No',mb:'No',ccc:'No',remarks:'Early stage'}
+  ],
+  eot:[
+    {id:1,pkg:'PKG-02 – Detroj Schools',school:'Gandhi Primary School',orig_date:'2024-12-20',req_days:120,app_days:90,reason:'Labour shortage during monsoon',letter_no:'EXT/PKG02/001',app_date:'2024-12-15',remarks:'Approved by SE'},
+    {id:2,pkg:'PKG-06 – Patan Schools',school:'Ambedkar School',orig_date:'2024-08-15',req_days:180,app_days:150,reason:'Land encroachment delay',letter_no:'EXT/PKG06/001',app_date:'2024-08-10',remarks:'Partial approval'}
+  ],
+  visits:[
+    {id:1,date:'2025-01-10',pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',engineer:'Raj Patel',contractor_present:'Yes',progress:60,quality:'Good',safety:'Satisfactory',issues:'Minor finishing pending',action:'Complete plaster by 15 Jan',next_date:'2025-01-25',photo_ref:'IMG_001-010',remarks:''},
+    {id:2,date:'2025-01-15',pkg:'PKG-02 – Detroj Schools',school:'Sardar Patel Vidyalay',engineer:'Amit Shah',contractor_present:'Yes',progress:38,quality:'Average',safety:'Needs Improvement',issues:'No safety net at slab level',action:'Erect safety net immediately',next_date:'2025-01-30',photo_ref:'IMG_011-020',remarks:'Contractor warned'},
+    {id:3,date:'2025-01-18',pkg:'PKG-04 – Matar Schools',school:'Tagore Vidyalay',engineer:'Priya Desai',contractor_present:'No',progress:28,quality:'Average',safety:'Satisfactory',issues:'Contractor absent',action:'Issue notice to contractor',next_date:'2025-02-01',photo_ref:'IMG_021-025',remarks:''}
+  ],
+  hindrance:[
+    {id:1,date:'2024-09-01',pkg:'PKG-02 – Detroj Schools',school:'Sardar Patel Vidyalay',issue:'Excessive rainfall stopped excavation work',category:'Rain',responsible:'Contractor',delay_days:15,resolved:'Yes',resolution_date:'2024-09-16',remarks:''},
+    {id:2,date:'2024-10-05',pkg:'PKG-06 – Patan Schools',school:'Ambedkar School',issue:'Land encroachment by local party',category:'Permission',responsible:'Third Party',delay_days:45,resolved:'No',resolution_date:'',remarks:'Matter in court'},
+    {id:3,date:'2024-11-10',pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',issue:'Steel supply delayed by vendor',category:'Material',responsible:'Contractor',delay_days:7,resolved:'Yes',resolution_date:'2024-11-17',remarks:''},
+    {id:4,date:'2024-12-01',pkg:'PKG-07 – Banaskantha Schools',school:'Swami Vivekanand PS',issue:'Land dispute halted all work',category:'Permission',responsible:'Department',delay_days:60,resolved:'No',resolution_date:'',remarks:'Legal proceedings ongoing'}
+  ],
+  materials:[
+    {id:1,pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',material:'Cement',approved:'Yes',received:'Yes',test_report:'Yes',inspection_date:'2024-05-01',status:'Approved',remarks:'Grade 53 OPC'},
+    {id:2,pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',material:'Steel',approved:'Yes',received:'Yes',test_report:'Yes',inspection_date:'2024-05-10',status:'Approved',remarks:'Fe500D TMT'},
+    {id:3,pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',material:'Tiles',approved:'Yes',received:'No',test_report:'No',inspection_date:'',status:'On Order',remarks:'Awaiting delivery'},
+    {id:4,pkg:'PKG-02 – Detroj Schools',school:'Sardar Patel Vidyalay',material:'Cement',approved:'Yes',received:'Yes',test_report:'No',inspection_date:'',status:'Pending',remarks:'Test report awaited'},
+    {id:5,pkg:'PKG-04 – Matar Schools',school:'Tagore Vidyalay',material:'Cement',approved:'No',received:'No',test_report:'No',inspection_date:'',status:'Pending',remarks:'Not yet approved'}
+  ],
+  payments:[
+    {id:1,pkg:'PKG-01 – Daskroi Schools',school:'Navyug Primary School',amount:3500000,extra:150000,ra_paid:1150000,gst:207000,tds:115000,sd:175000,remarks:''},
+    {id:2,pkg:'PKG-01 – Daskroi Schools',school:'Bright Future School',amount:2800000,extra:80000,ra_paid:980000,gst:176400,tds:98000,sd:140000,remarks:''},
+    {id:3,pkg:'PKG-02 – Detroj Schools',school:'Sardar Patel Vidyalay',amount:4200000,extra:0,ra_paid:380000,gst:68400,tds:38000,sd:210000,remarks:''},
+    {id:4,pkg:'PKG-03 – Borsad Schools',school:'Vivekanand School',amount:2500000,extra:50000,ra_paid:2500000,gst:450000,tds:250000,sd:125000,remarks:'Completed'},
+    {id:5,pkg:'PKG-06 – Patan Schools',school:'Ambedkar School',amount:5200000,extra:100000,ra_paid:1200000,gst:216000,tds:120000,sd:260000,remarks:''},
+    {id:6,pkg:'PKG-07 – Banaskantha Schools',school:'Swami Vivekanand PS',amount:2200000,extra:0,ra_paid:200000,gst:36000,tds:20000,sd:110000,remarks:'On hold'}
+  ],
+  completion:[
+    {id:1,pkg:'PKG-03 – Borsad Schools',school:'Vivekanand School',comp_date:'2024-12-01',final_bill:'Yes',cc:'Yes',handover_date:'2024-12-15',dlp:12,closed:'Yes',remarks:''},
+    {id:2,pkg:'PKG-03 – Borsad Schools',school:'Subhash School',comp_date:'2024-12-20',final_bill:'Yes',cc:'Yes',handover_date:'2024-12-28',dlp:12,closed:'Yes',remarks:''}
+  ]
+};
+const LISTS={};for(const k of Object.keys(DL))LISTS[k]=S.load('list_'+k)||[...DL[k]];
+const DB={};for(const k of Object.keys(DD))DB[k]=S.load(k)||JSON.parse(JSON.stringify(DD[k]));
+function saveList(k){S.save('list_'+k,LISTS[k]);updateBadges()}
+function save(k){S.save(k,DB[k]);updateBadges()}
+function nextId(arr){return arr.length?Math.max(...arr.map(x=>x.id))+1:1}
+function fmt(n){return(n||0).toLocaleString('en-IN')}
+function fmtCr(n){return'₹'+((n||0)/10000000).toFixed(2)+' Cr'}
+function fmtL(n){return'₹'+((n||0)/100000).toFixed(2)+' L'}
+function fmtDate(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+function addDays(dateStr,days){const d=new Date(dateStr);d.setDate(d.getDate()+days);return d}
+function daysRemaining(p){
+  const base=p.ext==='Yes'&&p.revised_date?new Date(p.revised_date):addDays(p.start,p.duration);
+  return Math.round((base-new Date())/86400000);
+}
+function progColor(v){if(v>=100)return'#16a34a';if(v>=50)return'#2563eb';if(v>=25)return'#ca8a04';return'#dc2626'}
+function badge(s){
+  const m={'Running':'running','Completed':'completed','Delayed':'delayed','Hold':'hold','Not Started':'notstarted','Paid':'paid','Pending Approval':'pending','Passed - Awaiting Payment':'passed','Yes':'yes','No':'no'};
+  return`<span class="badge badge-${m[s]||'grey'}">${s}</span>`;
+}
+function raStatus(r){if(r.pay_date)return'Paid';if(r.passed_date)return'Passed - Awaiting Payment';return'Pending Approval'}
+function daysPill(d){
+  if(d===null||isNaN(d))return'—';
+  if(d<0)return`<span class="days-pill red">${d}d OVERDUE</span>`;
+  if(d<=7)return`<span class="days-pill orange">${d}d left</span>`;
+  if(d<=30)return`<span class="days-pill yellow">${d}d left</span>`;
+  return`<span class="days-pill green">${d}d</span>`;
+}
+function progHtml(v){const p=Math.min(100,Math.max(0,v||0));return`<div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${progColor(p)}"></div></div><span class="prog-label" style="color:${progColor(p)}">${p}%</span></div>`}
+function tDiff(t,a){if(!t||!a)return'—';const p=((a-t)/t*100).toFixed(1);if(p>0)return`<span class="above">+${p}% Above</span>`;if(p<0)return`<span class="below">${p}% Below</span>`;return`<span style="color:var(--grey)">At Par</span>`}
+function sel(arr,val,name,extra=''){return`<select name="${name}" ${extra}>${arr.map(v=>`<option value="${v}"${v===val?' selected':''}>${v}</option>`).join('')}</select>`}
+function yn(val,name){return`<select name="${name}"><option value="Yes"${val==='Yes'?' selected':''}>Yes</option><option value="No"${val==='No'?' selected':''}>No</option></select>`}
+function pkgSel(val,name){return sel(LISTS.packages,val,name)}
+function pkgFilter(tblId){return`<select class="filter" onchange="fPkg('${tblId}',this.value)"><option value="">All Packages</option>${LISTS.packages.map(p=>`<option value="${p}">${p}</option>`).join('')}</select>`}
+function fPkg(tblId,val){document.querySelectorAll(`#${tblId} tbody tr`).forEach(tr=>{tr.style.display=(!val||tr.dataset.pkg===val)?'':'none'})}
+function fCol(tblId,ci,val){document.querySelectorAll(`#${tblId} tbody tr`).forEach(tr=>{const c=tr.querySelectorAll('td')[ci];tr.style.display=(!val||c?.textContent.includes(val))?'':'none'})}
+function fSearch(inp,tblId){const q=inp.value.toLowerCase();document.querySelectorAll(`#${tblId} tbody tr`).forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none'})}
+function toast(msg,dur=2400){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
+let cur='dashboard';
+function nav(page){document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));document.getElementById('nav-'+page)?.classList.add('active');cur=page;render(page)}
+function updateBadges(){
+  const p=DB.approvals.reduce((s,a)=>s+['ts','aa','da','er','eia','ra_appr','tea','ca','mb','ccc'].filter(f=>a[f]==='No').length,0);
+  const h=DB.hindrance.filter(h=>h.resolved==='No').length;
+  document.getElementById('badge-approvals').textContent=p;
+  document.getElementById('badge-hindrance').textContent=h;
+}
+function render(page){
+  const m=document.getElementById('main');
+  const pages={dashboard:pageDashboard,projects:pageProjects,ra:pageRA,approvals:pageApprovals,eot:pageEOT,visits:pageVisits,hindrance:pageHindrance,materials:pageMaterials,payments:pagePayments,completion:pageCompletion,settings:pageSettings};
+  m.innerHTML=(pages[page]||pageDashboard)();
+}
+function closeModal(id){const el=document.getElementById(id);if(el)el.remove()}
+document.addEventListener('click',e=>{if(e.target.classList.contains('overlay'))e.target.remove()});
+
+// ── DASHBOARD ──
+function pageDashboard(){
+  const ps=DB.projects,total=ps.length;
+  const running=ps.filter(p=>p.status==='Running').length,completed=ps.filter(p=>p.status==='Completed').length;
+  const delayed=ps.filter(p=>p.status==='Delayed').length,onHold=ps.filter(p=>p.status==='Hold').length;
+  const notStarted=ps.filter(p=>p.status==='Not Started').length;
+  const overdue=ps.filter(p=>p.status!=='Completed'&&daysRemaining(p)<0).length;
+  const due30=ps.filter(p=>p.status!=='Completed'&&daysRemaining(p)>=0&&daysRemaining(p)<=30).length;
+  const totalTender=ps.reduce((s,p)=>s+(p.tender_amt||0),0),totalAgr=ps.reduce((s,p)=>s+p.amount,0);
+  const avgPhys=ps.length?Math.round(ps.reduce((s,p)=>s+p.phys,0)/ps.length):0;
+  const avgFin=ps.length?Math.round(ps.reduce((s,p)=>s+p.fin,0)/ps.length):0;
+  const ra=DB.ra,totalBilled=ra.reduce((s,r)=>s+r.amount,0);
+  const totalPaid=ra.filter(r=>r.pay_date).reduce((s,r)=>s+r.amount,0);
+  const totalWithheld=ra.reduce((s,r)=>s+(r.withheld||0),0);
+  const pendingRA=ra.filter(r=>!r.passed_date).length;
+  const openHind=DB.hindrance.filter(h=>h.resolved==='No').length;
+  const statusData=[{l:'Running',c:running,col:'#2563eb'},{l:'Completed',c:completed,col:'#16a34a'},{l:'Delayed',c:delayed,col:'#dc2626'},{l:'Hold',c:onHold,col:'#ca8a04'},{l:'Not Started',c:notStarted,col:'#9ca3af'}].filter(x=>x.c>0);
+  function donut(data,tot){
+    const r=52,cx=62,cy=62,sw=20,circ=2*Math.PI*r;let off=0;
+    const segs=data.map(d=>{const fr=tot?d.c/tot:0,len=fr*circ;const s=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.col}" stroke-width="${sw}" stroke-dasharray="${len.toFixed(2)} ${(circ-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;off+=len;return s});
+    return`<svg width="124" height="124" viewBox="0 0 124 124">${segs.join('')}<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="20" font-weight="700" fill="#1e293b">${tot}</text><text x="${cx}" y="${cy+18}" text-anchor="middle" font-size="9" fill="#64748b">SCHOOLS</text></svg>`;
+  }
+  const pkgs=[...new Set(ps.map(p=>p.pkg))].sort();
+  const pkgBars=pkgs.map(pkg=>{const g=ps.filter(p=>p.pkg===pkg),avg=Math.round(g.reduce((s,p)=>s+p.phys,0)/g.length),lbl=pkg.split('–')[0].trim();return`<div class="chart-bar-row"><span class="chart-bar-label">${lbl}</span><div class="chart-bar-track"><div class="chart-bar-fill" style="width:${avg}%;background:${progColor(avg)}"></div></div><span class="chart-bar-val">${avg}%</span></div>`}).join('');
+  const dueSoon=ps.filter(p=>p.status!=='Completed').map(p=>({...p,dr:daysRemaining(p)})).filter(p=>p.dr>=0&&p.dr<=45).sort((a,b)=>a.dr-b.dr).slice(0,5);
+  const openH=DB.hindrance.filter(h=>h.resolved==='No').slice(0,4);
+  return`<div class="page-title">Dashboard</div><div class="page-sub">Live overview – all packages</div>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Total Schools</div><div class="kpi-value">${total}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Tender Value</div><div class="kpi-value" style="font-size:17px">${fmtCr(totalTender)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Agreement Value</div><div class="kpi-value" style="font-size:17px">${fmtCr(totalAgr)}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Running</div><div class="kpi-value">${running}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Completed</div><div class="kpi-value">${completed}</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Delayed</div><div class="kpi-value">${delayed}</div></div>
+    <div class="kpi-card yellow"><div class="kpi-label">On Hold</div><div class="kpi-value">${onHold}</div></div>
+    <div class="kpi-card grey"><div class="kpi-label">Not Started</div><div class="kpi-value">${notStarted}</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Overdue</div><div class="kpi-value">${overdue}</div></div>
+    <div class="kpi-card orange"><div class="kpi-label">Due ≤ 30d</div><div class="kpi-value">${due30}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:17px">${fmtL(totalBilled)}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">RA Paid</div><div class="kpi-value" style="font-size:17px">${fmtL(totalPaid)}</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Pending RA</div><div class="kpi-value">${pendingRA}</div></div>
+    <div class="kpi-card" style="border-left-color:#7c3aed"><div class="kpi-label">Total Withheld</div><div class="kpi-value" style="font-size:17px;color:#7c3aed">${fmtL(totalWithheld)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Avg Physical</div><div class="kpi-value">${avgPhys}%</div></div>
+    <div class="kpi-card"><div class="kpi-label">Avg Financial</div><div class="kpi-value">${avgFin}%</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Open Hindrances</div><div class="kpi-value">${openHind}</div></div>
+  </div>
+  <div class="chart-row">
+    <div class="card"><div class="card-hdr"><span class="card-title">Project Status</span></div><div class="card-body"><div class="donut-wrap">${donut(statusData,total)}<div class="donut-legend">${statusData.map(d=>`<div class="legend-item"><div class="legend-dot" style="background:${d.col}"></div><span>${d.l} — <strong>${d.c}</strong></span></div>`).join('')}</div></div></div></div>
+    <div class="card"><div class="card-hdr"><span class="card-title">Physical Progress by Package</span></div><div class="card-body" style="padding-top:10px">${pkgBars}</div></div>
+  </div>
+  <div class="chart-row">
+    <div class="card"><div class="card-hdr"><span class="card-title">Due Soon (≤45 days)</span></div><div class="card-body">${dueSoon.length===0?'<div class="empty"><div class="empty-icon">✅</div><p>None due in 45 days</p></div>':`<table><thead><tr><th>School</th><th>Package</th><th>Status</th><th>Days Left</th></tr></thead><tbody>${dueSoon.map(p=>`<tr><td>${p.school}</td><td><span class="tag tag-blue">${p.pkg.split('–')[0].trim()}</span></td><td>${badge(p.status)}</td><td>${daysPill(p.dr)}</td></tr>`).join('')}</tbody></table>`}</div></div>
+    <div class="card"><div class="card-hdr"><span class="card-title">Open Hindrances</span></div><div class="card-body">${openH.length===0?'<div class="empty"><div class="empty-icon">✅</div><p>No open hindrances</p></div>':`<table><thead><tr><th>School</th><th>Category</th><th>Delay</th></tr></thead><tbody>${openH.map(h=>`<tr><td>${h.school}</td><td>${h.category}</td><td>${h.delay_days}d</td></tr>`).join('')}</tbody></table>`}</div></div>
+  </div>`;
+}
+
+// ── PROJECTS ──
+function pageProjects(){
+  const rows=DB.projects.map(p=>{const dr=daysRemaining(p);return`<tr data-pkg="${p.pkg}"><td><span class="tag tag-blue">${p.pkg.split('–')[0].trim()}</span><br><span style="font-size:10px;color:var(--muted)">${(p.pkg.split('–')[1]||'').trim()}</span></td><td><strong>${p.school}</strong><br><span style="font-size:11px;color:var(--muted)">${p.village}, ${p.taluka}</span></td><td style="font-size:12px">${p.engineer}</td><td style="font-size:12px">${p.contractor}</td><td>₹${fmt(p.tender_amt)}</td><td>₹${fmt(p.amount)}</td><td>${tDiff(p.tender_amt,p.amount)}</td><td>${fmtDate(p.start)}</td><td>${daysPill(dr)}</td><td>${badge(p.status)}</td><td>${progHtml(p.phys)}</td><td>${progHtml(p.fin)}</td><td style="white-space:nowrap"><button class="btn-sm btn-edit" onclick="editProject(${p.id})">Edit</button> <button class="btn-sm btn-del-sm" onclick="delProject(${p.id})">Del</button></td></tr>`}).join('');
+  return`<div class="page-title">Master Project Register</div><div class="page-sub">All school projects – Tender vs Agreement analysis</div>
+  <div class="toolbar"><button class="btn-primary" onclick="editProject(null)">+ Add Project</button><div class="search-box"><input type="text" placeholder="Search..." oninput="fSearch(this,'ptbl')"></div>${pkgFilter('ptbl')}<select class="filter" onchange="fCol('ptbl',9,this.value)"><option value="">All Statuses</option>${LISTS.statuses.map(s=>`<option>${s}</option>`).join('')}</select></div>
+  <div class="card"><div class="card-body" style="padding:0"><div class="tbl-wrap"><table id="ptbl"><thead><tr><th>Package</th><th>School/Village</th><th>Engineer</th><th>Contractor</th><th>Tender Amt</th><th>Agreement Amt</th><th>Above/Below</th><th>Start</th><th>Days Left</th><th>Status</th><th>Physical%</th><th>Financial%</th><th>Actions</th></tr></thead><tbody>${rows||'<tr><td colspan="13" style="text-align:center;padding:28px;color:var(--muted)">No projects. Click + Add.</td></tr>'}</tbody></table></div></div></div>`;
+}
+function delProject(id){if(!confirm('Delete?'))return;DB.projects=DB.projects.filter(x=>x.id!==id);save('projects');render('projects');toast('Deleted')}
+function editProject(id){
+  const p=id?DB.projects.find(x=>x.id===id):null;
+  const d=document.createElement('div');d.className='overlay';d.id='pm';
+  d.innerHTML=`<div class="modal"><div class="modal-hdr"><span class="modal-title">${p?'Edit':'Add'} Project</span><button class="close-btn" onclick="closeModal('pm')">×</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div class="form-group full"><label class="fl">Package</label>${pkgSel(p?.pkg||LISTS.packages[0],'pkg')}</div>
+    <div class="form-group full"><label class="fl">School Name</label><input name="school" value="${p?.school||''}"></div>
+    <div class="form-group"><label class="fl">Village</label><input name="village" value="${p?.village||''}"></div>
+    <div class="form-group"><label class="fl">Taluka</label>${sel(LISTS.talukas,p?.taluka||LISTS.talukas[0],'taluka')}</div>
+    <div class="form-group"><label class="fl">District</label>${sel(LISTS.districts,p?.district||LISTS.districts[0],'district')}</div>
+    <div class="form-group"><label class="fl">Work Order No</label><input name="wo_no" value="${p?.wo_no||''}"></div>
+    <div class="form-group"><label class="fl">Work Order Date</label><input type="date" name="wo_date" value="${p?.wo_date||''}"></div>
+    <div class="form-group"><label class="fl">Tender Amount (₹)</label><input type="number" name="tender_amt" value="${p?.tender_amt||''}"></div>
+    <div class="form-group"><label class="fl">Agreement Amount (₹)</label><input type="number" name="amount" value="${p?.amount||''}"></div>
+    <div class="form-group"><label class="fl">Security Deposit (₹)</label><input type="number" name="sd" value="${p?.sd||''}"></div>
+    <div class="form-group"><label class="fl">Retention Money (₹)</label><input type="number" name="rm" value="${p?.rm||''}"></div>
+    <div class="form-group"><label class="fl">Contractor</label>${sel(LISTS.contractors,p?.contractor||LISTS.contractors[0],'contractor')}</div>
+    <div class="form-group"><label class="fl">Site Engineer</label>${sel(LISTS.engineers,p?.engineer||LISTS.engineers[0],'engineer')}</div>
+    <div class="form-group"><label class="fl">Start Date</label><input type="date" name="start" value="${p?.start||''}"></div>
+    <div class="form-group"><label class="fl">Duration (Days)</label><input type="number" name="duration" value="${p?.duration||365}"></div>
+    <div class="form-group"><label class="fl">Extension Granted</label>${yn(p?.ext||'No','ext')}</div>
+    <div class="form-group"><label class="fl">Revised Completion Date</label><input type="date" name="revised_date" value="${p?.revised_date||''}"></div>
+    <div class="form-group"><label class="fl">Status</label>${sel(LISTS.statuses,p?.status||'Running','status')}</div>
+    <div class="form-group"><label class="fl">Physical Progress %</label><input type="number" min="0" max="100" name="phys" value="${p?.phys||0}"></div>
+    <div class="form-group"><label class="fl">Financial Progress %</label><input type="number" min="0" max="100" name="fin" value="${p?.fin||0}"></div>
+    <div class="form-group"><label class="fl">No. of RA Bills</label><input type="number" name="ra_count" value="${p?.ra_count||0}"></div>
+    <div class="form-group"><label class="fl">Final Bill</label>${yn(p?.final_bill||'No','final_bill')}</div>
+    <div class="form-group"><label class="fl">Completion Cert</label>${yn(p?.cc||'No','cc')}</div>
+    <div class="form-group"><label class="fl">Handover Completed</label>${yn(p?.handover||'No','handover')}</div>
+    <div class="form-group full"><label class="fl">Remarks</label><textarea name="remarks">${p?.remarks||''}</textarea></div>
+  </div></div>
+  <div class="modal-ftr">${p?`<button class="btn-del-modal" onclick="delProject(${p.id});closeModal('pm')">Delete</button>`:''}
+  <button class="btn-cancel" onclick="closeModal('pm')">Cancel</button><button class="btn-save" onclick="saveProject(${p?p.id:'null'})">Save</button></div></div>`;
+  document.body.appendChild(d);
+}
+function saveProject(id){
+  const m=document.getElementById('pm');const g=n=>m.querySelector(`[name="${n}"]`)?.value||'';
+  const o={id:id||nextId(DB.projects),pkg:g('pkg'),school:g('school'),village:g('village'),taluka:g('taluka'),district:g('district'),wo_no:g('wo_no'),wo_date:g('wo_date'),tender_amt:+g('tender_amt'),amount:+g('amount'),sd:+g('sd'),rm:+g('rm'),contractor:g('contractor'),engineer:g('engineer'),start:g('start'),duration:+g('duration'),ext:g('ext'),revised_date:g('revised_date'),status:g('status'),phys:+g('phys'),fin:+g('fin'),ra_count:+g('ra_count'),final_bill:g('final_bill'),cc:g('cc'),handover:g('handover'),remarks:g('remarks')};
+  if(id)DB.projects=DB.projects.map(x=>x.id===id?o:x);else DB.projects.push(o);
+  save('projects');closeModal('pm');render('projects');toast(id?'Updated ✓':'Added ✓');
+}
+
+// ── RA BILLS ──
+function pageRA(){
+  const tb=DB.ra.reduce((s,r)=>s+r.amount,0),tp=DB.ra.filter(r=>r.pay_date).reduce((s,r)=>s+r.amount,0),tw=DB.ra.reduce((s,r)=>s+(r.withheld||0),0),pend=DB.ra.filter(r=>!r.passed_date).length;
+  const rows=DB.ra.map(r=>{const st=raStatus(r),net=r.amount+r.gst-(r.withheld||0);return`<tr data-pkg="${r.pkg}"><td><span class="tag tag-blue">${r.pkg.split('–')[0].trim()}</span></td><td>${r.school}</td><td><strong>${r.bill_no}</strong></td><td>${fmtDate(r.sub_date)}</td><td>₹${fmt(r.amount)}</td><td>${fmtDate(r.passed_date)}</td><td>${fmtDate(r.pay_date)}</td><td>₹${fmt(r.gst)}</td><td class="withheld-col">₹${fmt(r.withheld||0)}</td><td><strong>₹${fmt(net)}</strong></td><td>${badge(st)}</td><td>${r.remarks}</td><td style="white-space:nowrap"><button class="btn-sm btn-edit" onclick="editRA(${r.id})">Edit</button> <button class="btn-sm btn-del-sm" onclick="delRA(${r.id})">Del</button></td></tr>`}).join('');
+  return`<div class="page-title">RA Bill Tracker</div><div class="page-sub">Running Account Bills – withheld amount tracking included</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi-card"><div class="kpi-label">Total Bills</div><div class="kpi-value">${DB.ra.length}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:17px">${fmtL(tb)}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Paid</div><div class="kpi-value" style="font-size:17px">${fmtL(tp)}</div></div>
+    <div class="kpi-card" style="border-left-color:#7c3aed"><div class="kpi-label">Total Withheld</div><div class="kpi-value" style="font-size:17px;color:#7c3aed">${fmtL(tw)}</div></div>
+  </div>
+  <div class="toolbar"><button class="btn-primary" onclick="editRA(null)">+ Add RA Bill</button><div class="search-box"><input type="text" placeholder="Search..." oninput="fSearch(this,'ratbl')"></div>${pkgFilter('ratbl')}<select class="filter" onchange="fCol('ratbl',10,this.value)"><option value="">All Status</option><option>Paid</option><option>Pending Approval</option><option>Passed - Awaiting Payment</option></select></div>
+  <div class="card"><div class="card-body" style="padding:0"><div class="tbl-wrap"><table id="ratbl"><thead><tr><th>Pkg</th><th>School</th><th>Bill No</th><th>Submitted</th><th>Amount</th><th>Passed</th><th>Paid</th><th>GST</th><th style="color:#c4b5fd">Withheld</th><th>Net Amount</th><th>Status</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+}
+function delRA(id){if(!confirm('Delete?'))return;DB.ra=DB.ra.filter(x=>x.id!==id);save('ra');render('ra');toast('Deleted')}
+function editRA(id){
+  const r=id?DB.ra.find(x=>x.id===id):null;const d=document.createElement('div');d.className='overlay';d.id='ram';
+  d.innerHTML=`<div class="modal modal-sm"><div class="modal-hdr"><span class="modal-title">${r?'Edit':'Add'} RA Bill</span><button class="close-btn" onclick="closeModal('ram')">×</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div class="form-group"><label class="fl">Package</label>${pkgSel(r?.pkg||LISTS.packages[0],'pkg')}</div>
+    <div class="form-group"><label class="fl">School</label><input name="school" value="${r?.school||''}"></div>
+    <div class="form-group"><label class="fl">RA Bill No</label><input name="bill_no" value="${r?.bill_no||''}"></div>
+    <div class="form-group"><label class="fl">Submission Date</label><input type="date" name="sub_date" value="${r?.sub_date||''}"></div>
+    <div class="form-group"><label class="fl">Bill Amount (₹)</label><input type="number" name="amount" value="${r?.amount||''}"></div>
+    <div class="form-group"><label class="fl">GST (₹)</label><input type="number" name="gst" value="${r?.gst||''}"></div>
+    <div class="form-group"><label class="fl">Withheld Amount (₹)</label><input type="number" name="withheld" value="${r?.withheld||0}" style="border-color:#7c3aed"></div>
+    <div class="form-group"><label class="fl">Passed Date</label><input type="date" name="passed_date" value="${r?.passed_date||''}"></div>
+    <div class="form-group full"><label class="fl">Payment Date</label><input type="date" name="pay_date" value="${r?.pay_date||''}"></div>
+    <div class="form-group full"><label class="fl">Remarks</label><textarea name="remarks">${r?.remarks||''}</textarea></div>
+  </div></div>
+  <div class="modal-ftr">${r?`<button class="btn-del-modal" onclick="delRA(${r.id});closeModal('ram')">Delete</button>`:''}
+  <button class="btn-cancel" onclick="closeModal('ram')">Cancel</button><button class="btn-save" onclick="saveRA(${r?r.id:'null'})">Save</button></div></div>`;
+  document.body.appendChild(d);
+}
+function saveRA(id){
+  const m=document.getElementById('ram');const g=n=>m.querySelector(`[name="${n}"]`)?.value||'';
+  const o={id:id||nextId(DB.ra),pkg:g('pkg'),school:g('school'),bill_no:g('bill_no'),sub_date:g('sub_date'),amount:+g('amount'),gst:+g('gst'),withheld:+g('withheld'),passed_date:g('passed_date'),pay_date:g('pay_date'),remarks:g('remarks')};
+  if(id)DB.ra=DB.ra.map(x=>x.id===id?o:x);else DB.ra.push(o);
+  save('ra');closeModal('ram');render('ra');toast(id?'Updated ✓':'Added ✓');
+}
+
+// ── APPROVALS ──
+const AF=[['ts','Technical Sanction'],['aa','Admin Approval'],['da','Drawing Approval'],['er','Estimate Revision'],['eia','Extra Item Approval'],['ra_appr','Rate Approval'],['tea','Time Extension'],['ca','Completion Approval'],['mb','MB Completed'],['ccc','Completion Cert']];
+function pageApprovals(){
+  const tp=DB.approvals.reduce((s,a)=>s+AF.filter(([f])=>a[f]==='No').length,0);
+  const rows=DB.approvals.map(a=>{const pend=AF.filter(([f])=>a[f]==='No').length;return`<tr data-pkg="${a.pkg}"><td><span class="tag tag-blue">${a.pkg.split('–')[0].trim()}</span></td><td>${a.school}</td><td style="font-size:12px">${fmtDate(a.date)}</td>${AF.map(([f])=>`<td style="text-align:center">${badge(a[f])}</td>`).join('')}<td style="text-align:center"><strong style="color:${pend>0?'var(--red)':'var(--green)'}">${pend}</strong></td><td style="font-size:12px">${a.remarks}</td><td style="white-space:nowrap"><button class="btn-sm btn-edit" onclick="editApproval(${a.id})">Edit</button> <button class="btn-sm btn-del-sm" onclick="delApproval(${a.id})">Del</button></td></tr>`}).join('');
+  return`<div class="page-title">Approval (Manjuri) Tracker</div><div class="page-sub">All statutory approvals per school</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi-card"><div class="kpi-label">Schools Tracked</div><div class="kpi-value">${DB.approvals.length}</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Total Pending</div><div class="kpi-value">${tp}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Fully Approved</div><div class="kpi-value">${DB.approvals.filter(a=>AF.every(([f])=>a[f]==='Yes')).length}</div></div>
+  </div>
+  <div class="toolbar"><button class="btn-primary" onclick="editApproval(null)">+ Add School</button><div class="search-box"><input type="text" placeholder="Search..." oninput="fSearch(this,'aptbl')"></div>${pkgFilter('aptbl')}</div>
+  <div class="card"><div class="card-body" style="padding:0"><div class="tbl-wrap"><table id="aptbl"><thead><tr><th>Pkg</th><th>School</th><th>Date</th>${AF.map(([,l])=>`<th style="font-size:10px;max-width:60px">${l}</th>`).join('')}<th>Pending</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${rows||'<tr><td colspan="15" style="text-align:center;padding:28px;color:var(--muted)">No records</td></tr>'}</tbody></table></div></div></div>`;
+}
+function delApproval(id){if(!confirm('Delete?'))return;DB.approvals=DB.approvals.filter(x=>x.id!==id);save('approvals');render('approvals');toast('Deleted')}
+function editApproval(id){
+  const a=id?DB.approvals.find(x=>x.id===id):null;const d=document.createElement('div');d.className='overlay';d.id='apm';
+  d.innerHTML=`<div class="modal"><div class="modal-hdr"><span class="modal-title">${a?'Edit':'Add'} Approval Record</span><button class="close-btn" onclick="closeModal('apm')">×</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div class="form-group"><label class="fl">Package</label>${pkgSel(a?.pkg||LISTS.packages[0],'pkg')}</div>
+    <div class="form-group"><label class="fl">School Name</label><input name="school" value="${a?.school||''}"></div>
+    <div class="form-group"><label class="fl">Date</label><input type="date" name="date" value="${a?.date||''}"></div>
+    <div class="form-group"></div>
+    ${AF.map(([f,l])=>`<div class="form-group"><label class="fl">${l}</label>${yn(a?.[f]||'No',f)}</div>`).join('')}
+    <div class="form-group full"><label class="fl">Remarks</label><textarea name="remarks">${a?.remarks||''}</textarea></div>
+  </div></div>
+  <div class="modal-ftr">${a?`<button class="btn-del-modal" onclick="delApproval(${a.id});closeModal('apm')">Delete</button>`:''}
+  <button class="btn-cancel" onclick="closeModal('apm')">Cancel</button><button class="btn-save" onclick="saveApproval(${a?a.id:'null'})">Save</button></div></div>`;
+  document.body.appendChild(d);
+}
+function saveApproval(id){
+  const m=document.getElementById('apm');const g=n=>m.querySelector(`[name="${n}"]`)?.value||'';
+  const o={id:id||nextId(DB.approvals),pkg:g('pkg'),school:g('school'),date:g('date'),remarks:g('remarks')};
+  AF.forEach(([f])=>o[f]=g(f)||'No');
+  if(id)DB.approvals=DB.approvals.map(x=>x.id===id?o:x);else DB.approvals.push(o);
+  save('approvals');closeModal('apm');render('approvals');toast('Saved ✓');
+}
+
+// ── EOT ──
+function pageEOT(){
+  const rows=DB.eot.map(e=>{const rev=e.orig_date&&e.app_days?addDays(e.orig_date,e.app_days).toISOString().split('T')[0]:'';return`<tr data-pkg="${e.pkg}"><td><span class="tag tag-blue">${e.pkg.split('–')[0].trim()}</span></td><td>${e.school}</td><td>${fmtDate(e.orig_date)}</td><td style="text-align:center">${e.req_days}d</td><td style="text-align:center">${e.app_days}d</td><td>${fmtDate(rev)}</td><td style="font-size:12px">${e.reason}</td><td style="font-size:12px">${e.letter_no}</td><td>${fmtDate(e.app_date)}</td><td>${e.remarks}</td><td style="white-space:nowrap"><button class="btn-sm btn-edit" onclick="editEOT(${e.id})">Edit</button> <button class="btn-sm btn-del-sm" onclick="delEOT(${e.id})">Del</button></td></tr>`}).join('');
+  return`<div class="page-title">Extension of Time (EOT)</div><div class="page-sub">Time extensions granted to contractors</div>
+  <div class="toolbar"><button class="btn-primary" onclick="editEOT(null)">+ Add EOT</button><div class="search-box"><input type="text" placeholder="Search..." oninput="fSearch(this,'eottbl')"></div>${pkgFilter('eottbl')}</div>
+  <div class="card"><div class="card-body" style="padding:0"><div class="tbl-wrap"><table id="eottbl"><thead><tr><th>Pkg</th><th>School</th><th>Original Due</th><th>Requested</th><th>Approved</th><th>Revised Due</th><th>Reason</th><th>Letter No</th><th>Approval Date</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${rows||'<tr><td colspan="11" style="text-align:center;padding:28px;color:var(--muted)">No EOT records</td></tr>'}</tbody></table></div></div></div>`;
+}
+function delEOT(id){if(!confirm('Delete?'))return;DB.eot=DB.eot.filter(x=>x.id!==id);save('eot');render('eot');toast('Deleted')}
+function editEOT(id){
+  const e=id?DB.eot.find(x=>x.id===id):null;const d=document.createElement('div');d.className='overlay';d.id='eotm';
+  d.innerHTML=`<div class="modal modal-sm"><div class="modal-hdr"><span class="modal-title">${e?'Edit':'Add'} EOT</span><button class="close-btn" onclick="closeModal('eotm')">×</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div class="form-group"><label class="fl">Package</label>${pkgSel(e?.pkg||LISTS.packages[0],'pkg')}</div>
+    <div class="form-group"><label class="fl">School</label><input name="school" value="${e?.school||''}"></div>
+    <div class="form-group"><label class="fl">Original Due Date</label><input type="date" name="orig_date" value="${e?.orig_date||''}"></div>
+    <div class="form-group"><label class="fl">Requested (Days)</label><input type="number" name="req_days" value="${e?.req_days||''}"></div>
+    <div class="form-group"><label class="fl">Approved (Days)</label><input type="number" name="app_days" value="${e?.app_days||''}"></div>
+    <div class="form-group"><label class="fl">Letter No</label><input name="letter_no" value="${e?.letter_no||''}"></div>
+    <div class="form-group"><label class="fl">Approval Date</label><input type="date" name="app_date" value="${e?.app_date||''}"></div>
+    <div class="form-group full"><label class="fl">Reason</label><textarea name="reason">${e?.reason||''}</textarea></div>
+    <div class="form-group full"><label class="fl">Remarks</label><textarea name="remarks">${e?.remarks||''}</textarea></div>
+  </div></div>
+  <div class="modal-ftr">${e?`<button class="btn-del-modal" onclick="delEOT(${e.id});closeModal('eotm')">Delete</button>`:''}
+  <button class="btn-cancel" onclick="closeModal('eotm')">Cancel</button><button class="btn-save" onclick="saveEOT(${e?e.id:'null'})">Save</button></div></div>`;
+  document.body.appendChild(d);
+}
+function saveEOT(id){
+  const m=document.getElementById('eotm');const g=n=>m.querySelector(`[name="${n}"]`)?.value||'';
+  const o={id:id||nextId(DB.eot),pkg:g('pkg'),school:g('school'),orig_date:g('orig_date'),req_days:+g('req_days'),app_days:+g('app_days'),reason:g('reason'),letter_no:g('letter_no'),app_date:g('app_date'),remarks:g('remarks')};
+  if(id)DB.eot=DB.eot.map(x=>x.id===id?o:x);else DB.eot.push(o);
+  save('eot');closeModal('eotm');render('eot');toast('Saved ✓');
+}
+
+// ── SITE VISITS ──
+function pageVisits(){
+  const rows=DB.visits.map(v=>`<tr data-pkg="${v.pkg}"><td>${fmtDate(v.date)}</td><td><span class="tag tag-blue">${v.pkg.split('–')[0].trim()}</span></td><td>${v.school}</td><td style="font-size:12px">${v.engineer}</td><td style="text-align:center">${badge(v.contractor_present)}</td><td>${progHtml(v.progress)}</td><td><span class="badge badge-${v.quality==='Good'?'completed':v.quality==='Poor'?'delayed':'passed'}">${v.quality}</span></td><td><span class="badge badge-${v.safety==='Satisfactory'?'completed':v.safety==='Unsafe'?'delayed':'passed'}">${v.safety}</span></td><td style="font-size:12px;max-width:140px">${v.issues}</td><td>${fmtDate(v.next_date)}</td><td style="white-space:nowrap"><button class="btn-sm btn-edit" onclick="editVisit(${v.id})">Edit</button> <button class="btn-sm btn-del-sm" onclick="delVisit(${v.id})">Del</button></td></tr>`).join('');
+  return`<div class="page-title">Site Visit Register</div><div class="page-sub">Log and track all field visits</div>
+  <div class="toolbar"><button class="btn-primary" onclick="editVisit(null)">+ Log Visit</button><div class="search-box"><input type="text" placeholder="Search..." oninput="fSearch(this,'svtbl')"></div>${pkgFilter('svtbl')}</div>
+  <div class="card"><div class="card-body" style="padding:0"><div class="tbl-wrap"><table id="svtbl"><thead><tr><th>Date</th><th>Pkg</th><th>School</th><th>Engineer</th><th>Contractor</th><th>Progress</th><th>Quality</th><th>Safety</th><th>Issues</th><th>Next Visit</th><th>Actions</th></tr></thead><tbody>${rows||'<tr><td colspan="11" style="text-align:center;padding:28px;color:var(--muted)">No visits logged</td></tr>'}</tbody></table></div></div></div>`;
+}
+function delVisit(id){if(!confirm('Delete?'))return;DB.visits=DB.visits.filter(x=>x.id!==id);save('visits');render('visits');toast('Deleted')}
+function editVisit(id){
+  const v=id?DB.visits.find(x=>x.id===id):null;const d=document.createElement('div');d.className='overlay';d.id='svm';
+  d.innerHTML=`<div class="modal"><div class="modal-hdr"><span class="modal-title">${v?'Edit':'Log'} Site Visit</span><button class="close-btn" onclick="closeModal('svm')">×</button></div>
+  <div class="modal-body"><div class="form-grid cols3">
+    <div class="form-group"><label class="fl">Visit Date</label><input type="date" name="date" value="${v?.date||''}"></div>
+    <div class="form-group"><label class="fl">Package</label>${pkgSel(v?.pkg||LISTS.packages[0],'pkg')}</div>
+    <div class="form-group"><label class="fl">School</label><input name="school" value="${v?.school||''}"></div>
+    <div class="form-group"><label class="fl">Engineer</label>${sel(LISTS.engineers,v?.engineer||LISTS.engineers[0],'engineer')}</div>
+    <div class="form-group"><label class="fl">Contractor Present</label>${yn(v?.contractor_present||'Yes','contractor_present')}</div>
+    <div class="form-group"><label class="fl">Progress %</label><input type="number" min="0" max="100" name="progress" value="${v?.progress||0}"></div>
+    <div class="form-group"><label class="fl">Quality</label>${sel(LISTS.quality,v?.quality||'Good','quality')}</div>
+    <div class="form-group"><label class="fl">Safety</label>${sel(LISTS.safety,v?.safety||'Satisfactory','safety')}</div>
+    <div class="form-group"><label class="fl">Next Visit Date</label><input type="date" name="next_date" value="${v?.next_date||''}"></div>
+    <div class="form-group"><label class="fl">Photo Reference</label><input name="photo_ref" value="${v?.photo_ref||''}"></div>
+    <div class="form-group full"><label class="fl">Issues Found</label><textarea name="issues">${v?.issues||''}</textarea></div>
+    <div class="form-group full"><label class="fl">Action Required</label><textarea name="action">${v?.action||''}</textarea></div>
+    <div class="form-group full"><label class="fl">Remarks</label><textarea name="remarks">${v?.remarks||''}</textarea></div>
+  </div></div>
+  <div class="modal-ftr">${v?`<button class="btn-del-modal" onclick="delVisit(${v.id});closeModal('svm')">Delete</button>`:''}
+  <button class="btn-cancel" onclick="closeModal('svm')">Cancel</button><button class="btn-save" onclick="saveVisit(${v?v.id:'null'})">Save</button></div></div>`;
+  document.body.appendChild(d);
+}
+function saveVisit(id){
+  const m=document.getElementById('svm');const g=n=>m.querySelector(`[name="${n}"]`)?.value||'';
+  const o={id:id||nextId(DB.visits),date:g('date'),pkg:g('pkg'),school:g('school'),engineer:g('engineer'),contractor_present:g('contractor_present'),progress:+g('progress'),quality:g('quality'),safety:g('safety'),issues:g('issues'),action:g('action'),next_date:g('next_date'),photo_ref:g('photo_ref'),remarks:g('remarks')};
+  if(id)DB.visits=DB.visits.map(x=>x.id===id?o:x);else DB.visits.push(o);
+  save('visits');closeModal('svm');render('visits');toast('Saved ✓');
+}
+
+// ── HINDRANCE ──
+function pageHindrance(){
+  const rows=DB.hindrance.map(h=>`<tr data-pkg="${h.pkg}"><td>${fmtDate(h.date)}</td><td><span class="tag tag-blue">${h.pkg.split('–')[0].trim()}</span></td><td>${h.school}</td><td style="font-size:12px;max-width:150px">${h.issue}</td><td>${h.category}</td><td>${h.responsible}</td><td style="text-align:center">${h.delay_days}d</td><td style="text-align:center">${badge(h.resolved)}</td><td>${fmtDate(h.resolution_date)}</td><td style="white-space:nowrap"><button class="btn-sm btn-edit" onclick="editHindrance(${h.id})">Edit</button> <button class="btn-sm btn-del-sm" onclick="delHindrance(${h.id})">Del</button></td></tr>`).join('');
+  return`<div class="page-title">Hindrance Register</div><div class="page-sub">Log and track delays at site</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi-card"><div class="kpi-label">Total</div><div class="kpi-value">${DB.hindrance.length}</div></div>
+    <div class="kpi-card red"><div class="kpi-label">Open</div><div class="kpi-value">${DB.hindrance.filter(h=>h.resolved==='No').length}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Resolved</div><div class="kpi-value">${DB.hindrance.filter(h=>h.resolved==='Yes').length}</div></div>
+  </div>
+  <div class="toolbar"><button class="btn-primary" onclick="editHindrance(null)">+ Add</button><div class="search-box"><input type="text" placeholder="Search..." oninput="fSearch(this,'htbl')"></div>${pkgFilter('htbl')}<select class="filter" onchange="fCol('htbl',4,this.value)"><option value="">All Categories</option>${LISTS.hindrance_cats.map(c=>`<option>${c}</option>`).join('')}</select><select class="filter" onchange="fCol('htbl',7,this.value)"><option value="">All</option><option>Yes</option><option>No</option></select></div>
+  <div class="card"><div class="card-body" style="padding:0"><div class="tbl-wrap"><table id="htbl"><thead><tr><th>Date</th><th>Pkg</th><th>School</th><th>Issue</th><th>Category</th><th>Responsible</th><th>Delay</th><th>Resolved</th><th>Resolution Date</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+}
+function delHindrance(id){if(!confirm('Delete?'))return;DB.hindrance=DB.hindrance.filter(x=>x.id!==id);save('hindrance');render('hindrance');toast('Deleted')}
+function editHindrance(id){
+  const h=id?DB.hindrance.find(x=>x.id===id):null;const d=document.createElement('div');d.className='overlay';d.id='hm';
+  d.innerHTML=`<div class="modal modal-sm"><div class="modal-hdr"><span class="modal-title">${h?'Edit':'Add'} Hindrance</span><button class="close-btn" onclick="closeModal('hm')">×</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div class="form-group"><label class="fl">Date</label><input type="date" name="date" value="${h?.date||''}"></div>
+    <div class="form-group"><label class="fl">Package</label>${pkgSel(h?.pkg||LISTS.packages[0],'pkg')}</div>
+    <div class="form-group"><label class="fl">School</label><input name="school" value="${h?.school||''}"></div>
+    <div class="form-group"><label class="fl">Category</label>${sel(LISTS.hindrance_cats,h?.category||LISTS.hindrance_cats[0],'category')}</div>
+    <div class="form-group"><label class="fl">Responsible</label>${sel(['Contractor','Department','Engineer','Third Party'],h?.responsible||'Contractor','responsible')}</div>
+    <div class="form-group"><label class="fl">Delay Days</label><input type="number" name="delay_days" value="${h?.delay_days||0}"></div>
+    <div class="form-group"><label class="fl">Resolved</label>${yn(h?.resolved||'No','resolved')}</div>
+    <div class="form-group"><label class="fl">Resolution Date</label><input type="date" name="resolution_date" value="${h?.resolution_date||''}"></div>
+    <div class="form-group full"><label class="fl">Issue Description</label><textarea name="issue">${h?.issue||''}</textarea></div>
+    <div class="form-group full"><label class="fl">Remarks</label><textarea name="remarks">${h?.remarks||''}</textarea></div>
+  </div></div>
+  <div class="modal-ftr">${h?`<button class="btn-del-modal" onclick="delHindrance(${h.id});closeModal('hm')">Delete</button>`:''}
+  <button class="btn-cancel" onclick="closeModal('hm')">Cancel</button><button class="btn-save" onclick="saveHindrance(${h?h.id:'null'})">Save</button></div></div>`;
+  document.body.appendChild(d);
+}
+function saveHindrance(id){
+  const m=document.getElementById('hm');const g=n=>m.querySelector(`[name="${n}"]`)?.value||'';
+  const o={id:id||nextId(DB.hindrance),date:g('date'),pkg:g('pkg'),school:g('school'),issue:g('issue'),category:g('category'),responsible:g('responsible'),delay_days:+g('delay_days'),resolved:g('resolved'),resolution_date:g('resolution_date'),remarks:g('remarks')};
+  if(id)DB.hindrance=DB.hindrance.map(x=>x.id===id?o:x);else DB.hindrance.push(o);
+  save('hindrance');closeModal('hm');render('hindrance');toast('Saved ✓');
+}
+
+// ── MATERIALS ──
+function pageMaterials(){
+  const rows=DB.materials.map(m=>`<tr data-pkg="${m.pkg}"><td><span class="tag tag-blue">${m.pkg.split('–')[0].trim()}</span></td><td>${m.school}</td><td><strong>${m.material}</strong></td><td style="text-align:center">${badge(m.approved)}</td><td style="text-align:center">${badge(m.received)}</td><td style="text-align:center">${badge(m.test_report)}</td><td>${fmtDate(m.inspection_date)}</td><td><span class="badge badge-${m.status==='Approved'?'completed':m.status==='Rejected'?'delayed':m.status==='Pending'?'pending':'passed'}">${m.status}</span></td><td style="font-size:12px">${m.remarks}</td><td style="white-space:nowrap"><button class="btn-sm btn-edit" onclick="editMat(${m.id})">Edit</button> <button class="btn-sm btn-del-sm" onclick="delMat(${m.id})">Del</button></td></tr>`).join('');
+  return`<div class="page-title">Material & Quality Register</div><div class="page-sub">Material approvals, receipts, test reports</div>
+  <div class="toolbar"><button class="btn-primary" onclick="editMat(null)">+ Add Entry</button><div class="search-box"><input type="text" placeholder="Search..." oninput="fSearch(this,'mattbl')"></div>${pkgFilter('mattbl')}<select class="filter" onchange="fCol('mattbl',7,this.value)"><option value="">All Status</option>${LISTS.mat_statuses.map(s=>`<option>${s}</option>`).join('')}</select></div>
+  <div class="card"><div class="card-body" style="padding:0"><div class="tbl-wrap"><table id="mattbl"><thead><tr><th>Pkg</th><th>School</th><th>Material</th><th>Approved</th><th>Received</th><th>Test Report</th><th>Inspection Date</th><th>Status</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+}
+function delMat(id){if(!confirm('Delete?'))return;DB.materials=DB.materials.filter(x=>x.id!==id);save('materials');render('materials');toast('Deleted')}
+function editMat(id){
+  const m=id?DB.materials.find(x=>x.id===id):null;const d=document.createElement('div');d.className='overlay';d.id='matm';
+  d.innerHTML=`<div class="modal modal-sm"><div class="modal-hdr"><span class="modal-title">${m?'Edit':'Add'} Material</span><button class="close-btn" onclick="closeModal('matm')">×</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div class="form-group"><label class="fl">Package</label>${pkgSel(m?.pkg||LISTS.packages[0],'pkg')}</div>
+    <div class="form-group"><label class="fl">School</label><input name="school" value="${m?.school||''}"></div>
+    <div class="form-group"><label class="fl">Material</label>${sel(LISTS.materials,m?.material||LISTS.materials[0],'material')}</div>
+    <div class="form-group"><label class="fl">Status</label>${sel(LISTS.mat_statuses,m?.status||'Pending','status')}</div>
+    <div class="form-group"><label class="fl">Approved</label>${yn(m?.approved||'No','approved')}</div>
+    <div class="form-group"><label class="fl">Received</label>${yn(m?.received||'No','received')}</div>
+    <div class="form-group"><label class="fl">Test Report</label>${yn(m?.test_report||'No','test_report')}</div>
+    <div class="form-group"><label class="fl">Inspection Date</label><input type="date" name="inspection_date" value="${m?.inspection_date||''}"></div>
+    <div class="form-group full"><label class="fl">Remarks</label><textarea name="remarks">${m?.remarks||''}</textarea></div>
+  </div></div>
+  <div class="modal-ftr">${m?`<button class="btn-del-modal" onclick="delMat(${m.id});closeModal('matm')">Delete</button>`:''}
+  <button class="btn-cancel" onclick="closeModal('matm')">Cancel</button><button class="btn-save" onclick="saveMat(${m?m.id:'null'})">Save</button></div></div>`;
+  document.body.appendChild(d);
+}
+function saveMat(id){
+  const mo=document.getElementById('matm');const g=n=>mo.querySelector(`[name="${n}"]`)?.value||'';
+  const o={id:id||nextId(DB.materials),pkg:g('pkg'),school:g('school'),material:g('material'),approved:g('approved'),received:g('received'),test_report:g('test_report'),inspection_date:g('inspection_date'),status:g('status'),remarks:g('remarks')};
+  if(id)DB.materials=DB.materials.map(x=>x.id===id?o:x);else DB.materials.push(o);
+  save('materials');closeModal('matm');render('materials');toast('Saved ✓');
+}
+
+// ── PAYMENTS ──
+function pagePayments(){
+  const ta=DB.payments.reduce((s,p)=>s+p.amount+p.extra,0),tp=DB.payments.reduce((s,p)=>s+p.ra_paid,0),tb=ta-tp;
+  const rows=DB.payments.map(p=>{const tot=p.amount+p.extra,bal=tot-p.ra_paid,net=p.ra_paid+p.gst-p.tds-p.sd;return`<tr data-pkg="${p.pkg}"><td><span class="tag tag-blue">${p.pkg.split('–')[0].trim()}</span></td><td>${p.school}</td><td>₹${fmt(p.amount)}</td><td>₹${fmt(p.extra)}</td><td><strong>₹${fmt(tot)}</strong></td><td>₹${fmt(p.ra_paid)}</td><td style="color:${bal>0?'var(--orange)':'var(--green)'}"><strong>₹${fmt(bal)}</strong></td><td>₹${fmt(p.gst)}</td><td>₹${fmt(p.tds)}</td><td>₹${fmt(p.sd)}</td><td><strong>₹${fmt(net)}</strong></td><td style="white-space:nowrap"><button class="btn-sm btn-edit" onclick="editPay(${p.id})">Edit</button> <button class="btn-sm btn-del-sm" onclick="delPay(${p.id})">Del</button></td></tr>`}).join('');
+  return`<div class="page-title">Payment Register</div><div class="page-sub">Contract-wise financial summary</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi-card"><div class="kpi-label">Total Work Value</div><div class="kpi-value" style="font-size:17px">${fmtCr(ta)}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">RA Paid</div><div class="kpi-value" style="font-size:17px">${fmtCr(tp)}</div></div>
+    <div class="kpi-card orange"><div class="kpi-label">Balance</div><div class="kpi-value" style="font-size:17px">${fmtCr(tb)}</div></div>
+  </div>
+  <div class="toolbar"><button class="btn-primary" onclick="editPay(null)">+ Add Record</button><div class="search-box"><input type="text" placeholder="Search..." oninput="fSearch(this,'paytbl')"></div>${pkgFilter('paytbl')}</div>
+  <div class="card"><div class="card-body" style="padding:0"><div class="tbl-wrap"><table id="paytbl"><thead><tr><th>Pkg</th><th>School</th><th>Agreement Amt</th><th>Extra Items</th><th>Total Value</th><th>RA Paid</th><th>Balance</th><th>GST</th><th>TDS</th><th>SD</th><th>Net Paid</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
+}
+function delPay(id){if(!confirm('Delete?'))return;DB.payments=DB.payments.filter(x=>x.id!==id);save('payments');render('payments');toast('Deleted')}
+function editPay(id){
+  const p=id?DB.payments.find(x=>x.id===id):null;const d=document.createElement('div');d.className='overlay';d.id='paym';
+  d.innerHTML=`<div class="modal modal-sm"><div class="modal-hdr"><span class="modal-title">${p?'Edit':'Add'} Payment Record</span><button class="close-btn" onclick="closeModal('paym')">×</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div class="form-group"><label class="fl">Package</label>${pkgSel(p?.pkg||LISTS.packages[0],'pkg')}</div>
+    <div class="form-group"><label class="fl">School</label><input name="school" value="${p?.school||''}"></div>
+    <div class="form-group"><label class="fl">Agreement Amount (₹)</label><input type="number" name="amount" value="${p?.amount||''}"></div>
+    <div class="form-group"><label class="fl">Extra Items (₹)</label><input type="number" name="extra" value="${p?.extra||0}"></div>
+    <div class="form-group"><label class="fl">RA Paid (₹)</label><input type="number" name="ra_paid" value="${p?.ra_paid||0}"></div>
+    <div class="form-group"><label class="fl">GST (₹)</label><input type="number" name="gst" value="${p?.gst||0}"></div>
+    <div class="form-group"><label class="fl">TDS (₹)</label><input type="number" name="tds" value="${p?.tds||0}"></div>
+    <div class="form-group"><label class="fl">Security Deposit (₹)</label><input type="number" name="sd" value="${p?.sd||0}"></div>
+    <div class="form-group full"><label class="fl">Remarks</label><textarea name="remarks">${p?.remarks||''}</textarea></div>
+  </div></div>
+  <div class="modal-ftr">${p?`<button class="btn-del-modal" onclick="delPay(${p.id});closeModal('paym')">Delete</button>`:''}
+  <button class="btn-cancel" onclick="closeModal('paym')">Cancel</button><button class="btn-save" onclick="savePay(${p?p.id:'null'})">Save</button></div></div>`;
+  document.body.appendChild(d);
+}
+function savePay(id){
+  const m=document.getElementById('paym');const g=n=>m.querySelector(`[name="${n}"]`)?.value||'';
+  const o={id:id||nextId(DB.payments),pkg:g('pkg'),school:g('school'),amount:+g('amount'),extra:+g('extra'),ra_paid:+g('ra_paid'),gst:+g('gst'),tds:+g('tds'),sd:+g('sd'),remarks:g('remarks')};
+  if(id)DB.payments=DB.payments.map(x=>x.id===id?o:x);else DB.payments.push(o);
+  save('payments');closeModal('paym');render('payments');toast('Saved ✓');
+}
+
+// ── COMPLETION ──
+function pageCompletion(){
+  const rows=DB.completion.map(c=>{const w=c.handover_date&&c.dlp?new Date(new Date(c.handover_date).setMonth(new Date(c.handover_date).getMonth()+c.dlp)).toISOString().split('T')[0]:'';return`<tr data-pkg="${c.pkg}"><td><span class="tag tag-blue">${c.pkg.split('–')[0].trim()}</span></td><td>${c.school}</td><td>${fmtDate(c.comp_date)}</td><td style="text-align:center">${badge(c.final_bill)}</td><td style="text-align:center">${badge(c.cc)}</td><td>${fmtDate(c.handover_date)}</td><td style="text-align:center">${c.dlp}m</td><td>${w?fmtDate(w):'—'}</td><td style="text-align:center">${badge(c.closed)}</td><td style="font-size:12px">${c.remarks}</td><td style="white-space:nowrap"><button class="btn-sm btn-edit" onclick="editComp(${c.id})">Edit</button> <button class="btn-sm btn-del-sm" onclick="delComp(${c.id})">Del</button></td></tr>`}).join('');
+  return`<div class="page-title">Completion Register</div><div class="page-sub">Post-completion – DLP and handover tracking</div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi-card green"><div class="kpi-label">Completed</div><div class="kpi-value">${DB.completion.length}</div></div>
+    <div class="kpi-card green"><div class="kpi-label">Fully Closed</div><div class="kpi-value">${DB.completion.filter(c=>c.closed==='Yes').length}</div></div>
+    <div class="kpi-card yellow"><div class="kpi-label">In DLP</div><div class="kpi-value">${DB.completion.filter(c=>c.closed==='No').length}</div></div>
+  </div>
+  <div class="toolbar"><button class="btn-primary" onclick="editComp(null)">+ Add Entry</button><div class="search-box"><input type="text" placeholder="Search..." oninput="fSearch(this,'comptbl')"></div>${pkgFilter('comptbl')}</div>
+  <div class="card"><div class="card-body" style="padding:0"><div class="tbl-wrap"><table id="comptbl"><thead><tr><th>Pkg</th><th>School</th><th>Completion</th><th>Final Bill</th><th>Comp Cert</th><th>Handover</th><th>DLP</th><th>Warranty End</th><th>Closed</th><th>Remarks</th><th>Actions</th></tr></thead><tbody>${rows||'<tr><td colspan="11" style="text-align:center;padding:28px;color:var(--muted)">No completed schools yet</td></tr>'}</tbody></table></div></div></div>`;
+}
+function delComp(id){if(!confirm('Delete?'))return;DB.completion=DB.completion.filter(x=>x.id!==id);save('completion');render('completion');toast('Deleted')}
+function editComp(id){
+  const c=id?DB.completion.find(x=>x.id===id):null;const d=document.createElement('div');d.className='overlay';d.id='compm';
+  d.innerHTML=`<div class="modal modal-sm"><div class="modal-hdr"><span class="modal-title">${c?'Edit':'Add'} Completion</span><button class="close-btn" onclick="closeModal('compm')">×</button></div>
+  <div class="modal-body"><div class="form-grid">
+    <div class="form-group"><label class="fl">Package</label>${pkgSel(c?.pkg||LISTS.packages[0],'pkg')}</div>
+    <div class="form-group"><label class="fl">School</label><input name="school" value="${c?.school||''}"></div>
+    <div class="form-group"><label class="fl">Completion Date</label><input type="date" name="comp_date" value="${c?.comp_date||''}"></div>
+    <div class="form-group"><label class="fl">Final Bill</label>${yn(c?.final_bill||'No','final_bill')}</div>
+    <div class="form-group"><label class="fl">Completion Certificate</label>${yn(c?.cc||'No','cc')}</div>
+    <div class="form-group"><label class="fl">Handover Date</label><input type="date" name="handover_date" value="${c?.handover_date||''}"></div>
+    <div class="form-group"><label class="fl">DLP (Months)</label><input type="number" name="dlp" value="${c?.dlp||12}"></div>
+    <div class="form-group"><label class="fl">Closed</label>${yn(c?.closed||'No','closed')}</div>
+    <div class="form-group full"><label class="fl">Remarks</label><textarea name="remarks">${c?.remarks||''}</textarea></div>
+  </div></div>
+  <div class="modal-ftr">${c?`<button class="btn-del-modal" onclick="delComp(${c.id});closeModal('compm')">Delete</button>`:''}
+  <button class="btn-cancel" onclick="closeModal('compm')">Cancel</button><button class="btn-save" onclick="saveComp(${c?c.id:'null'})">Save</button></div></div>`;
+  document.body.appendChild(d);
+}
+function saveComp(id){
+  const m=document.getElementById('compm');const g=n=>m.querySelector(`[name="${n}"]`)?.value||'';
+  const o={id:id||nextId(DB.completion),pkg:g('pkg'),school:g('school'),comp_date:g('comp_date'),final_bill:g('final_bill'),cc:g('cc'),handover_date:g('handover_date'),dlp:+g('dlp'),closed:g('closed'),remarks:g('remarks')};
+  if(id)DB.completion=DB.completion.map(x=>x.id===id?o:x);else DB.completion.push(o);
+  save('completion');closeModal('compm');render('completion');toast('Saved ✓');
+}
+
+// ── SETTINGS ──
+function pageSettings(){
+  function lb(key,title,icon){
+    const items=LISTS[key].map((v,i)=>`<div class="list-item"><span>${v}</span><button class="btn-sm btn-del-sm" onclick="delLI('${key}',${i})">✕</button></div>`).join('');
+    return`<div class="list-box"><h3>${icon} ${title} <span style="font-size:11px;font-weight:400;color:var(--muted)">(${LISTS[key].length})</span></h3><div>${items||'<p style="color:var(--muted);font-size:12px;padding:8px 0">No items</p>'}</div><div class="add-row"><input type="text" id="inp-${key}" placeholder="Add new..." onkeydown="if(event.key==='Enter')addLI('${key}')"><button onclick="addLI('${key}')">+ Add</button></div></div>`;
+  }
+  return`<div class="page-title">Settings</div><div class="page-sub">Customise all dropdown lists used across the system</div>
+  <div class="settings-grid">
+    ${lb('packages','Packages / Tenders','📦')}
+    ${lb('contractors','Contractors','🏢')}
+    ${lb('engineers','Site Engineers','👷')}
+    ${lb('talukas','Talukas','📍')}
+    ${lb('districts','Districts','🗺')}
+    ${lb('statuses','Project Statuses','🔖')}
+    ${lb('materials','Materials','🧱')}
+    ${lb('hindrance_cats','Hindrance Categories','⚠️')}
+    ${lb('mat_statuses','Material Statuses','✅')}
+  </div>
+  <div class="card" style="margin-top:16px"><div class="card-hdr"><span class="card-title">⚠️ Data Management</span></div>
+  <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap">
+    <button class="btn-save" onclick="exportData()">⬇ Export All Data</button>
+    <label class="btn-save" style="cursor:pointer">⬆ Import Data<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+    <button class="btn-del-modal" onclick="resetAll()">🗑 Reset to Demo Data</button>
+  </div></div>`;
+}
+function addLI(key){const inp=document.getElementById('inp-'+key);const v=inp.value.trim();if(!v)return;if(LISTS[key].includes(v)){toast('Already exists');return;}LISTS[key].push(v);saveList(key);inp.value='';render('settings');toast(`Added: ${v}`)}
+function delLI(key,idx){const v=LISTS[key][idx];if(!confirm(`Remove "${v}"?`))return;LISTS[key].splice(idx,1);saveList(key);render('settings');toast('Removed')}
+
+// ── EXPORT / IMPORT / RESET ──
+function exportData(){
+  const blob=new Blob([JSON.stringify({data:DB,lists:LISTS},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='scpm_backup_'+new Date().toISOString().split('T')[0]+'.json';a.click();toast('Exported ✓');
+}
+function importData(evt){
+  const file=evt.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{try{const p=JSON.parse(e.target.result);const d=p.data||p;const l=p.lists;for(const k of Object.keys(DD)){if(d[k]){DB[k]=d[k];S.save(k,d[k]);}}if(l){for(const k of Object.keys(DL)){if(l[k]){LISTS[k]=l[k];S.save('list_'+k,l[k]);}}}updateBadges();render(cur);toast('Imported ✓');}catch{alert('Invalid file');}};
+  reader.readAsText(file);
+}
+function resetAll(){if(!confirm('Reset ALL data to demo data?'))return;for(const k of Object.keys(DD)){DB[k]=JSON.parse(JSON.stringify(DD[k]));S.save(k,DB[k]);}for(const k of Object.keys(DL)){LISTS[k]=[...DL[k]];S.save('list_'+k,LISTS[k]);}updateBadges();render(cur);toast('Reset done ✓')}
+
+// ── INIT ──
+document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+updateBadges();render('dashboard');
+</script>
+</body>
+</html>
+HTMLEOF
+echo "Written: $(wc -c < /mnt/user-data/outputs/School_Construction_PM_v2.html) bytes"
+Output
+
+Written: 85771 bytes
