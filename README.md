@@ -22,46 +22,53 @@ An enterprise full-stack web application designed for construction company manag
 c:\Projects\KRS\
 ├── Backend/                   # Spring Boot REST API
 │   ├── src/main/java/com/krs/backend/
-│   │   ├── controllers/      # REST API Controllers (Auth, Tender, etc.)
-│   │   ├── models/           # JPA Entities (User, Role, Tender, Construction)
+│   │   ├── controllers/      # REST API (Auth, User, Role, Tender, etc.)
+│   │   ├── models/           # JPA Entities (User, Role, PageMaster, Notifications, etc.)
 │   │   ├── repositories/     # Spring Data JPA Repositories
+│   │   ├── services/         # Business Logic (PermissionService, etc.)
 │   │   └── security/         # JWT Security Configuration & Filters
 │   └── src/main/resources/   # Application properties & Liquibase changelogs
 ├── Frontend/                  # Angular SPA Application
 │   └── src/app/
-│       ├── components/       # Login, Dashboard, Projects, RA Bills, Approvals
-│       ├── services/         # AuthService & AuthInterceptor
+│       ├── components/
+│       │   ├── admin/        # User & Role Management (Premium Data Tables)
+│       │   ├── login/        # JWT Authentication UI
+│       │   ├── dashboard/    # Global Overview Metrics
+│       │   ├── projects/     # Project & Site Monitoring
+│       │   ├── ra-bills/     # RA Bill Generation & Tracking
+│       │   └── approvals/    # Multi-Tier Approval Workflows
+│       ├── services/         # API HTTP Services & AuthInterceptor
+│       ├── utils/            # Constants & REST URLs configurations
 │       └── app.routes.ts     # Route Definitions
-├── SQL/
-│   └── schema.sql            # Core database & user initialization script
-├── Client Data/               # Client reference assets (PDFs, mockups, bill samples)
-├── generate_backend.ps1       # Backend scaffold generator script
-├── generate_frontend.ps1      # Frontend scaffold generator script
-├── generate_ui_flow.ps1       # UI flow generator script
-└── start_project.bat          # Startup script for launching full-stack app
+├── SQL/                      # Core DB schemas, Python generators & Test Data
+├── Client Data/              # Client reference assets (PDFs, mockups, bill samples)
+└── start_project.bat         # Startup script for launching full-stack app
 ```
 
 ---
 
 ## 🚀 Key Modules & Capabilities
 
-1. **Authentication & User Management**
+1. **Enterprise Identity & Access Management (IAM)**
+   - **User Management**: Premium UI data tables with real-time filtering, active/inactive toggles, dynamic role assignments, and duplicate validation.
+   - **Role & Permission Management**: Custom role creation with active/inactive states. Supports deep, granular page and action mapping (RolePageActionMapping & UserPageActionMapping).
+   - **Authentication**: Stateless JWT token authentication with Spring Security 6+.
 
-   - Secure login using JWT tokens.
-   - Role-based permissions (Admin, Site Manager, Billing Engineer, Approver).
-2. **Tender Management**
+2. **Tender & Project Lifecycle**
+   - **Tender Management**: Track active & submitted tenders, including values, client specs, and deadlines.
+   - **Construction Monitoring**: Track ongoing sites, project budgets, and locations.
 
-   - Track active & submitted tenders.
-   - Estimate values, client specifications, submission deadlines, and status tracking.
-3. **Construction Project Monitoring**
+3. **Running Account (RA) Billing Engine**
+   - Digital RA bill creation with itemized tracking.
+   - Deduction calculations and automated bill lifecycle management.
 
-   - Site progress tracking, allocated budgets, timeline management, and milestone checks.
-4. **Running Account (RA) Billing Engine**
+4. **Multi-Tier Approval Workflows**
+   - Granular approval routing for Site Managers, Billing Engineers, and Executives.
+   - Fully linked to RA Bills and generic daily tasks.
 
-   - Digital RA bill creation, itemized measurements logging, deduction calculations, and bill status lifecycle.
-5. **Approval Workflows**
-
-   - Multi-stage approval interface for site managers, billing engineers, and executives.
+5. **Real-time Alerting & Audit**
+   - **Notifications**: Integrated notification engine (`User_Notification_Read`) to alert users to pending approvals or billing updates.
+   - **Audit Trails**: Global database triggers and `audit_logs` tracking for all generic CREATE, UPDATE, and DELETE actions.
 
 ---
 
