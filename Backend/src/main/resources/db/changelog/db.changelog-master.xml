@@ -17,5 +17,10 @@
     <include file="db/changelog/changes/v10_public_notifications.sql" />
     <include file="db/changelog/changes/v11_permission_system.sql" />
     <include file="db/changelog/changes/v12_todo_goals.sql" />
+    <include file="db/changelog/changes/v13_tender_details_columns.sql" />
+    <include file="db/changelog/changes/v14_normalize_domain_tables.sql" />
+    <include file="db/changelog/changes/v15_add_user_theme_preference.sql" />
+    <include file="db/changelog/changes/v16_add_location_start_closed_dates.sql" />
+    <include file="db/changelog/changes/v17_create_project_documents.sql" />
 
 </databaseChangeLog>

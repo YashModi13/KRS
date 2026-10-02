@@ -1,8 +1,14 @@
 package com.krs.backend.models;
 
 import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "notifications", schema = "krs_schema")
 public class Notification {
@@ -22,12 +28,4 @@ public class Notification {
 
     @PrePersist
     protected void onCreate() { createdAt = LocalDateTime.now(); }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
 }

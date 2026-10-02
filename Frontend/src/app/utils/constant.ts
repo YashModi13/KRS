@@ -4,6 +4,11 @@ export const Constants = {
     DEFAULT_OFFSET: 0,
     OPTIONS: [10, 25, 50, 100]
   },
+  THEME: {
+    LIGHT: 'light',
+    DARK: 'dark',
+    DEFAULT: 'light'
+  },
   APP: {
     TITLE: "KRS Construction Project Management",
     NAME: "KRS Construction",
@@ -12,11 +17,23 @@ export const Constants = {
     DEFAULT_LANGUAGE: "en"
   },
   PROJECTS: {
-    PAGE_TITLE: "Active Projects Repository",
-    PAGE_SUBTITLE: "Comprehensive Overview of Tenders, Agreements, and Status",
+    PAGE_TITLE: "Projects Repository",
+    PAGE_SUBTITLE: "Comprehensive Master Record of Tenders, Agreements, and Status (Active & Completed)",
     TIME_LIMIT_WARNING_DAYS: 45,
-    STATUS_OPTIONS: ["Running", "Completed", "Delayed", "Hold", "Not Started"],
+    STATUS_OPTIONS: ["Running", "Completed", "Work Completed", "Delayed", "Hold", "Not Started"],
     CONSTRUCTION_TYPES: ["School", "Hospital", "Road", "Bridge", "Residential"]
+  },
+  PROJECT_OFFICIALS: {
+    EXECUTIVE_ENGINEER: {
+      TITLE: "Executive Engineer (PWD)",
+      NAME: "Ramesh Patel (EE)",
+      PHONE: "+91 98765 43210"
+    },
+    DEPUTY_EXECUTIVE_ENGINEER: {
+      TITLE: "Deputy Executive Engineer",
+      NAME: "Suresh Dave (DEE)",
+      PHONE: "+91 97654 32109"
+    }
   },
   USER_MANAGEMENT: {
     CREDENTIALS_SHARE_TEMPLATE: "Hello,\n\nHere are your login credentials for {{APP_NAME}}:\n\nLogin URL: {{URL}}\nUsername: {{USERNAME}}\nEmail: {{EMAIL}}\nPassword: {{PASSWORD}}\nRoles: {{ROLES}}\n\nPlease keep this secure."

@@ -1,15 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { KrsService } from './krs.service';
+import { ThemeService } from './theme.service';
 import { RestUrl } from '../utils/rest-url';
-
-import { Constants } from '../utils/constant';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private krsService = inject(KrsService);
+  private readonly krsService = inject(KrsService);
+  private readonly themeService = inject(ThemeService);
+  private readonly authStateSubject = new BehaviorSubject<boolean>(this.isLoggedIn());
+  public authState$ = this.authStateSubject.asObservable();
 
   login(credentials: any): Observable<any> {
     return this.krsService.post(RestUrl.AUTH.LOGIN, credentials, null);
@@ -17,6 +19,7 @@ export class AuthService {
 
   saveToken(token: string) {
     localStorage.setItem('auth-token', token);
+    this.authStateSubject.next(true);
   }
 
   getToken(): string | null {
@@ -46,7 +49,7 @@ export class AuthService {
 
   getRole(): string {
     const decoded = this.getDecodedToken();
-    if (!decoded || !decoded.role) return 'User';
+    if (!decoded?.role) return 'User';
     let roleStr = decoded.role.replace('ROLE_', '');
     return roleStr.charAt(0).toUpperCase() + roleStr.slice(1).toLowerCase().replace('_', ' ');
   }
@@ -74,5 +77,7 @@ export class AuthService {
         d.shift();
       }
     }
+    this.themeService.resetToDefaultTheme();
+    this.authStateSubject.next(false);
   }
 }

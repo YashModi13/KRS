@@ -38,7 +38,7 @@
             <span class="icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </span>
-            <input type="text" [(ngModel)]="username" name="username" placeholder="Enter your username" required>
+            <input #usernameInput type="text" [(ngModel)]="username" (input)="onInput()" (change)="onInput()" (blur)="onInput()" name="username" placeholder="Enter your username" required>
           </div>
         </div>
         <div class="form-group">
@@ -47,7 +47,7 @@
             <span class="icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </span>
-            <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" name="password" placeholder="Enter your password" required>
+            <input #passwordInput [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" (input)="onInput()" (change)="onInput()" (blur)="onInput()" name="password" placeholder="Enter your password" required>
             <button type="button" class="show-password-btn" (click)="togglePassword()">
               <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -68,9 +68,10 @@
           <a href="#" class="forgot-password">Forgot Password?</a>
         </div>
 
-        <button type="submit" class="btn-primary" [disabled]="!username || !password">
-          Sign In
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <button type="submit" class="btn-primary" [disabled]="isLoading">
+          <span *ngIf="!isLoading">Sign In</span>
+          <span *ngIf="isLoading" class="spinner"></span>
+          <svg *ngIf="!isLoading" class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </button>
 
         <div class="message-container">

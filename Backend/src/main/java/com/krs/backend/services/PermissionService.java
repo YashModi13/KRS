@@ -3,7 +3,6 @@ package com.krs.backend.services;
 import com.krs.backend.dto.PermissionDTO;
 import com.krs.backend.models.*;
 import com.krs.backend.repositories.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -11,14 +10,19 @@ import java.util.*;
 @Service
 public class PermissionService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final RolePageActionMappingRepository roleActionRepo;
+    private final UserPageActionMappingRepository userActionRepo;
 
-    @Autowired
-    private RolePageActionMappingRepository roleActionRepo;
-
-    @Autowired
-    private UserPageActionMappingRepository userActionRepo;
+    public PermissionService(
+            UserRepository userRepository,
+            RolePageActionMappingRepository roleActionRepo,
+            UserPageActionMappingRepository userActionRepo
+    ) {
+        this.userRepository = userRepository;
+        this.roleActionRepo = roleActionRepo;
+        this.userActionRepo = userActionRepo;
+    }
 
     public List<PermissionDTO> getUserPermissions(Long userId) {
         Optional<User> userOpt = userRepository.findById(userId);

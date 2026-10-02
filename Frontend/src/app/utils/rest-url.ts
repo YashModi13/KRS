@@ -1,6 +1,7 @@
 export const RestUrl = {
-  API_BASE_URL: 'http://localhost:8080/api',
+  API_BASE_URL: 'http://localhost:8081/api',
   USERS: '/users',
+  USER_THEME: '/users/theme',
   USER_VALIDATION: {
     CHECK_USERNAME: '/users/check-username',
     CHECK_EMAIL: '/users/check-email',
@@ -16,7 +17,8 @@ export const RestUrl = {
     BASE: '/notifications',
     UNREAD_COUNT: '/notifications/unread-count',
     READ_ALL: '/notifications/read-all',
-    READ_SINGLE: (id: number | string) => `/notifications/${id}/read`
+    READ_SINGLE: (id: number | string) => `/notifications/${id}/read`,
+    UNREAD_SINGLE: (id: number | string) => `/notifications/${id}/unread`
   },
   TODOS: '/todos'
 };

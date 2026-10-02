@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/todos")
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "${app.cors.origins}", maxAge = 3600)
 public class TodoGoalController {
 
     private final TodoGoalRepository todoGoalRepository;

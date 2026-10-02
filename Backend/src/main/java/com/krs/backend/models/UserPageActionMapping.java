@@ -1,7 +1,13 @@
 package com.krs.backend.models;
 
 import jakarta.persistence.*;
+import lombok.*;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "user_page_action_mapping", schema = "krs_schema")
 public class UserPageActionMapping extends BaseAuditEntity {
@@ -20,16 +26,4 @@ public class UserPageActionMapping extends BaseAuditEntity {
 
     @Column(name = "is_allowed", nullable = false)
     private Boolean isAllowed;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-
-    public PageActionMapping getPageAction() { return pageAction; }
-    public void setPageAction(PageActionMapping pageAction) { this.pageAction = pageAction; }
-
-    public Boolean getIsAllowed() { return isAllowed; }
-    public void setIsAllowed(Boolean allowed) { isAllowed = allowed; }
 }

@@ -1,8 +1,14 @@
 package com.krs.backend.models;
 
 import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "daily_tasks", schema = "krs_schema")
 public class DailyTask {
@@ -38,29 +44,4 @@ public class DailyTask {
 
     @PreUpdate
     protected void onUpdate() { updatedAt = LocalDateTime.now(); }
-
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Project getProject() { return project; }
-    public void setProject(Project project) { this.project = project; }
-
-    public String getTaskDescription() { return taskDescription; }
-    public void setTaskDescription(String taskDescription) { this.taskDescription = taskDescription; }
-
-    public String getAssignedTo() { return assignedTo; }
-    public void setAssignedTo(String assignedTo) { this.assignedTo = assignedTo; }
-
-    public Boolean getStatus() { return status; }
-    public void setStatus(Boolean status) { this.status = status; }
-
-    public String getRemarks() { return remarks; }
-    public void setRemarks(String remarks) { this.remarks = remarks; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

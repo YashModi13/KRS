@@ -1,0 +1,124 @@
+<div class="tasks-page-header">
+  <div>
+    <h1 class="page-title">Daily Tasks & To-Do Goals</h1>
+    <p class="page-sub">Create, organize, and track daily site tasks & priorities</p>
+  </div>
+  
+  <div class="date-navigator">
+    <button class="btn btn-secondary" (click)="prevDay()">&#8592; Prev</button>
+    <button class="btn btn-secondary" (click)="today()">Today</button>
+    <input type="date" [ngModel]="currentDateString" (ngModelChange)="onDateChange($event)" class="date-picker-input" title="Select Date">
+    <button class="btn btn-secondary" (click)="nextDay()">Next &#8594;</button>
+  </div>
+</div>
+
+<div class="tasks-container">
+  <!-- Create Task Form Card -->
+  <div class="card create-task-card">
+    <div class="card-hdr">
+      <span>➕ Create New Task / Note</span>
+      <span class="date-tag">{{ currentDateString }}</span>
+    </div>
+    <div class="card-body">
+      <div class="form-row">
+        <div class="input-group" style="flex: 2;">
+          <label>Task Description *</label>
+          <input type="text" class="input-field" placeholder="Enter daily task description, site note or reminder..." [(ngModel)]="newTodo.taskDescription" (keyup.enter)="addTodo()">
+        </div>
+        
+        <div class="input-group" style="flex: 1;">
+          <label>Priority</label>
+          <select class="input-field" [(ngModel)]="newTodo.priority">
+            <option value="HIGH">🔴 High Priority</option>
+            <option value="MEDIUM">🟡 Medium Priority</option>
+            <option value="LOW">🟢 Low Priority</option>
+          </select>
+        </div>
+
+        <div class="input-group" style="flex: 1;">
+          <label>Target Date</label>
+          <input type="date" class="input-field" [(ngModel)]="newTodoDate" [min]="todayString">
+        </div>
+
+        <button class="btn btn-primary add-btn" (click)="addTodo()">
+          ➕ Add Task
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Priority KPI Badges -->
+  <div class="priority-summary-grid">
+    <div class="priority-kpi-card high">
+      <div class="p-icon">🔴</div>
+      <div>
+        <div class="p-label">High Priority</div>
+        <div class="p-val">{{ highPriorityCount }} <span class="p-sub">/ {{ highPriorityTotal }}</span></div>
+      </div>
+    </div>
+    
+    <div class="priority-kpi-card medium">
+      <div class="p-icon">🟡</div>
+      <div>
+        <div class="p-label">Medium Priority</div>
+        <div class="p-val">{{ mediumPriorityCount }} <span class="p-sub">/ {{ mediumPriorityTotal }}</span></div>
+      </div>
+    </div>
+
+    <div class="priority-kpi-card low">
+      <div class="p-icon">🟢</div>
+      <div>
+        <div class="p-label">Low Priority</div>
+        <div class="p-val">{{ lowPriorityCount }} <span class="p-sub">/ {{ lowPriorityTotal }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tasks List Card -->
+  <div class="card tasks-list-card">
+    <div class="card-hdr">
+      <span>📋 Tasks List for {{ currentDateString }}</span>
+      <span class="count-pill">{{ todos.length }} Tasks</span>
+    </div>
+    <div class="card-body">
+      <div *ngIf="todos.length === 0" class="todo-empty">
+        <span style="font-size: 28px;">🎉</span>
+        <div>No tasks scheduled for {{ currentDateString }}</div>
+        <p style="font-size: 12px; margin: 0; opacity: 0.7;">Use the form above to add a new task or note.</p>
+      </div>
+
+      <div class="todo-list">
+        <div *ngFor="let todo of todos" class="todo-item" [class.done-item]="todo.isDone">
+          <div class="todo-header">
+            <div class="todo-left">
+              <input type="checkbox" [checked]="todo.isDone" (change)="todo.isDone ? undoDone(todo) : startMarkDone(todo)" title="Toggle status" class="todo-checkbox">
+              <span class="priority-badge" [ngClass]="todo.priority.toLowerCase()">{{ todo.priority }}</span>
+              <span class="todo-title" [class.strikethrough]="todo.isDone">{{ isDescExpanded(todo) ? todo.taskDescription : shortDesc(todo.taskDescription) }}</span>
+              <button *ngIf="todo.taskDescription.length > DESC_LIMIT" class="btn-more" (click)="toggleDesc(todo)">
+                {{ isDescExpanded(todo) ? 'Less' : 'More' }}
+              </button>
+            </div>
+            
+            <div class="todo-actions">
+              <button *ngIf="!todo.isDone && pendingDoneId !== todo.id" class="btn-done" (click)="startMarkDone(todo)">✓ Done</button>
+              <button *ngIf="!todo.isDone" class="btn-icon" (click)="moveNextDay(todo, $event)" title="Move to tomorrow">➡️</button>
+              <button class="btn-icon danger" (click)="deleteTodo(todo, $event)" title="Delete task">🗑️</button>
+            </div>
+          </div>
+
+          <!-- Pending Done Form -->
+          <div *ngIf="pendingDoneId === todo.id" class="done-note-panel">
+            <input type="text" class="input-field" placeholder="Optional completion note or remarks..." [(ngModel)]="pendingDoneNote" (keyup.enter)="confirmDone(todo)">
+            <button class="btn btn-primary btn-sm" (click)="confirmDone(todo)">Confirm Done</button>
+            <button class="btn btn-secondary btn-sm" (click)="cancelDone()">Cancel</button>
+          </div>
+
+          <!-- Done Note Display -->
+          <div *ngIf="todo.isDone && todo.doneNote" class="done-note-display">
+            📝 <strong>Remarks:</strong> {{ todo.doneNote }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

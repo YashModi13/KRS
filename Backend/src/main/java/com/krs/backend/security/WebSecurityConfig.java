@@ -1,5 +1,5 @@
 package com.krs.backend.security;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,13 +21,18 @@ import java.util.Arrays;
 @Configuration
 @EnableMethodSecurity
 public class WebSecurityConfig {
-    @Autowired AuthTokenFilter authTokenFilter;
+
+    private final AuthTokenFilter authTokenFilter;
     
     @Value("${app.cors.origins}")
     private String corsOrigins;
     
     @Value("${app.messages.error.unauthorized}")
     private String unauthorizedMessage;
+
+    public WebSecurityConfig(AuthTokenFilter authTokenFilter) {
+        this.authTokenFilter = authTokenFilter;
+    }
     
     @Bean
     public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
@@ -72,4 +77,3 @@ public class WebSecurityConfig {
         return http.build();
     }
 }
-

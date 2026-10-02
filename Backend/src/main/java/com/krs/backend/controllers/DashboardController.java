@@ -2,7 +2,6 @@ package com.krs.backend.controllers;
 
 import com.krs.backend.models.DailyTask;
 import com.krs.backend.repositories.DailyTaskRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,8 +11,11 @@ import java.util.List;
 @RequestMapping("/api/tasks")
 public class DashboardController {
 
-    @Autowired
-    private DailyTaskRepository dailyTaskRepository;
+    private final DailyTaskRepository dailyTaskRepository;
+
+    public DashboardController(DailyTaskRepository dailyTaskRepository) {
+        this.dailyTaskRepository = dailyTaskRepository;
+    }
 
     @GetMapping
     public List<DailyTask> getAllTasks() {

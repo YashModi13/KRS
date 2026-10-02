@@ -1,8 +1,8 @@
 package com.krs.backend.controllers;
 
 import com.krs.backend.models.User;
+import com.krs.backend.models.ThemeMode;
 import com.krs.backend.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,14 +14,16 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "${app.cors.origins}", maxAge = 3600)
 public class UserController {
 
-    @Autowired
-    private UserRepository userRepository;
-    
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllUsers(
@@ -94,7 +96,24 @@ public class UserController {
             if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
                 user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
             }
+            if (userDetails.getTheme() != null) {
+                user.setTheme(userDetails.getTheme());
+            }
             return ResponseEntity.ok(userRepository.save(user));
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/theme")
+    public ResponseEntity<Map<String, String>> updateUserTheme(@RequestBody Map<String, String> body, java.security.Principal principal) {
+        if (principal == null) return ResponseEntity.status(401).build();
+        ThemeMode requestedTheme = ThemeMode.fromValue(body.get("theme"));
+        User user = userRepository.findUserByUsername(principal.getName());
+        if (user != null) {
+            user.setTheme(requestedTheme);
+            userRepository.save(user);
+        }
+        Map<String, String> res = new HashMap<>();
+        res.put("theme", requestedTheme.getValue());
+        return ResponseEntity.ok(res);
     }
 }

@@ -1,8 +1,8 @@
 @echo off
 echo Starting KRS Construction Full-Stack Application...
 
-echo Checking for any process on port 8080 and killing it...
-FOR /F "tokens=5" %%T IN ('netstat -a -n -o ^| findstr :8080') DO (
+echo Checking for any process on port 8081 and killing it...
+FOR /F "tokens=5" %%T IN ('netstat -a -n -o ^| findstr :8081') DO (
     IF NOT "%%T"=="0" (
         taskkill /PID %%T /F 2>nul
     )

@@ -7,26 +7,27 @@
 
   <!-- Detail Mode Header (Breadcrumb) -->
   <div *ngIf="mode === 'detail'">
-    <h1 class="page-title" style="display: flex; align-items: center;">
+    <h1 class="page-title" style="display: flex; align-items: center; gap: 8px;">
       <span (click)="mode = 'list'" style="color: #64748b; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Projects</span> 
-      <span style="color: #cbd5e1; margin: 0 10px;">/</span> 
-      <span style="font-size: 20px;">{{selectedProject?.tenderId}} - {{selectedProject?.nameOfWork}}</span>
+      <span style="color: #cbd5e1;">/</span> 
+      <span style="font-size: 20px;">Tender #{{selectedProject?.tenderId || selectedProject?.srNo}} - {{selectedProject?.noticeNo || selectedProject?.packageNo || 'Details'}}</span>
     </h1>
-    <p class="page-sub">Project Details & Locations</p>
+    <p class="page-sub">Comprehensive Project & Site Location Master Record</p>
   </div>
 
-  <!-- Create Mode Header (Breadcrumb) -->
-  <div *ngIf="mode === 'create'">
-    <h1 class="page-title" style="display: flex; align-items: center;">
+  <!-- Create/Edit Mode Header (Breadcrumb) -->
+  <div *ngIf="mode === 'create' || mode === 'edit'">
+    <h1 class="page-title" style="display: flex; align-items: center; gap: 8px;">
       <span (click)="mode = 'list'" style="color: #64748b; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Projects</span> 
-      <span style="color: #cbd5e1; margin: 0 10px;">/</span> 
-      <span style="font-size: 20px;">Create New Project</span>
+      <span style="color: #cbd5e1;">/</span> 
+      <span style="font-size: 20px;">{{mode === 'edit' ? 'Edit Project #' + projectData.tenderId : 'Register New Project Tender'}}</span>
     </h1>
-    <p class="page-sub">Register a new master project</p>
+    <p class="page-sub">{{mode === 'edit' ? 'Update master project parameters' : 'Add new tender details to master database'}}</p>
   </div>
+
   <!-- Action Buttons in Header -->
   <div *ngIf="mode === 'list'" style="display: flex; gap: 12px; align-items: center;">
-    <button class="btn btn-primary btn-add" (click)="mode = 'create'">+ Add Project</button>
+    <button class="btn btn-primary btn-add" (click)="openCreateMode()">+ Add Project</button>
     <div style="position: relative;">
       <button class="btn btn-export" (click)="toggleExportMenu($event)">
         <span style="margin-right: 6px;">📥</span> Export <span style="font-size: 10px; margin-left: 4px;">▼</span>
@@ -42,42 +43,47 @@
       </div>
     </div>
   </div>
+
+  <div *ngIf="mode !== 'list'" style="display: flex; gap: 10px;">
+    <button class="btn btn-secondary" (click)="mode = 'list'">Back to Projects List</button>
+  </div>
 </div>
 
 <!-- LIST MODE -->
 <div class="card p-0" *ngIf="mode === 'list'">
-  <div class="table-responsive">
+  <div class="table-responsive" style="max-height: 720px; overflow-y: auto;">
     <table class="master-table">
       <thead>
         <tr>
-          <th (click)="onSort('packageNo')" style="cursor: pointer;">Package No. <span *ngIf="sortBy==='packageNo'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th (click)="onSort('srNo')" style="cursor: pointer; width: 60px;">Sr # <span *ngIf="sortBy==='srNo'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th (click)="onSort('noticeNo')" style="cursor: pointer;">Notice / Pkg No <span *ngIf="sortBy==='noticeNo'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
           <th (click)="onSort('tenderId')" style="cursor: pointer;">Tender ID <span *ngIf="sortBy==='tenderId'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
-          <th (click)="onSort('nameOfWork')" style="cursor: pointer;">Project Title & Location <span *ngIf="sortBy==='nameOfWork'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
-          <th (click)="onSort('id')" style="cursor: pointer;">Engineer <span *ngIf="sortBy==='id'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
-          <th (click)="onSort('id')" style="cursor: pointer;">Contractor <span *ngIf="sortBy==='id'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
-          <th class="text-right" (click)="onSort('estimatedTenderCost')" style="cursor: pointer;">Tender Amt <span *ngIf="sortBy==='estimatedTenderCost'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
-          <th class="text-right" (click)="onSort('tenderedCost')" style="cursor: pointer;">Agreement Amt <span *ngIf="sortBy==='tenderedCost'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
-          <th class="text-right" (click)="onSort('id')" style="cursor: pointer;">Variance <span *ngIf="sortBy==='id'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
-          <th class="text-center" (click)="onSort('workOrderDate')" style="cursor: pointer;">Start Date <span *ngIf="sortBy==='workOrderDate'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
-          <th class="text-center" (click)="onSort('id')" style="cursor: pointer;">Timeline <span *ngIf="sortBy==='id'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
-          <th class="text-center" (click)="onSort('id')" style="cursor: pointer;">Status <span *ngIf="sortBy==='id'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th (click)="onSort('departmentName')" style="cursor: pointer;">Department & Work Title <span *ngIf="sortBy==='departmentName'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th (click)="onSort('relatedTo')" style="cursor: pointer;">Related To / Ref <span *ngIf="sortBy==='relatedTo'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-right" (click)="onSort('estimatedTenderCost')" style="cursor: pointer;">Est. Cost <span *ngIf="sortBy==='estimatedTenderCost'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-right" (click)="onSort('tenderedCost')" style="cursor: pointer;">Tender Cost <span *ngIf="sortBy==='tenderedCost'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-right" (click)="onSort('aboveBelowPercentage')" style="cursor: pointer;">Variance <span *ngIf="sortBy==='aboveBelowPercentage'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-center" (click)="onSort('workAwardedStatus')" style="cursor: pointer;">Award Status <span *ngIf="sortBy==='workAwardedStatus'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-center" (click)="onSort('workOrderDate')" style="cursor: pointer;">Order Date <span *ngIf="sortBy==='workOrderDate'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-center" (click)="onSort('emdReturnStatus')" style="cursor: pointer;">EMD Return <span *ngIf="sortBy==='emdReturnStatus'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
+          <th class="text-center" (click)="onSort('status')" style="cursor: pointer;">Overall Status <span *ngIf="sortBy==='status'">{{sortDir==='asc'?'↑':'↓'}}</span></th>
           <th class="text-center">Actions</th>
         </tr>
         <tr class="filter-row">
-          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['packageNo']" placeholder="🔍 Package" class="col-filter"></td>
-          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['tenderId']" placeholder="🔍 Tender" class="col-filter"></td>
-          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['nameOfWork']" placeholder="🔍 Title" class="col-filter"></td>
-          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['engineer']" placeholder="🔍 Eng." class="col-filter"></td>
-          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['contractor']" placeholder="🔍 Cont." class="col-filter"></td>
+          <td><input type="text" (keyup.enter)="applyFilters()" [(ngModel)]="filters['srNo']" placeholder="🔍 Sr" class="col-filter"></td>
+          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['noticeNo']" placeholder="🔍 Notice/Pkg" class="col-filter"></td>
+          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['tenderId']" placeholder="🔍 Tender ID" class="col-filter"></td>
+          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['nameOfWork']" placeholder="🔍 Department / Work" class="col-filter"></td>
+          <td><input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['relatedTo']" placeholder="🔍 Person/Ref" class="col-filter"></td>
           <td style="position: relative;">
-            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Amt Range" 
+            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Est. Range" 
               (click)="toggleFilter('tenderAmtPicker', $event)"
               [value]="(filters['tenderAmtMin'] ? '≥'+filters['tenderAmtMin'] : '') + (filters['tenderAmtMin'] && filters['tenderAmtMax'] ? ' - ' : '') + (filters['tenderAmtMax'] ? '≤'+filters['tenderAmtMax'] : '')">
             
             <div class="filter-popup" *ngIf="activeFilterMenu === 'tenderAmtPicker'" (click)="$event.stopPropagation()">
-              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Amount</label>
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Est. Cost</label>
               <input type="number" [(ngModel)]="filters['tenderAmtMin']" class="col-filter" style="margin-bottom: 8px;">
-              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Amount</label>
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Est. Cost</label>
               <input type="number" [(ngModel)]="filters['tenderAmtMax']" class="col-filter" style="margin-bottom: 12px;">
               <div class="filter-popup-actions">
                 <button class="btn-filter-clear" (click)="clearFilter('tenderAmt')">Clear</button>
@@ -86,14 +92,14 @@
             </div>
           </td>
           <td style="position: relative;">
-            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Amt Range" 
+            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Cost Range" 
               (click)="toggleFilter('agreementAmtPicker', $event)"
               [value]="(filters['agreementAmtMin'] ? '≥'+filters['agreementAmtMin'] : '') + (filters['agreementAmtMin'] && filters['agreementAmtMax'] ? ' - ' : '') + (filters['agreementAmtMax'] ? '≤'+filters['agreementAmtMax'] : '')">
             
             <div class="filter-popup" *ngIf="activeFilterMenu === 'agreementAmtPicker'" (click)="$event.stopPropagation()">
-              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Amount</label>
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Tender Cost</label>
               <input type="number" [(ngModel)]="filters['agreementAmtMin']" class="col-filter" style="margin-bottom: 8px;">
-              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Amount</label>
+              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Tender Cost</label>
               <input type="number" [(ngModel)]="filters['agreementAmtMax']" class="col-filter" style="margin-bottom: 12px;">
               <div class="filter-popup-actions">
                 <button class="btn-filter-clear" (click)="clearFilter('agreementAmt')">Clear</button>
@@ -101,21 +107,9 @@
               </div>
             </div>
           </td>
-          <td style="position: relative;">
-            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Var. Range" 
-              (click)="toggleFilter('variancePicker', $event)"
-              [value]="(filters['varianceMin'] ? '≥'+filters['varianceMin']+'%' : '') + (filters['varianceMin'] && filters['varianceMax'] ? ' - ' : '') + (filters['varianceMax'] ? '≤'+filters['varianceMax']+'%' : '')">
-            
-            <div class="filter-popup" *ngIf="activeFilterMenu === 'variancePicker'" (click)="$event.stopPropagation()">
-              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min %</label>
-              <input type="number" [(ngModel)]="filters['varianceMin']" class="col-filter" style="margin-bottom: 8px;">
-              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max %</label>
-              <input type="number" [(ngModel)]="filters['varianceMax']" class="col-filter" style="margin-bottom: 12px;">
-              <div class="filter-popup-actions">
-                <button class="btn-filter-clear" (click)="clearFilter('variance')">Clear</button>
-                <button class="btn-filter-apply" (click)="applyFilters()">Apply</button>
-              </div>
-            </div>
+          <td></td>
+          <td>
+            <input type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['workAwardedStatus']" placeholder="🔍 Awarded Status" class="col-filter">
           </td>
           <td style="position: relative;">
             <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Date Range 📅" 
@@ -137,30 +131,22 @@
               </div>
             </div>
           </td>
-          <td style="position: relative;">
-            <input type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Days Range" 
-              (click)="toggleFilter('timelinePicker', $event)"
-              [value]="(filters['timelineMin'] ? '≥'+filters['timelineMin']+'d' : '') + (filters['timelineMin'] && filters['timelineMax'] ? ' - ' : '') + (filters['timelineMax'] ? '≤'+filters['timelineMax']+'d' : '')">
-            
-            <div class="filter-popup" *ngIf="activeFilterMenu === 'timelinePicker'" (click)="$event.stopPropagation()" style="left: auto; right: 0;">
-              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Days</label>
-              <input type="number" [(ngModel)]="filters['timelineMin']" class="col-filter" style="margin-bottom: 8px;">
-              <label style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Days</label>
-              <input type="number" [(ngModel)]="filters['timelineMax']" class="col-filter" style="margin-bottom: 12px;">
-              <div class="filter-popup-actions">
-                <button class="btn-filter-clear" (click)="clearFilter('timeline')">Clear</button>
-                <button class="btn-filter-apply" (click)="applyFilters()">Apply</button>
-              </div>
-            </div>
+          <td>
+            <select class="col-filter" [(ngModel)]="filters['emdReturnStatus']" (change)="applyFilters()">
+              <option value="">All EMD</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="Pending">Pending</option>
+            </select>
           </td>
           <td>
             <select class="col-filter" [(ngModel)]="filters['status']" (change)="applyFilters()">
-              <option value="">All</option>
+              <option value="">All Status</option>
+              <option value="Work Completed">Work Completed</option>
+              <option value="Tender Not Awarded">Tender Not Awarded</option>
+              <option value="Tender Documents Not Submitted">Docs Not Submitted</option>
               <option value="Running">Running</option>
-              <option value="Delayed">Delayed</option>
-              <option value="Completed">Completed</option>
-              <option value="Hold">Hold</option>
-              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
             </select>
           </td>
           <td></td>
@@ -168,77 +154,90 @@
       </thead>
       <tbody>
         <tr *ngIf="isLoading">
-          <td colspan="12" style="text-align: center; padding: 60px;">
+          <td colspan="13" style="text-align: center; padding: 60px;">
             <div class="notif-loading" style="display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 14px;">
               <div class="spinner" style="width: 32px; height: 32px; border-width: 3px;"></div>
-              <span>Fetching project data...</span>
+              <span>Fetching project tender master records...</span>
             </div>
           </td>
         </tr>
         <ng-container *ngIf="!isLoading">
           <tr *ngFor="let p of projects" (click)="viewDetails(p.id!)" class="clickable-row">
-            <td>
-              <div class="main-text highlighted font-weight-600">{{p.packageNo || 'N/A'}}</div>
+            <td class="text-center font-weight-600 sub-text">
+              {{p.srNo || p.id}}
             </td>
             <td>
-              <div class="main-text font-weight-500" style="color: #475569;">{{p.tenderId || 'N/A'}}</div>
-            </td>
-            <td>
-              <div class="tooltip-wrapper" [attr.data-tooltip]="p.nameOfWork || p.workOrderNumber || 'N/A'">
-                <div class="main-text font-weight-600 truncate-text" style="max-width: 180px;">{{p.nameOfWork || p.workOrderNumber || 'N/A'}}</div>
-              </div><br>
-              <div class="tooltip-wrapper" [attr.data-tooltip]="p.villageName || 'N/A'">
-                <div class="sub-text truncate-text" style="max-width: 180px;">{{p.villageName || 'N/A'}}</div>
+              <div class="main-text highlighted font-weight-600 truncate-text" style="max-width: 140px;" [title]="p.noticeNo || p.packageNo || 'N/A'">
+                {{p.noticeNo || p.packageNo || 'N/A'}}
               </div>
             </td>
             <td>
-              <div class="main-text">Raj Patel</div>
+              <div class="main-text font-weight-600">{{p.tenderId || 'N/A'}}</div>
             </td>
             <td>
-              <div class="tooltip-wrapper" data-tooltip="Shree Ram Constructions">
-                <div class="main-text truncate-text" style="max-width: 150px;">Shree Ram Const.</div>
+              <div class="tooltip-wrapper" [attr.data-tooltip]="p.nameOfWork || 'N/A'">
+                <div class="main-text font-weight-600 truncate-text" style="max-width: 260px;">{{p.nameOfWork || 'N/A'}}</div>
               </div>
+              <div class="sub-text truncate-text" style="max-width: 260px;">🏢 {{p.departmentName || 'N/A'}}</div>
             </td>
-            <td class="text-right font-weight-600" style="color: #475569;">{{p.estimatedTenderCost | currency:'INR':'symbol':'1.0-0'}}</td>
-            <td class="text-right font-weight-600" style="color: #0f172a;">{{p.tenderedCost | currency:'INR':'symbol':'1.0-0'}}</td>
-            
-            <td class="text-right font-weight-600" [ngClass]="getAboveBelow(p.estimatedTenderCost, p.tenderedCost).class">
-              {{getAboveBelow(p.estimatedTenderCost, p.tenderedCost).text}}
+            <td>
+              <div class="main-text font-weight-500">{{p.relatedTo || 'N/A'}}</div>
+              <div class="sub-text">Ref: {{p.refPerson || 'N/A'}}</div>
+            </td>
+            <td class="text-right font-weight-600 sub-text">
+              {{p.estimatedTenderCost ? (p.estimatedTenderCost | currency:'INR':'symbol':'1.0-0') : 'N/A'}}
+            </td>
+            <td class="text-right font-weight-600 main-text">
+              {{p.tenderedCost ? (p.tenderedCost | currency:'INR':'symbol':'1.0-0') : 'N/A'}}
             </td>
             
-            <td class="text-center text-sm font-weight-500" style="color: #475569;">{{p.workOrderDate | date:'dd MMM yyyy'}}</td>
+            <td class="text-right font-weight-600" [ngClass]="getAboveBelow(p.estimatedTenderCost, p.tenderedCost, p.aboveBelowPercentage).class">
+              {{getAboveBelow(p.estimatedTenderCost, p.tenderedCost, p.aboveBelowPercentage).text}}
+            </td>
+            
+            <td class="text-center font-weight-500">
+              <span class="badge" [ngClass]="p.workAwardedStatus === 'Work Completed' ? 'badge-completed' : (p.workAwardedStatus === 'Not' ? 'badge-grey' : 'badge-running')">
+                {{p.workAwardedStatus || 'N/A'}}
+              </span>
+            </td>
+
+            <td class="text-center text-sm font-weight-500">
+              {{p.workOrderDate ? (p.workOrderDate | date:'dd MMM yyyy') : 'NA'}}
+            </td>
             
             <td class="text-center">
-              <span class="badge" [ngClass]="$any(p)._daysLeft < -30 ? 'badge-overdue' : 'badge-delayed'">
-                {{ $any(p)._daysLeft }} Days
+              <span class="badge" [ngClass]="p.emdReturnStatus === 'Yes' ? 'badge-green' : 'badge-amber'">
+                EMD: {{p.emdReturnStatus || 'N/A'}}
               </span>
             </td>
             
             <td class="text-center">
-              <span class="badge" [ngClass]="'badge-' + $any(p)._status.toLowerCase().replace(' ', '')">{{$any(p)._status}}</span>
+              <span class="badge" [ngClass]="p.status === 'Work Completed' ? 'badge-completed' : (p.status === 'Tender Not Awarded' ? 'badge-grey' : 'badge-running')">
+                {{p.status || 'N/A'}}
+              </span>
             </td>
             
             <td class="text-center actions-cell">
-              <button class="btn-icon edit" title="Edit" (click)="$event.stopPropagation()">
+              <button class="btn-icon edit" title="Edit Project" (click)="editProject(p, $event)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
               </button>
-              <button class="btn-icon del" title="Delete" (click)="$event.stopPropagation()">
+              <button class="btn-icon del" title="Delete Project" (click)="deleteProject(p.id!, $event)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               </button>
             </td>
           </tr>
           <tr *ngIf="projects.length === 0">
-            <td colspan="12" style="text-align: center; color: #7f8c8d; padding: 40px;">No projects found.</td>
+            <td colspan="13" style="text-align: center; color: #7f8c8d; padding: 40px;">No tender project records found.</td>
           </tr>
         </ng-container>
       </tbody>
     </table>
   </div>
   
-  <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid #e1e8ed;">
+  <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border); background-color: var(--white);">
     <div class="limit-selector" style="display: flex; align-items: center; gap: 10px;">
-      <span style="font-size: 13px; color: #64748b; font-weight: 500;">Rows per page:</span>
-      <select [ngModel]="limit" (ngModelChange)="onLimitChange($event)" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d8e0; cursor: pointer; background-color: #f8fafc; font-weight: 500;">
+      <span style="font-size: 13px; color: var(--muted); font-weight: 500;">Rows per page:</span>
+      <select [ngModel]="limit" (ngModelChange)="onLimitChange($event)" class="filter-select" style="padding: 6px 10px;">
         <option [value]="10">10</option>
         <option [value]="25">25</option>
         <option [value]="50">50</option>
@@ -247,7 +246,7 @@
     </div>
     
     <div class="page-controls" style="display: flex; align-items: center; gap: 20px;">
-      <span style="font-size: 13px; color: #64748b; font-weight: 500;">{{showingText}}</span>
+      <span style="font-size: 13px; color: var(--muted); font-weight: 500;">{{showingText}}</span>
       <div style="display: flex; gap: 8px;">
         <button class="btn btn-secondary" [disabled]="offset === 0" (click)="prevPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="offset === 0 ? '0.5' : '1'">Previous</button>
         <button class="btn btn-secondary" [disabled]="offset + limit >= totalRecords" (click)="nextPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="offset + limit >= totalRecords ? '0.5' : '1'">Next</button>
@@ -256,98 +255,698 @@
   </div>
 </div>
 
-<!-- DETAIL MODE -->
+<!-- DETAIL MODE (SitePro V3 Project Internal Dashboard) -->
 <div class="detail-container" *ngIf="mode === 'detail' && selectedProject">
-  <div class="card" style="margin-bottom: 20px;">
-    <div class="card-hdr">Project: {{selectedProject.tenderId}} - {{selectedProject.nameOfWork}}</div>
-    <div class="card-body">
-      <div class="grid grid-3">
-        <div class="detail-item"><strong>Department:</strong> {{selectedProject.departmentName || 'N/A'}}</div>
-        <div class="detail-item"><strong>Package No:</strong> {{selectedProject.packageNo || 'N/A'}}</div>
-        <div class="detail-item"><strong>Work Order No:</strong> {{selectedProject.workOrderNumber || 'N/A'}}</div>
-        <div class="detail-item"><strong>Estimated Cost:</strong> ₹{{selectedProject.estimatedTenderCost | number}}</div>
-        <div class="detail-item"><strong>Tendered Cost:</strong> ₹{{selectedProject.tenderedCost | number}}</div>
-        <div class="detail-item"><strong>Work Order Date:</strong> {{selectedProject.workOrderDate || 'N/A'}}</div>
-        <div class="detail-item"><strong>Defects Liability:</strong> {{selectedProject.defectsLiabilityPeriod || 'N/A'}}</div>
-        <div class="detail-item"><strong>Security Deposit Amt:</strong> ₹{{selectedProject.securityDepositAmount | number}}</div>
-        <div class="detail-item"><strong>Retention Money/Bill:</strong> ₹{{selectedProject.retentionMoneyPerBill | number}}</div>
+
+  <!-- Header Banner -->
+  <div class="sitepro-header-banner">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+          <h2 style="font-size: 20px; font-weight: 700; color: #ffffff; margin: 0; font-family: 'Space Grotesk', sans-serif;">
+            {{selectedProject.nameOfWork || 'SSA Tender Project Details'}}
+          </h2>
+          <span class="sitepro-badge" [ngClass]="selectedProject.status === 'Work Completed' ? 'sitepro-badge-green' : 'sitepro-badge-blue'">
+            ● {{selectedProject.status || 'Active'}}
+          </span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px; font-size: 13px; color: #94a3b8; flex-wrap: wrap;">
+          <span>📋 Tender ID: <strong style="color: #60a5fa;">{{selectedProject.tenderId || selectedProject.srNo || 'N/A'}}</strong></span>
+          <span>📄 Notice/Pkg: <strong style="color: #e2e8f0;">{{selectedProject.noticeNo || selectedProject.packageNo || 'N/A'}}</strong></span>
+          <span>📝 Work Order #: <strong style="color: #e2e8f0;">{{selectedProject.workOrderNumber || 'N/A'}}</strong></span>
+          <span>🏢 Dept: <strong style="color: #cbd5e1;">{{selectedProject.departmentName || 'N/A'}}</strong></span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button class="btn btn-secondary" (click)="mode = 'list'" style="padding: 8px 16px; font-weight: 600; font-size: 13px;">
+          ← Back to Master List
+        </button>
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-hdr">Project Locations (Schools / Sites)</div>
-    <div class="card-body">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Block</th>
-            <th>School ID</th>
-            <th>School Name</th>
-            <th>Head</th>
-            <th>New ACR</th>
-            <th>Shed</th>
-            <th>Repairing</th>
-            <th>CWSN Toilet</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let loc of selectedProject.locations">
-            <td>{{loc.block}}</td>
-            <td>{{loc.schoolId}}</td>
-            <td>{{loc.schoolName}}</td>
-            <td>{{loc.head}}</td>
-            <td>{{loc.newAcr || '-'}}</td>
-            <td>{{loc.shed || '-'}}</td>
-            <td>{{loc.repairing || '-'}}</td>
-            <td>{{loc.cwsnToilet || '-'}}</td>
-          </tr>
-          <tr *ngIf="!selectedProject.locations || selectedProject.locations.length === 0">
-            <td colspan="8" style="text-align: center; color: #7f8c8d; padding: 20px;">No locations added yet.</td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- Navigation Tabs Strip -->
+  <div class="sitepro-nav-tabs">
+    <button class="sitepro-tab" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
+      📊 Executive Dashboard
+    </button>
+    <button class="sitepro-tab" [class.active]="activeTab === 'locations'" (click)="setTab('locations')">
+      🏫 Location Sub-sites ({{selectedProject.locations?.length || 0}})
+    </button>
+    <button class="sitepro-tab" [class.active]="activeTab === 'rabills'" (click)="setTab('rabills')">
+      🧾 RA Bills & Payments ({{selectedProject.raBills?.length || 0}})
+    </button>
+    <button class="sitepro-tab" [class.active]="activeTab === 'approvals'" (click)="setTab('approvals')">
+      📋 Manjuri & Approvals ({{selectedProject.approvals?.length || 0}})
+    </button>
+    <button class="sitepro-tab" [class.active]="activeTab === 'milestones'" (click)="setTab('milestones')">
+      🗓️ Milestones & Timeline
+    </button>
+    <button class="sitepro-tab" [class.active]="activeTab === 'team'" (click)="setTab('team')">
+      👥 Team & Officials
+    </button>
+    <button class="sitepro-tab" [class.active]="activeTab === 'documents'" (click)="setTab('documents')">
+      📁 Documents ({{projectDocuments.length}})
+    </button>
+  </div>
+
+  <!-- TAB 1: EXECUTIVE DASHBOARD (OVERVIEW) -->
+  <div *ngIf="activeTab === 'overview'">
+
+    <!-- KPI Summary Grid Cards -->
+    <div class="sitepro-kpi-grid">
+      <!-- Card 1: Tender & Contract Value -->
+      <div class="sitepro-kpi-card">
+        <div class="sitepro-kpi-lbl">Awarded Tender Value</div>
+        <div class="sitepro-kpi-val" style="color: #2563eb;">
+          ₹{{(selectedProject.tenderedCost || selectedProject.estimatedTenderCost || 0) | number:'1.0-0'}}
+        </div>
+        <div style="font-size: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+          <span style="color: var(--muted);">Est: ₹{{selectedProject.estimatedTenderCost | number:'1.0-0'}}</span>
+          <span [ngClass]="getAboveBelow(selectedProject.estimatedTenderCost, selectedProject.tenderedCost, selectedProject.aboveBelowPercentage).class" style="font-weight: 700;">
+            {{getAboveBelow(selectedProject.estimatedTenderCost, selectedProject.tenderedCost, selectedProject.aboveBelowPercentage).text}}
+          </span>
+        </div>
+      </div>
+
+      <!-- Card 2: Physical & Financial Execution -->
+      <div class="sitepro-kpi-card">
+        <div class="sitepro-kpi-lbl">Physical & Financial Progress</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0 4px 0;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--text);">Physical Progress</span>
+          <span style="font-size: 14px; font-weight: 700; color: #16a34a;">{{getPhysicalProgress(selectedProject)}}%</span>
+        </div>
+        <div class="sitepro-progress-track">
+          <div class="sitepro-progress-fill green" [style.width.%]="getPhysicalProgress(selectedProject)"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0 4px 0;">
+          <span style="font-size: 13px; font-weight: 600; color: var(--text);">Financial Progress</span>
+          <span style="font-size: 14px; font-weight: 700; color: #2563eb;">{{getFinancialProgress(selectedProject)}}%</span>
+        </div>
+        <div class="sitepro-progress-track">
+          <div class="sitepro-progress-fill" [style.width.%]="getFinancialProgress(selectedProject)"></div>
+        </div>
+      </div>
+
+      <!-- Card 3: Timeline & Work Order Dates -->
+      <div class="sitepro-kpi-card">
+        <div class="sitepro-kpi-lbl">Work Order & Target Dates</div>
+        <div style="margin-top: 6px;">
+          <div style="font-size: 12px; color: var(--muted);">Start (Work Order Date):</div>
+          <div style="font-size: 14px; font-weight: 700; color: var(--text);">
+            📅 {{selectedProject.workOrderDate ? (selectedProject.workOrderDate | date:'dd MMM yyyy') : 'Not Set'}}
+          </div>
+          <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">Target Completion Date:</div>
+          <div style="font-size: 14px; font-weight: 700; color: #2563eb;">
+            🏁 {{selectedProject.completionDateActual ? (selectedProject.completionDateActual | date:'dd MMM yyyy') : 'Not Set'}}
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: SD & Retention Money -->
+      <div class="sitepro-kpi-card">
+        <div class="sitepro-kpi-lbl">Security Deposit & Returns</div>
+        <div class="sitepro-kpi-val" style="color: #d97706; font-size: 18px;">
+          ₹{{selectedProject.securityDepositAmount ? (selectedProject.securityDepositAmount | number:'1.0-0') : '0'}}
+        </div>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">FDR No: {{selectedProject.sdFdrNo || 'N/A'}}</div>
+        <div style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
+          <span class="sitepro-badge sitepro-badge-amber">SD: {{selectedProject.sdReturnStatus || 'Pending'}}</span>
+          <span class="sitepro-badge sitepro-badge-blue">EMD: {{selectedProject.emdReturnStatus || 'Pending'}}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Alert Banner -->
+    <div class="sitepro-alert-banner" *ngIf="selectedProject.locations && selectedProject.locations.length > 0">
+      <span style="font-size: 20px;">💡</span>
+      <div>
+        <strong style="font-size: 14px;">Sub-site Date Sync Active:</strong>
+        <span style="font-size: 13px; margin-left: 6px;">
+          Project Start Date is aligned to the earliest location start date ({{selectedProject.workOrderDate | date:'dd MMM yyyy'}}), and Project Completion Date is set to the maximum closed date ({{selectedProject.completionDateActual | date:'dd MMM yyyy'}}).
+        </span>
+      </div>
+    </div>
+
+    <!-- Two-Column Master Cards -->
+    <div class="grid grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+      <!-- Card 1: Identification Details -->
+      <div class="card" style="margin: 0;">
+        <div class="card-hdr">📌 Tender Identification & Master Attributes</div>
+        <div class="card-body">
+          <div class="detail-item"><strong>Department Name:</strong> {{selectedProject.departmentName || 'N/A'}}</div>
+          <div class="detail-item"><strong>Tender ID:</strong> {{selectedProject.tenderId || 'N/A'}}</div>
+          <div class="detail-item"><strong>Notice No / Package:</strong> {{selectedProject.noticeNo || selectedProject.packageNo || 'N/A'}}</div>
+          <div class="detail-item"><strong>Tender Submission Date:</strong> {{selectedProject.dateOfSub ? (selectedProject.dateOfSub | date:'dd MMM yyyy') : 'N/A'}}</div>
+          <div class="detail-item"><strong>Related To:</strong> {{selectedProject.relatedTo || 'N/A'}}</div>
+          <div class="detail-item"><strong>Reference Person:</strong> {{selectedProject.refPerson || 'N/A'}}</div>
+          <div class="detail-item"><strong>Tender Fee:</strong> ₹{{selectedProject.tenderFee ? (selectedProject.tenderFee | number) : 'N/A'}} (Fee No: {{selectedProject.tenderFeeNo || 'N/A'}})</div>
+          <div class="detail-item"><strong>EMD Amount:</strong> ₹{{selectedProject.emdAmt ? (selectedProject.emdAmt | number) : 'N/A'}} (EMD No: {{selectedProject.emdNo || 'N/A'}})</div>
+          <div class="detail-item"><strong>EMD Return Status:</strong> <span class="badge badge-green">{{selectedProject.emdReturnStatus || 'N/A'}}</span></div>
+        </div>
+      </div>
+
+      <!-- Card 2: Work Order & Financial Details -->
+      <div class="card" style="margin: 0;">
+        <div class="card-hdr">🗓️ Work Order & Execution Parameters</div>
+        <div class="card-body">
+          <div class="detail-item"><strong>Work Order No:</strong> {{selectedProject.workOrderNumber || 'N/A'}}</div>
+          <div class="detail-item"><strong>Work Order Date:</strong> {{selectedProject.workOrderDate ? (selectedProject.workOrderDate | date:'dd MMM yyyy') : 'N/A'}}</div>
+          <div class="detail-item"><strong>Time Limit:</strong> {{selectedProject.timeLimit || 'N/A'}}</div>
+          <div class="detail-item"><strong>Target Completion Date:</strong> {{selectedProject.completionDateActual ? (selectedProject.completionDateActual | date:'dd MMM yyyy') : 'N/A'}}</div>
+          <div class="detail-item"><strong>Defects Liability Period (DLP):</strong> {{selectedProject.defectsLiabilityPeriod || 'N/A'}}</div>
+          <div class="detail-item"><strong>DLP Ended On:</strong> {{selectedProject.dlpEndedOn ? (selectedProject.dlpEndedOn | date:'dd MMM yyyy') : 'N/A'}}</div>
+          <div class="detail-item"><strong>SD RAB Return Status:</strong> <span class="badge badge-amber">{{selectedProject.sdRmRabReturnStatus || 'N/A'}}</span></div>
+          <div class="detail-item"><strong>Remarks:</strong> {{selectedProject.remarks || 'N/A'}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: LOCATION SUB-SITES -->
+  <div *ngIf="activeTab === 'locations'">
+    <div class="card">
+      <div class="card-hdr" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>🏫 Sub-site Locations & Dates (Min Location Start Date = Project Start Date, Max Location Closed Date = Project Closed Date)</span>
+        <button class="btn btn-primary btn-sm" (click)="openAddLocationModal()" style="font-size: 12px; padding: 6px 14px;">+ Add Sub-site Location</button>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="padding: 12px 16px;">Village / Taluka</th>
+              <th>Block & School Info</th>
+              <th>Head</th>
+              <th>Site Start Date (Min Date)</th>
+              <th>Site Closed Date (Max Date)</th>
+              <th>Physical Progress (%)</th>
+              <th>Status</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let loc of selectedProject.locations; let i = index">
+              <td style="padding: 12px 16px;">
+                <strong style="color: var(--text); font-size: 14px;">{{loc.villageName || loc.block || 'N/A'}}</strong>
+                <div style="font-size: 11px; color: var(--muted);">Taluka: {{loc.taluka || '-'}}</div>
+              </td>
+              <td>
+                <div style="font-weight: 600; color: var(--text);">{{loc.schoolName || '-'}}</div>
+                <div style="font-size: 11px; color: var(--muted);">School ID: {{loc.schoolId || '-'}}</div>
+              </td>
+              <td>{{loc.head || '-'}}</td>
+              <td>
+                <span class="badge badge-grey" style="font-size: 12px; font-weight: 600;">📅 {{loc.startDate ? (loc.startDate | date:'dd MMM yyyy') : 'Not Set'}}</span>
+              </td>
+              <td>
+                <span class="badge badge-grey" style="font-size: 12px; font-weight: 600;">🏁 {{loc.closedDate ? (loc.closedDate | date:'dd MMM yyyy') : 'Not Set'}}</span>
+              </td>
+              <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div class="sitepro-progress-track" style="width: 80px; margin: 0;">
+                    <div class="sitepro-progress-fill green" [style.width.%]="loc.physicalProgress || 0"></div>
+                  </div>
+                  <span style="font-weight: 700; font-size: 12px;">{{loc.physicalProgress || 0}}%</span>
+                </div>
+              </td>
+              <td><span class="badge" [ngClass]="loc.status === 'Completed' ? 'badge-completed' : 'badge-running'">{{loc.status || 'Running'}}</span></td>
+              <td class="text-center actions-cell">
+                <button class="btn-icon edit" title="Edit Sub-site Location" (click)="openEditLocationModal(loc, $event)">
+                  ✏️
+                </button>
+                <button class="btn-icon del" title="Delete Location" (click)="deleteLocationSite(loc.id, i, $event)">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!selectedProject.locations || selectedProject.locations.length === 0">
+              <td colspan="8" style="text-align: center; color: var(--muted); padding: 30px;">No sub-site locations registered for this project. Click "+ Add Sub-site Location" to configure site dates and progress.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: RA BILLS & PAYMENTS -->
+  <div *ngIf="activeTab === 'rabills'">
+    <div class="card">
+      <div class="card-hdr" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>🧾 RA Bills & Payment Records (Total Billed: ₹{{getTotalRaBilled(selectedProject) | number:'1.0-0'}}, Paid: ₹{{getTotalRaPaid(selectedProject) | number:'1.0-0'}})</span>
+        <span class="sitepro-badge sitepro-badge-blue">{{selectedProject.raBills?.length || 0}} Bills Recorded</span>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="padding: 12px 16px;">Bill #</th>
+              <th>Bill Date</th>
+              <th>Gross Amount</th>
+              <th>GST (18%)</th>
+              <th>Deductions (RM/TDS/Cess)</th>
+              <th>Net Payment</th>
+              <th>Invoice / Deposit Status</th>
+              <th>Payment Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let bill of selectedProject.raBills">
+              <td style="padding: 12px 16px; font-weight: 700;">{{bill.raBillNumber || bill.id}}</td>
+              <td>{{bill.dateOfBill ? (bill.dateOfBill | date:'dd MMM yyyy') : 'N/A'}}</td>
+              <td style="font-weight: 600;">₹{{bill.grossBillAmount ? (bill.grossBillAmount | number) : '0'}}</td>
+              <td>₹{{bill.totalGst ? (bill.totalGst | number) : '0'}}</td>
+              <td>₹{{((bill.rm5Percent || 0) + (bill.tds2Percent || 0) + (bill.labourCess1Percent || 0)) | number}}</td>
+              <td style="font-weight: 800; color: #16a34a;">₹{{bill.netPayment ? (bill.netPayment | number) : '0'}}</td>
+              <td>
+                <span style="font-size: 11px;">Sub: {{bill.invoiceSubmitted ? '✅' : '❌'}} | Dep: {{bill.billDeposited ? '✅' : '❌'}}</span>
+              </td>
+              <td><span class="badge" [ngClass]="bill.status === 'Paid' || bill.status === 'paid' ? 'badge-completed' : 'badge-running'">{{bill.status || 'Submitted'}}</span></td>
+            </tr>
+            <tr *ngIf="!selectedProject.raBills || selectedProject.raBills.length === 0">
+              <td colspan="8" style="text-align: center; color: var(--muted); padding: 30px;">No RA bills recorded for this project yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: APPROVALS & MANJURI -->
+  <div *ngIf="activeTab === 'approvals'">
+    <div class="card">
+      <div class="card-hdr">📋 Approvals, Manjuri & Time Extension Sanctions</div>
+      <div class="card-body" style="padding: 0;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="padding: 12px 16px;">Approval Type</th>
+              <th>Approval Ref # / Date</th>
+              <th>Sanctioned Amount</th>
+              <th>Extended Date</th>
+              <th>Description / Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let app of selectedProject.approvals">
+              <td style="padding: 12px 16px; font-weight: 700;">{{app.approvalType || 'Time Extension'}}</td>
+              <td>{{app.approvalNumber || '-'}} ({{app.approvalDate ? (app.approvalDate | date:'dd MMM yyyy') : 'N/A'}})</td>
+              <td style="font-weight: 600;">₹{{app.amount ? (app.amount | number) : '0'}}</td>
+              <td style="font-weight: 600; color: #2563eb;">{{app.timeLimitExtensionDate ? (app.timeLimitExtensionDate | date:'dd MMM yyyy') : 'N/A'}}</td>
+              <td>{{app.description || '-'}}</td>
+              <td><span class="badge badge-green">{{app.status || 'Approved'}}</span></td>
+            </tr>
+            <tr *ngIf="!selectedProject.approvals || selectedProject.approvals.length === 0">
+              <td colspan="6" style="text-align: center; color: var(--muted); padding: 30px;">No extension or extra work approvals recorded for this project yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: MILESTONES & TIMELINE -->
+  <div *ngIf="activeTab === 'milestones'">
+    <div class="card">
+      <div class="card-hdr">🗓️ Project Execution Milestones & Target Phases</div>
+      <div class="card-body">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+            <div>
+              <strong style="font-size: 14px; color: var(--text);">Phase 1: Site Survey & Foundation Work</strong>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Target Completion: {{selectedProject.workOrderDate ? (selectedProject.workOrderDate | date:'dd MMM yyyy') : 'Project Start'}}</div>
+            </div>
+            <span class="badge badge-completed">✅ Completed</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+            <div>
+              <strong style="font-size: 14px; color: var(--text);">Phase 2: Superstructure & Masonry Work</strong>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Target Completion: In Progress</div>
+            </div>
+            <span class="badge badge-running">🔄 In Progress ({{getPhysicalProgress(selectedProject)}}%)</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+            <div>
+              <strong style="font-size: 14px; color: var(--text);">Phase 3: Roofing, Plaster & Finishing Work</strong>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Target Completion: {{selectedProject.completionDateActual ? (selectedProject.completionDateActual | date:'dd MMM yyyy') : 'Target End'}}</div>
+            </div>
+            <span class="badge badge-grey">⏳ Pending</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+            <div>
+              <strong style="font-size: 14px; color: var(--text);">Phase 4: Inspection, DLP Period & Handover</strong>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">DLP Ended Date: {{selectedProject.dlpEndedOn ? (selectedProject.dlpEndedOn | date:'dd MMM yyyy') : 'N/A'}}</div>
+            </div>
+            <span class="badge badge-grey">⏳ Pending</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 6: TEAM & OFFICIALS -->
+  <div *ngIf="activeTab === 'team'">
+    <div class="card">
+      <div class="card-hdr">👥 Project Key Officials & Contact Directory</div>
+      <div class="card-body">
+        <div class="grid grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+          <div style="padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);">
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Reference Person</div>
+            <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px;">{{selectedProject.refPerson || 'N/A'}}</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Related To: {{selectedProject.relatedTo || 'N/A'}}</div>
+          </div>
+
+          <div style="padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);">
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">{{Constants.PROJECT_OFFICIALS.EXECUTIVE_ENGINEER.TITLE}}</div>
+            <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px;">{{Constants.PROJECT_OFFICIALS.EXECUTIVE_ENGINEER.NAME}}</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">📞 {{Constants.PROJECT_OFFICIALS.EXECUTIVE_ENGINEER.PHONE}}</div>
+          </div>
+
+          <div style="padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);">
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">{{Constants.PROJECT_OFFICIALS.DEPUTY_EXECUTIVE_ENGINEER.TITLE}}</div>
+            <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px;">{{Constants.PROJECT_OFFICIALS.DEPUTY_EXECUTIVE_ENGINEER.NAME}}</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">📞 {{Constants.PROJECT_OFFICIALS.DEPUTY_EXECUTIVE_ENGINEER.PHONE}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 7: PROJECT DOCUMENTS -->
+  <div *ngIf="activeTab === 'documents'">
+    <div class="card">
+      <div class="card-hdr" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>📁 Project Documents Repository (Tracked in database & stored in local folder)</span>
+        <button class="btn btn-primary btn-sm" (click)="openUploadModal()" style="font-size: 12px; padding: 6px 14px;">
+          + Upload New Document
+        </button>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="padding: 12px 16px;">Document Name</th>
+              <th>Notes / Description</th>
+              <th>Uploaded Date</th>
+              <th>Uploaded By</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let doc of projectDocuments">
+              <td style="padding: 12px 16px; font-weight: 700; color: var(--text);">
+                📄 {{doc.documentName}}
+              </td>
+              <td>{{doc.notes || 'No description notes'}}</td>
+              <td style="font-weight: 600;">
+                📅 {{doc.uploadedDate ? (doc.uploadedDate | date:'dd MMM yyyy, hh:mm a') : 'N/A'}}
+              </td>
+              <td>👤 {{doc.createdBy || 'System Admin'}}</td>
+              <td class="text-center actions-cell">
+                <button class="btn-icon edit" title="Download Document" (click)="downloadDocument(doc)">
+                  📥
+                </button>
+                <button class="btn-icon del" title="Delete Document" (click)="deleteDocument(doc.id, $event)">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!projectDocuments || projectDocuments.length === 0">
+              <td colspan="5" style="text-align: center; color: var(--muted); padding: 30px;">
+                No files uploaded for this project yet. Click "+ Upload New Document" to attach project files.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- UPLOAD DOCUMENT MODAL DIALOG -->
+<div class="modal-backdrop" *ngIf="showUploadModal" (click)="closeUploadModal()" style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px);">
+  <div class="modal-card" (click)="$event.stopPropagation()" style="background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 500px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+      <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text);">📁 Upload Project Document</h3>
+      <button (click)="closeUploadModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted);">✕</button>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Select Document File *</label>
+      <input type="file" (change)="onFileSelected($event)" class="col-filter" style="padding: 8px;">
+      <div style="font-size: 11px; color: var(--muted); margin-top: 4px;" *ngIf="selectedFileToUpload">
+        Selected: <strong>{{selectedFileToUpload.name}}</strong> ({{(selectedFileToUpload.size / 1024).toFixed(1)}} KB)
+      </div>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Document Name / Title</label>
+      <input type="text" [(ngModel)]="uploadDocumentName" placeholder="E.g. Approved Structural Drawing (Default: file name)" class="col-filter" style="padding: 10px; width: 100%;">
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Document Notes / Description</label>
+      <textarea [(ngModel)]="uploadNotes" placeholder="Enter notes or remarks regarding this document..." class="col-filter" style="width: 100%; height: 85px; resize: vertical; padding: 10px;"></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px;">
+      <button class="btn btn-secondary" (click)="closeUploadModal()" [disabled]="isUploading">Cancel</button>
+      <button class="btn btn-primary" (click)="submitUploadDocument()" [disabled]="isUploading || !selectedFileToUpload">
+        {{isUploading ? 'Uploading...' : 'Upload File'}}
+      </button>
     </div>
   </div>
 </div>
 
-<!-- CREATE MODE -->
-<div class="card" *ngIf="mode === 'create'">
-  <div class="card-hdr">Project Detail Registration</div>
+<!-- CREATE / EDIT MODE -->
+<div class="card" *ngIf="mode === 'create' || mode === 'edit'">
+  <div class="card-hdr">{{mode === 'edit' ? 'Update Tender Project' : 'Register Tender Project'}}</div>
   <div class="card-body">
     <div class="grid grid-3">
       <div class="form-group">
-        <label>Work Order Number</label>
-        <input type="text" [(ngModel)]="projectData.workOrderNumber" placeholder="Enter No.">
+        <label>Sr No.</label>
+        <input type="number" [(ngModel)]="projectData.srNo" placeholder="Sr No.">
       </div>
       <div class="form-group">
-        <label>Name of Work</label>
-        <input type="text" [(ngModel)]="projectData.nameOfWork" placeholder="Project Title">
+        <label>Department Name</label>
+        <input type="text" [(ngModel)]="projectData.departmentName" placeholder="E.g. Jamnagar Municipal Corporation">
       </div>
       <div class="form-group">
         <label>Tender ID</label>
         <input type="text" [(ngModel)]="projectData.tenderId" placeholder="Tender ID">
       </div>
       <div class="form-group">
-        <label>Department Name</label>
-        <input type="text" [(ngModel)]="projectData.departmentName" placeholder="E.g. Education Dept">
+        <label>Notice No. / Package No.</label>
+        <input type="text" [(ngModel)]="projectData.noticeNo" placeholder="Notice / Package No.">
       </div>
       <div class="form-group">
-        <label>Security Deposit Amount</label>
-        <input type="number" [(ngModel)]="projectData.securityDepositAmount">
+        <label>Tender Submission Date</label>
+        <input type="date" [(ngModel)]="projectData.dateOfSub">
       </div>
       <div class="form-group">
-        <label>Retention Money Per Bill</label>
-        <input type="number" [(ngModel)]="projectData.retentionMoneyPerBill">
+        <label>Related To</label>
+        <input type="text" [(ngModel)]="projectData.relatedTo" placeholder="E.g. Gokulbhai">
       </div>
+      <div class="form-group">
+        <label>Reference Person (Ref)</label>
+        <input type="text" [(ngModel)]="projectData.refPerson" placeholder="E.g. Narenra Nakum">
+      </div>
+      <div class="form-group">
+        <label>Tender Fee</label>
+        <input type="number" [(ngModel)]="projectData.tenderFee" placeholder="Tender Fee">
+      </div>
+      <div class="form-group">
+        <label>Tender Fee No.</label>
+        <input type="text" [(ngModel)]="projectData.tenderFeeNo" placeholder="Fee Receipt / DD No.">
+      </div>
+      <div class="form-group">
+        <label>EMD Amount</label>
+        <input type="number" [(ngModel)]="projectData.emdAmt" placeholder="EMD Amount">
+      </div>
+      <div class="form-group">
+        <label>EMD No.</label>
+        <input type="text" [(ngModel)]="projectData.emdNo" placeholder="EMD Transaction No.">
+      </div>
+      <div class="form-group">
+        <label>Estimated Cost (EST. COST)</label>
+        <input type="number" [(ngModel)]="projectData.estimatedTenderCost" placeholder="Estimated Cost">
+      </div>
+      <div class="form-group">
+        <label>Tendered Cost (TED COST)</label>
+        <input type="number" [(ngModel)]="projectData.tenderedCost" placeholder="Tendered Cost">
+      </div>
+      <div class="form-group">
+        <label>Above / Below %</label>
+        <input type="number" [(ngModel)]="projectData.aboveBelowPercentage" placeholder="E.g. 15 or -65.3">
+      </div>
+      <div class="form-group">
+        <label>Work Awarded Status</label>
+        <select [(ngModel)]="projectData.workAwardedStatus" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+          <option value="Work Completed">Work Completed</option>
+          <option value="Not">Not</option>
+          <option value="In Progress">In Progress</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Work Order No.</label>
+        <input type="text" [(ngModel)]="projectData.workOrderNumber" placeholder="Work Order No.">
+      </div>
+      <div class="form-group">
+        <label>Work Order Date</label>
+        <input type="date" [(ngModel)]="projectData.workOrderDate">
+      </div>
+      <div class="form-group">
+        <label>Time Limit</label>
+        <input type="text" [(ngModel)]="projectData.timeLimit" placeholder="E.g. 12 M">
+      </div>
+      <div class="form-group">
+        <label>Security Deposit (SD Amount)</label>
+        <input type="number" [(ngModel)]="projectData.securityDepositAmount" placeholder="SD Amount">
+      </div>
+      <div class="form-group">
+        <label>SD FDR NO</label>
+        <input type="text" [(ngModel)]="projectData.sdFdrNo" placeholder="FDR No.">
+      </div>
+      <div class="form-group">
+        <label>SD RAB Deduction</label>
+        <input type="number" [(ngModel)]="projectData.sdRabDeduction" placeholder="SD RAB Deduction">
+      </div>
+      <div class="form-group">
+        <label>SD RAB Return Amount</label>
+        <input type="number" [(ngModel)]="projectData.sdRabReturnAmount" placeholder="SD RAB Return">
+      </div>
+      <div class="form-group">
+        <label>Additional Deduction</label>
+        <input type="text" [(ngModel)]="projectData.additionalDeduction" placeholder="Additional Deduction">
+      </div>
+      <div class="form-group">
+        <label>Work Completed Amount</label>
+        <input type="number" [(ngModel)]="projectData.workCompletedAmount" placeholder="Completed Amount">
+      </div>
+      <div class="form-group">
+        <label>Pending Work Amount</label>
+        <input type="number" [(ngModel)]="projectData.pendingWorkAmount" placeholder="Pending Amount">
+      </div>
+      <div class="form-group">
+        <label>Completion Date of Work</label>
+        <input type="date" [(ngModel)]="projectData.completionDateActual">
+      </div>
+      <div class="form-group">
+        <label>Defects Liability Period</label>
+        <input type="text" [(ngModel)]="projectData.defectsLiabilityPeriod" placeholder="DLP">
+      </div>
+      <div class="form-group">
+        <label>DLP Ended On</label>
+        <input type="date" [(ngModel)]="projectData.dlpEndedOn">
+      </div>
+      <div class="form-group">
+        <label>EMD Return Status</label>
+        <input type="text" [(ngModel)]="projectData.emdReturnStatus" placeholder="E.g. Yes / Pending">
+      </div>
+      <div class="form-group">
+        <label>SD Return Status</label>
+        <input type="text" [(ngModel)]="projectData.sdReturnStatus" placeholder="E.g. Pending">
+      </div>
+      <div class="form-group">
+        <label>SD RM/RAB Return Status</label>
+        <input type="text" [(ngModel)]="projectData.sdRmRabReturnStatus" placeholder="E.g. Pending">
+      </div>
+      <div class="form-group">
+        <label>Overall Status</label>
+        <input type="text" [(ngModel)]="projectData.status" placeholder="E.g. Work Completed / Tender Not Awarded">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top: 15px;">
+      <label>Name of Work</label>
+      <textarea [(ngModel)]="projectData.nameOfWork" rows="3" placeholder="Full name of work / description"></textarea>
+    </div>
+
+    <div class="form-group" style="margin-top: 10px;">
+      <label>Remarks</label>
+      <textarea [(ngModel)]="projectData.remarks" rows="2" placeholder="Remarks"></textarea>
     </div>
     
     <div class="alert-box success" *ngIf="saveSuccess" style="margin-top: 20px;">
       Project details saved successfully!
     </div>
 
-    <div class="form-submit-wrapper" style="margin-top: 20px;">
-      <button class="btn btn-primary" (click)="saveProject()">Save Project Detail</button>
+    <div class="form-submit-wrapper" style="margin-top: 20px; display: flex; gap: 12px;">
+      <button class="btn btn-primary" (click)="saveProject()">Save Project Tender</button>
+      <button class="btn btn-secondary" (click)="mode = 'list'">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOCATION SUB-SITE MODAL DIALOG -->
+<div *ngIf="showLocationModal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+  <div style="background: var(--white); border-radius: 12px; width: 620px; max-width: 90vw; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden;">
+    <div style="padding: 16px 20px; background: var(--grey-l); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="font-size: 16px; font-weight: 700; color: var(--text); margin: 0;">{{locationModalMode === 'add' ? 'Add Location Sub-Site' : 'Edit Location Sub-Site'}}</h3>
+      <button (click)="closeLocationModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted);">✕</button>
+    </div>
+    
+    <div style="padding: 20px; max-height: 70vh; overflow-y: auto;">
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label>Village Name</label>
+          <input type="text" [(ngModel)]="editingLocation.villageName" placeholder="Village Name">
+        </div>
+        <div class="form-group">
+          <label>Block / Taluka</label>
+          <input type="text" [(ngModel)]="editingLocation.block" placeholder="Block / Taluka">
+        </div>
+        <div class="form-group">
+          <label>School ID</label>
+          <input type="text" [(ngModel)]="editingLocation.schoolId" placeholder="School ID">
+        </div>
+        <div class="form-group">
+          <label>School Name</label>
+          <input type="text" [(ngModel)]="editingLocation.schoolName" placeholder="School Name">
+        </div>
+        <div class="form-group">
+          <label>Site Start Date (Min Date)</label>
+          <input type="date" [(ngModel)]="editingLocation.startDate">
+        </div>
+        <div class="form-group">
+          <label>Site Closed Date (Max Date)</label>
+          <input type="date" [(ngModel)]="editingLocation.closedDate">
+        </div>
+        <div class="form-group">
+          <label>Physical Progress (%)</label>
+          <input type="number" [(ngModel)]="editingLocation.physicalProgress" placeholder="0 - 100">
+        </div>
+        <div class="form-group">
+          <label>Financial Progress (%)</label>
+          <input type="number" [(ngModel)]="editingLocation.financialProgress" placeholder="0 - 100">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select [(ngModel)]="editingLocation.status" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--white); color: var(--text);">
+            <option value="Running">Running</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Hold">Hold</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Head Person</label>
+          <input type="text" [(ngModel)]="editingLocation.head" placeholder="Head Person">
+        </div>
+      </div>
+      
+      <p style="font-size: 11px; color: var(--muted); margin-top: 10px; background: var(--grey-l); padding: 8px 12px; border-radius: 6px;">
+        💡 <strong>Auto-Date Sync:</strong> Saving this location will automatically recalculate the overall Project Start Date (MIN location start date) and Project Closed Date (MAX location closed date).
+      </p>
+    </div>
+
+    <div style="padding: 16px 20px; border-top: 1px solid var(--border); background: var(--grey-l); display: flex; justify-content: flex-end; gap: 10px;">
+      <button class="btn btn-secondary" (click)="closeLocationModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="saveLocationModal()">Save Sub-site Location</button>
     </div>
   </div>
 </div>

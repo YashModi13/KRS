@@ -1,7 +1,338 @@
-.kpi-warning-text {
-  font-size: 12px;
-  color: red;
+/* ── SitePro V3 Dashboard KPI Summary Grid ──────────────── */
+.sitepro-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
+
+/* SitePro V3 Middle Grid & Card Layouts */
+.sitepro-middle-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 1024px) {
+  .sitepro-middle-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sitepro-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  padding: 18px;
+  transition: all 0.2s ease;
+}
+
+.sitepro-card.full-width-card {
+  margin-bottom: 24px;
+}
+
+[data-theme="dark"] .sitepro-card {
+  background: linear-gradient(145deg, rgba(10, 22, 46, 0.9), rgba(5, 11, 20, 0.95));
+  border-color: rgba(37, 99, 235, 0.18);
+  box-shadow: 6px 6px 16px rgba(0, 0, 0, 0.6), -2px -2px 8px rgba(37, 99, 235, 0.08);
+}
+
+.sitepro-card-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.sitepro-card-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #2563eb;
+  letter-spacing: 0.2px;
+}
+
+[data-theme="dark"] .sitepro-card-title {
+  color: #60a5fa;
+}
+
+.sitepro-card-body {
+  max-height: 275px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.sitepro-card-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sitepro-card-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sitepro-card-body::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.3);
+  border-radius: 4px;
+}
+
+.sitepro-card-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
+/* Time Limit Project Item */
+.sitepro-project-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .sitepro-project-row {
+  border-bottom-color: rgba(30, 80, 160, 0.15);
+}
+
+.sitepro-project-row:hover {
+  background: var(--grey-l);
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .sitepro-project-row:hover {
+  background: rgba(15, 30, 65, 0.5);
+}
+
+.sitepro-project-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .sitepro-project-icon {
+  background: rgba(10, 22, 46, 0.8);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+.sitepro-project-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sitepro-project-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sitepro-progress-bar {
+  height: 5px;
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .sitepro-progress-bar {
+  background: rgba(20, 50, 100, 0.4);
+}
+
+.sitepro-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.sitepro-project-meta {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.sitepro-days-pill {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.sitepro-done-sub {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Alert Items */
+.sitepro-alert-item {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  border-radius: 9px;
+  padding: 9px 12px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .sitepro-alert-item {
+  background: rgba(5, 12, 28, 0.6);
+  border-color: rgba(37, 99, 235, 0.15);
+}
+
+.sitepro-alert-msg {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.sitepro-alert-sub {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* Pending Tasks Grid */
+.sitepro-pending-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.sitepro-pending-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 13px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .sitepro-pending-card {
+  background: rgba(3, 8, 18, 0.7);
+  border-color: rgba(20, 50, 120, 0.25);
+  box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+.sitepro-pending-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  margin-top: 4px;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+}
+
+.sitepro-pending-desc {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sitepro-pending-sub {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.sitepro-empty-state {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 16px;
+}
+
+.sitepro-empty-state-green {
+  color: #22c55e;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px;
+}
+
+.sitepro-kpi-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.95));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sitepro-kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent);
+}
+
+.sitepro-kpi-card.blue { border-left: 5px solid #3b82f6; }
+.sitepro-kpi-card.green { border-left: 5px solid #10b981; }
+.sitepro-kpi-card.purple { border-left: 5px solid #8b5cf6; }
+.sitepro-kpi-card.amber { border-left: 5px solid #f59e0b; }
+
+.sitepro-kpi-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: var(--bg);
+  box-shadow: inset 1px 1px 3px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+.sitepro-kpi-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.sitepro-kpi-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.sitepro-kpi-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.sitepro-kpi-card.blue .sitepro-kpi-val { color: #2563eb; }
+.sitepro-kpi-card.green .sitepro-kpi-val { color: #059669; }
+.sitepro-kpi-card.purple .sitepro-kpi-val { color: #7c3aed; }
+.sitepro-kpi-card.amber .sitepro-kpi-val { color: #d97706; }
+
+[data-theme="dark"] .sitepro-kpi-card {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(9, 13, 22, 0.95));
+  border-color: #334155;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .sitepro-kpi-card.blue .sitepro-kpi-val { color: #60a5fa; }
+[data-theme="dark"] .sitepro-kpi-card.green .sitepro-kpi-val { color: #34d399; }
+[data-theme="dark"] .sitepro-kpi-card.purple .sitepro-kpi-val { color: #a78bfa; }
+[data-theme="dark"] .sitepro-kpi-card.amber .sitepro-kpi-val { color: #fbbf24; }
 
 .tasks-subtitle {
   color: var(--muted);
@@ -11,22 +342,29 @@
 /* ── Todo Panel ─────────────────────────────────── */
 .todo-wrapper {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: var(--border) transparent;
 }
 .todo-wrapper::-webkit-scrollbar { width: 4px; }
 .todo-wrapper::-webkit-scrollbar-track { background: transparent; }
-.todo-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.todo-wrapper::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
 /* Todo card hover */
+.todo-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
 .todo-item:hover {
-  background: #f8fafc !important;
-  border-color: #bfdbfe !important;
+  background: var(--grey-l) !important;
+  border-color: var(--accent) !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+  box-shadow: var(--shadow) !important;
 }
 
 .todo-item.done-item {
-  background: #f9fafb !important;
+  background: var(--bg) !important;
+  opacity: 0.85;
 }
 
 /* Priority indicator badge */
@@ -41,9 +379,9 @@
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
-.priority-badge.high  { background: #fee2e2; color: #991b1b; }
-.priority-badge.medium { background: #fef9c3; color: #854d0e; }
-.priority-badge.low   { background: #dcfce7; color: #166534; }
+.priority-badge.high  { background: var(--red-l); color: var(--red); }
+.priority-badge.medium { background: var(--yellow-l); color: var(--yellow); }
+.priority-badge.low   { background: var(--green-l); color: var(--green); }
 
 /* Action icon buttons */
 .btn-icon {
@@ -54,6 +392,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  color: var(--muted);
 }
 .btn-icon:hover {
   filter: brightness(0.9);
@@ -69,29 +408,35 @@
   font-size: 11px;
   font-weight: 700;
   border-radius: 6px;
-  border: 1px solid #86efac;
-  background: #f0fdf4;
-  color: #16a34a;
+  border: 1px solid var(--green);
+  background: var(--green-l);
+  color: var(--green);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.18s ease;
   letter-spacing: 0.2px;
 }
 .btn-done:hover {
-  background: #16a34a;
+  background: var(--green);
   color: #fff;
-  border-color: #16a34a;
+  border-color: var(--green);
   transform: scale(1.04);
 }
 
 /* Date picker inside header */
 input[type="date"] {
   cursor: pointer;
+  background-color: var(--white);
+  color: var(--text);
+  border-color: var(--border);
 }
 input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.7;
   transition: opacity 0.2s;
+}
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
 }
 input[type="date"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
@@ -113,9 +458,137 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   align-items: center;
   gap: 8px;
   padding: 40px 20px;
-  background: #f8fafc;
+  background: var(--bg);
   border-radius: 8px;
-  border: 1px dashed #cbd5e1;
-  color: #94a3b8;
+  border: 1px dashed var(--border);
+  color: var(--muted);
   font-size: 13px;
+}
+
+[data-theme="dark"] .todo-item {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: #334155;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .todo-item:hover {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: #60a5fa !important;
+}
+
+[data-theme="dark"] .todo-empty {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: #334155;
+}
+
+[data-theme="dark"] .card {
+  background: linear-gradient(145deg, rgba(10, 22, 46, 0.9), rgba(5, 11, 20, 0.95));
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  box-shadow: 6px 6px 16px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .card-hdr {
+  border-bottom-color: rgba(37, 99, 235, 0.2);
+  color: #f8fafc;
+}
+
+/* Dashboard Task Chips */
+.dashboard-task-chip {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .dashboard-task-chip {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: #334155;
+}
+
+.dashboard-task-chip.done {
+  border-left: 4px solid #10b981;
+}
+
+.dashboard-task-chip.pending {
+  border-left: 4px solid #3b82f6;
+}
+
+.task-check-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.task-dot-badge {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.task-dot-badge.high { color: #ef4444; }
+.task-dot-badge.medium { color: #f59e0b; }
+.task-dot-badge.low { color: #10b981; }
+
+.task-chip-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.task-chip-title.strikethrough {
+  text-decoration: line-through;
+  opacity: 0.75;
+}
+
+.task-chip-sub {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Table wrapper 5-row limit, sleek scrollbar & sticky header */
+.table-wrapper {
+  max-height: 345px;
+  overflow-y: auto;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.6);
+}
+
+.table-wrapper th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--white);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .table-wrapper th {
+  background: #0a162e;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }

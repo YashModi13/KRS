@@ -1,11 +1,19 @@
 package com.krs.backend.models;
 
 import jakarta.persistence.*;
+import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "projects", schema = "krs_schema")
 public class Project {
@@ -13,6 +21,9 @@ public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "sr_no")
+    private Long srNo;
 
     @Column(name = "work_order_number")
     private String workOrderNumber;
@@ -63,11 +74,23 @@ public class Project {
     @Column(name = "package_no")
     private String packageNo;
 
+    @Column(name = "notice_no")
+    private String noticeNo;
+
     @Column(name = "tender_id")
     private String tenderId;
 
     @Column(name = "name_of_work", columnDefinition = "TEXT")
     private String nameOfWork;
+
+    @Column(name = "related_to")
+    private String relatedTo;
+
+    @Column(name = "tender_fee")
+    private BigDecimal tenderFee;
+
+    @Column(name = "tender_fee_no")
+    private String tenderFeeNo;
 
     @Column(name = "dd_no")
     private String ddNo;
@@ -75,23 +98,84 @@ public class Project {
     @Column(name = "emd_amt")
     private BigDecimal emdAmt;
 
+    @Column(name = "emd_no")
+    private String emdNo;
+
     @Column(name = "estimated_tender_cost")
     private BigDecimal estimatedTenderCost;
 
     @Column(name = "tendered_cost")
     private BigDecimal tenderedCost;
 
+    @Column(name = "above_below_percentage")
+    private BigDecimal aboveBelowPercentage;
+
+    @Column(name = "ref_person")
+    private String refPerson;
+
+    @Column(name = "work_awarded_status")
+    private String workAwardedStatus;
+
     @Column(name = "work_order_date")
     private LocalDate workOrderDate;
+
+    @Column(name = "time_limit")
+    private String timeLimit;
+
+    @Column(name = "sd_fdr_no")
+    private String sdFdrNo;
+
+    @Column(name = "remarks", columnDefinition = "TEXT")
+    private String remarks;
+
+    @Column(name = "sd_rab_deduction")
+    private BigDecimal sdRabDeduction;
+
+    @Column(name = "sd_rab_return_amount")
+    private BigDecimal sdRabReturnAmount;
+
+    @Column(name = "additional_deduction")
+    private String additionalDeduction;
+
+    @Column(name = "work_completed_amount")
+    private BigDecimal workCompletedAmount;
+
+    @Column(name = "pending_work_amount")
+    private BigDecimal pendingWorkAmount;
 
     @Column(name = "defects_liability_period")
     private String defectsLiabilityPeriod;
 
+    @Column(name = "dlp_ended_on")
+    private LocalDate dlpEndedOn;
+
     @Column(name = "security_deposit_date")
     private LocalDate securityDepositDate;
 
+    @Column(name = "emd_return_status")
+    private String emdReturnStatus;
+
+    @Column(name = "sd_return_status")
+    private String sdReturnStatus;
+
+    @Column(name = "sd_rm_rab_return_status")
+    private String sdRmRabReturnStatus;
+
+    @Column(name = "status")
+    private String status;
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectLocation> locations;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RaBill> raBills;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Approval> approvals;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ProjectDocument> documents;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -107,92 +191,4 @@ public class Project {
 
     @PreUpdate
     protected void onUpdate() { updatedAt = LocalDateTime.now(); }
-
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getWorkOrderNumber() { return workOrderNumber; }
-    public void setWorkOrderNumber(String workOrderNumber) { this.workOrderNumber = workOrderNumber; }
-
-    public String getNegotiationLetterFile() { return negotiationLetterFile; }
-    public void setNegotiationLetterFile(String negotiationLetterFile) { this.negotiationLetterFile = negotiationLetterFile; }
-
-    public String getVillageName() { return villageName; }
-    public void setVillageName(String villageName) { this.villageName = villageName; }
-
-    public BigDecimal getSecurityDepositAmount() { return securityDepositAmount; }
-    public void setSecurityDepositAmount(BigDecimal securityDepositAmount) { this.securityDepositAmount = securityDepositAmount; }
-
-    public String getSecurityDepositType() { return securityDepositType; }
-    public void setSecurityDepositType(String securityDepositType) { this.securityDepositType = securityDepositType; }
-
-    public String getSecurityDepositFile() { return securityDepositFile; }
-    public void setSecurityDepositFile(String securityDepositFile) { this.securityDepositFile = securityDepositFile; }
-
-    public BigDecimal getRetentionMoneyPerBill() { return retentionMoneyPerBill; }
-    public void setRetentionMoneyPerBill(BigDecimal retentionMoneyPerBill) { this.retentionMoneyPerBill = retentionMoneyPerBill; }
-
-    public BigDecimal getExtraExcessAmount() { return extraExcessAmount; }
-    public void setExtraExcessAmount(BigDecimal extraExcessAmount) { this.extraExcessAmount = extraExcessAmount; }
-
-    public LocalDate getTimeLimitExtension() { return timeLimitExtension; }
-    public void setTimeLimitExtension(LocalDate timeLimitExtension) { this.timeLimitExtension = timeLimitExtension; }
-
-    public LocalDate getCompletionDateActual() { return completionDateActual; }
-    public void setCompletionDateActual(LocalDate completionDateActual) { this.completionDateActual = completionDateActual; }
-
-    public LocalDate getCompletionDateExtended() { return completionDateExtended; }
-    public void setCompletionDateExtended(LocalDate completionDateExtended) { this.completionDateExtended = completionDateExtended; }
-
-    public String getLetterByKrsFile() { return letterByKrsFile; }
-    public void setLetterByKrsFile(String letterByKrsFile) { this.letterByKrsFile = letterByKrsFile; }
-
-    public String getLetterByDeptFile() { return letterByDeptFile; }
-    public void setLetterByDeptFile(String letterByDeptFile) { this.letterByDeptFile = letterByDeptFile; }
-
-    public String getDepartmentName() { return departmentName; }
-    public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
-
-    public LocalDate getDateOfSub() { return dateOfSub; }
-    public void setDateOfSub(LocalDate dateOfSub) { this.dateOfSub = dateOfSub; }
-
-    public String getPackageNo() { return packageNo; }
-    public void setPackageNo(String packageNo) { this.packageNo = packageNo; }
-
-    public String getTenderId() { return tenderId; }
-    public void setTenderId(String tenderId) { this.tenderId = tenderId; }
-
-    public String getNameOfWork() { return nameOfWork; }
-    public void setNameOfWork(String nameOfWork) { this.nameOfWork = nameOfWork; }
-
-    public String getDdNo() { return ddNo; }
-    public void setDdNo(String ddNo) { this.ddNo = ddNo; }
-
-    public BigDecimal getEmdAmt() { return emdAmt; }
-    public void setEmdAmt(BigDecimal emdAmt) { this.emdAmt = emdAmt; }
-
-    public BigDecimal getEstimatedTenderCost() { return estimatedTenderCost; }
-    public void setEstimatedTenderCost(BigDecimal estimatedTenderCost) { this.estimatedTenderCost = estimatedTenderCost; }
-
-    public BigDecimal getTenderedCost() { return tenderedCost; }
-    public void setTenderedCost(BigDecimal tenderedCost) { this.tenderedCost = tenderedCost; }
-
-    public LocalDate getWorkOrderDate() { return workOrderDate; }
-    public void setWorkOrderDate(LocalDate workOrderDate) { this.workOrderDate = workOrderDate; }
-
-    public String getDefectsLiabilityPeriod() { return defectsLiabilityPeriod; }
-    public void setDefectsLiabilityPeriod(String defectsLiabilityPeriod) { this.defectsLiabilityPeriod = defectsLiabilityPeriod; }
-
-    public LocalDate getSecurityDepositDate() { return securityDepositDate; }
-    public void setSecurityDepositDate(LocalDate securityDepositDate) { this.securityDepositDate = securityDepositDate; }
-
-    public List<ProjectLocation> getLocations() { return locations; }
-    public void setLocations(List<ProjectLocation> locations) { this.locations = locations; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

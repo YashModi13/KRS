@@ -2,7 +2,6 @@ package com.krs.backend.controllers;
 import com.krs.backend.models.User;
 import com.krs.backend.repositories.UserRepository;
 import com.krs.backend.security.JwtUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -11,13 +10,21 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.HashMap;
 
+import com.krs.backend.models.ThemeMode;
+
 @CrossOrigin(origins = "${app.cors.origins}", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    @Autowired AuthenticationManager authenticationManager;
-    @Autowired JwtUtils jwtUtils;
-    @Autowired UserRepository userRepository;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
+    private final UserRepository userRepository;
+
+    public AuthController(AuthenticationManager authenticationManager, JwtUtils jwtUtils, UserRepository userRepository) {
+        this.authenticationManager = authenticationManager;
+        this.jwtUtils = jwtUtils;
+        this.userRepository = userRepository;
+    }
 
     @PostMapping("/login")
     public Map<String, Object> authenticateUser(@RequestBody Map<String, String> loginRequest) {
@@ -36,6 +43,7 @@ public class AuthController {
         Map<String, Object> response = new HashMap<>();
         response.put("token", jwt);
         response.put("username", authentication.getName());
+        response.put("theme", user != null && user.getTheme() != null ? user.getTheme().getValue() : ThemeMode.LIGHT.getValue());
         return response;
     }
 }

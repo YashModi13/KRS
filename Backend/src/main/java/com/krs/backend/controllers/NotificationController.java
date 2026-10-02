@@ -6,7 +6,6 @@ import com.krs.backend.models.UserNotificationRead;
 import com.krs.backend.repositories.NotificationRepository;
 import com.krs.backend.repositories.UserRepository;
 import com.krs.backend.repositories.UserNotificationReadRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,31 +14,72 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+
 @CrossOrigin(origins = "${app.cors.origins}", maxAge = 3600)
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
-    @Autowired
-    private NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
+    private final UserNotificationReadRepository userNotificationReadRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private UserNotificationReadRepository userNotificationReadRepository;
+    public NotificationController(
+            NotificationRepository notificationRepository,
+            UserNotificationReadRepository userNotificationReadRepository,
+            UserRepository userRepository
+    ) {
+        this.notificationRepository = notificationRepository;
+        this.userNotificationReadRepository = userNotificationReadRepository;
+        this.userRepository = userRepository;
+    }
 
-    @Autowired
-    private UserRepository userRepository;
+    private Long getCurrentUserId() {
+        try {
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof UserDetails) {
+                String username = ((UserDetails) principal).getUsername();
+                User u = userRepository.findUserByUsername(username);
+                if (u != null) return u.getId();
+            }
+        } catch (Exception ignored) {}
+        return 1L; // Fallback for default user
+    }
 
     public static class NotificationDTO {
-        public Long id;
-        public String message;
-        public String type;
-        public boolean isRead;
-        public LocalDateTime createdAt;
+        private Long id;
+        private String message;
+        private String type;
+        
+        @JsonProperty("isRead")
+        private boolean isRead;
+        private LocalDateTime createdAt;
+
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+
+        @JsonProperty("isRead")
+        public boolean isRead() { return isRead; }
+
+        @JsonProperty("isRead")
+        public void setRead(boolean read) { isRead = read; }
+
+        public LocalDateTime getCreatedAt() { return createdAt; }
+        public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     }
 
     @GetMapping("/unread-count")
     public ResponseEntity<Long> getUnreadCount() {
-        Long currentUserId = 1L;
+        Long currentUserId = getCurrentUserId();
         long totalNotifications = notificationRepository.count();
         long readNotifications = userNotificationReadRepository.countByUserId(currentUserId);
         return ResponseEntity.ok(Math.max(0, totalNotifications - readNotifications));
@@ -49,7 +89,7 @@ public class NotificationController {
     public List<NotificationDTO> getNotifications(
             @RequestParam(defaultValue = "50") int limit,
             @RequestParam(defaultValue = "0") int offset) {
-        Long currentUserId = 1L; // Hardcoded to superadmin for now
+        Long currentUserId = getCurrentUserId();
         List<Notification> paginatedNotifications = notificationRepository.findWithLimitAndOffset(limit, offset);
         
         Set<Long> readNotificationIds = userNotificationReadRepository.findByUserId(currentUserId)
@@ -59,18 +99,18 @@ public class NotificationController {
 
         return paginatedNotifications.stream().map(n -> {
             NotificationDTO dto = new NotificationDTO();
-            dto.id = n.getId();
-            dto.message = n.getMessage();
-            dto.type = n.getType();
-            dto.createdAt = n.getCreatedAt();
-            dto.isRead = readNotificationIds.contains(n.getId());
+            dto.setId(n.getId());
+            dto.setMessage(n.getMessage());
+            dto.setType(n.getType());
+            dto.setCreatedAt(n.getCreatedAt());
+            dto.setRead(readNotificationIds.contains(n.getId()));
             return dto;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     @PutMapping("/{id}/read")
-    public ResponseEntity<?> markAsRead(@PathVariable Long id) {
-        Long currentUserId = 1L;
+    public ResponseEntity<Void> markAsRead(@PathVariable Long id) {
+        Long currentUserId = getCurrentUserId();
         if (!userNotificationReadRepository.existsByUserIdAndNotificationId(currentUserId, id)) {
             User user = userRepository.findById(currentUserId).orElseThrow();
             Notification notification = notificationRepository.findById(id).orElseThrow();
@@ -83,9 +123,19 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{id}/unread")
+    public ResponseEntity<Void> markAsUnread(@PathVariable Long id) {
+        Long currentUserId = getCurrentUserId();
+        List<UserNotificationRead> reads = userNotificationReadRepository.findByUserId(currentUserId);
+        reads.stream()
+                .filter(r -> r.getNotification() != null && r.getNotification().getId().equals(id))
+                .forEach(userNotificationReadRepository::delete);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/read-all")
-    public ResponseEntity<?> markAllAsRead() {
-        Long currentUserId = 1L;
+    public ResponseEntity<Void> markAllAsRead() {
+        Long currentUserId = getCurrentUserId();
         User user = userRepository.findById(currentUserId).orElseThrow();
         
         List<Notification> allNotifications = notificationRepository.findAll();
@@ -101,7 +151,7 @@ public class NotificationController {
                     read.setUser(user);
                     read.setNotification(n);
                     return read;
-                }).collect(Collectors.toList());
+                }).toList();
                 
         if (!newReads.isEmpty()) {
             userNotificationReadRepository.saveAll(newReads);

@@ -1,7 +1,6 @@
 package com.krs.backend.repositories;
 
 import com.krs.backend.models.Project;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -14,6 +13,5 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
 
     List<Project> findAll();
 
-    @EntityGraph(attributePaths = {"locations"})
     Optional<Project> findById(Long id);
 }

@@ -80,7 +80,7 @@
   <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid #e1e8ed;">
     <div class="limit-selector" style="display: flex; align-items: center; gap: 10px;">
       <span style="font-size: 13px; color: #64748b; font-weight: 500;">Rows per page:</span>
-      <select [ngModel]="limit" (ngModelChange)="changePageLimit($event)" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d8e0; cursor: pointer; background-color: #f8fafc; font-weight: 500;">
+      <select [ngModel]="limit" (ngModelChange)="changePageLimit($event)" class="col-filter" style="padding: 6px 10px; width: auto; font-weight: 500;">
         <option [ngValue]="10">10</option>
         <option [ngValue]="25">25</option>
         <option [ngValue]="50">50</option>

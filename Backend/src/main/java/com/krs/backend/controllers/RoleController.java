@@ -2,18 +2,19 @@ package com.krs.backend.controllers;
 
 import com.krs.backend.models.Role;
 import com.krs.backend.repositories.RoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/roles")
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "${app.cors.origins}", maxAge = 3600)
 public class RoleController {
 
     private final RoleRepository roleRepository;
@@ -34,8 +35,8 @@ public class RoleController {
         
         int page = offset / limit;
         
-        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(
-            sortDir.equalsIgnoreCase("desc") ? org.springframework.data.domain.Sort.Direction.DESC : org.springframework.data.domain.Sort.Direction.ASC,
+        Sort sort = Sort.by(
+            sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC,
             sortBy
         );
         
@@ -50,7 +51,7 @@ public class RoleController {
 
     @GetMapping("/check-name")
     public ResponseEntity<Boolean> checkNameExists(@RequestParam String name, @RequestParam(required = false) Long excludeId) {
-        java.util.Optional<Role> roleOpt = roleRepository.findByNameIgnoreCase(name);
+        Optional<Role> roleOpt = roleRepository.findByNameIgnoreCase(name);
         boolean exists = roleOpt.isPresent() && (excludeId == null || !roleOpt.get().getId().equals(excludeId));
         return ResponseEntity.ok(exists);
     }

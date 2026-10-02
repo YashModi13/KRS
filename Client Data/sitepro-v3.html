@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SitePro V3 - Gujarat PWD SSA Project Management System</title>
+
+  <!-- React 18 & ReactDOM 18 UMD -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  
+  <!-- Babel Standalone for live JSX transpilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #050b14; color: #c8deff; font-family: 'Inter', sans-serif; min-height: 100vh; width: 100%; }
+    #root { min-height: 100vh; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // Storage Polyfill for standalone browser execution
+    if (!window.storage) {
+      window.storage = {
+        get: async function(key) {
+          try {
+            const v = localStorage.getItem(key);
+            return v ? { value: v } : null;
+          } catch(e) { return null; }
+        },
+        set: async function(key, val) {
+          try {
+            localStorage.setItem(key, val);
+          } catch(e) {}
+        }
+      };
+    }
+  </script>
+
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    const DB_KEY = "sitepro_v3_pwd";
+
+    const defaultDB = {
+      projects: [
+        {
+          id:"p1", name:"GCPS Upgradation – Batch 7", workOrderNo:"PWD/SSA/2025-26/0047",
+          negotiationLetterNo:"NL/DPI/2025/0312", negotiationLetterDoc:"", workOrderDoc:"",
+          contractorName:"Rajkot Civil Works Pvt Ltd", tenderAmount:8500000, contractAmount:8200000,
+          securityDeposit:410000, sdType:"FDR", sdDoc:"", sdReleased:false,
+          sdReminderDate:"2026-12-31", sdReminderNote:"Release after DLP completion",
+          retentionPct:5, retentionReleased:false,
+          rmReminderDate:"2026-12-31", rmReminderNote:"12 months post completion cert",
+          tenderStartDate:"2025-10-01", tenderEndDate:"2026-03-31", extendedEndDate:"2026-06-30",
+          timeLimitExtensions:[
+            { id:"tl1", upto:"2026-06-30", reason:"Monsoon delay", approvalRef:"PWD/EE/TL/2026/001", doc:"", approvedOn:"2026-01-15" }
+          ],
+          status:"active",
+          villages:[
+            { id:"v1", name:"Kothariya", startDate:"2025-10-01", endDate:"2026-04-30", extEndDate:"", status:"active", note:"" },
+            { id:"v2", name:"Mavdi",     startDate:"2025-10-15", endDate:"2026-05-31", extEndDate:"", status:"active", note:"" },
+            { id:"v3", name:"Raiya",     startDate:"2025-11-01", endDate:"2026-06-30", extEndDate:"2026-08-31", status:"active", note:"Extended due to land issue" },
+          ],
+          raBills:[
+            { id:"rb1", label:"RA Bill 1", billDate:"2026-01-05", amount:1800000, retentionAmt:90000, invoiceSubmitted:true, invoiceDate:"2026-01-05", checkPersonName:"Ramesh Patel (EE)", deptBillCopy:true, deptBillDoc:"", deposited:true, depositDate:"2026-01-20", status:"paid" },
+            { id:"rb2", label:"RA Bill 2", billDate:"2026-02-10", amount:2200000, retentionAmt:110000, invoiceSubmitted:true, invoiceDate:"2026-02-10", checkPersonName:"Suresh Dave (DEE)", deptBillCopy:true, deptBillDoc:"", deposited:false, depositDate:"", status:"submitted" },
+          ],
+          extraWorkAmt:320000, extraWorkApprovalRef:"PWD/EE/EW/2026/005", extraWorkDoc:"",
+          excessAmount:0, excessApprovalRef:"",
+          letters:[
+            { id:"l1", type:"KRS", subject:"Request for time extension – Kothariya site", date:"2026-01-10", doc:"", authorName:"KRS Office" },
+            { id:"l2", type:"Department", subject:"Approved – Time extension granted", date:"2026-01-18", doc:"", authorName:"EE PWD Rajkot" },
+          ],
+          milestones:[
+            { id:"m1", title:"Foundation – All Villages", due:"2025-12-15", done:true },
+            { id:"m2", title:"Superstructure – Kothariya", due:"2026-02-28", done:true },
+            { id:"m3", title:"Superstructure – Mavdi & Raiya", due:"2026-03-31", done:false },
+            { id:"m4", title:"Finishing – All Sites", due:"2026-05-30", done:false },
+            { id:"m5", title:"Handover & Completion Cert", due:"2026-06-30", done:false },
+          ],
+          weeklyProgress:[
+            { week:"W1 Apr", earthwork:100, masonry:85, concrete:70, steel:60, finishing:10 },
+            { week:"W2 Apr", earthwork:100, masonry:90, concrete:78, steel:68, finishing:18 },
+          ],
+          documents:[
+            { id:"d1", name:"Approved Drawing Set", type:"Drawing", date:"2025-10-05", note:"" },
+            { id:"d2", name:"Work Order Copy", type:"WorkOrder", date:"2025-10-01", note:"" },
+            { id:"d3", name:"FDR Receipt – SD", type:"SD", date:"2025-10-08", note:"" },
+          ],
+          notes:"SSA contract. Retention to be released 12 months after completion certificate.",
+        },
+        {
+          id:"p2", name:"NH-48 Underpass Bridge", workOrderNo:"PWD/BR/2025-26/0089",
+          negotiationLetterNo:"NL/BR/2025/0210", negotiationLetterDoc:"", workOrderDoc:"",
+          contractorName:"Patel Infrastructure Ltd", tenderAmount:12000000, contractAmount:11500000,
+          securityDeposit:575000, sdType:"BankGuarantee", sdDoc:"", sdReleased:false,
+          sdReminderDate:"2027-03-31", sdReminderNote:"",
+          retentionPct:10, retentionReleased:false,
+          rmReminderDate:"2027-03-31", rmReminderNote:"",
+          tenderStartDate:"2026-02-01", tenderEndDate:"2026-12-31", extendedEndDate:"",
+          timeLimitExtensions:[],
+          status:"active",
+          villages:[
+            { id:"v1", name:"Site A – NH-48 Entry", startDate:"2026-02-01", endDate:"2026-08-31", extEndDate:"", status:"active", note:"" },
+            { id:"v2", name:"Site B – NH-48 Exit", startDate:"2026-02-15", endDate:"2026-10-31", extEndDate:"", status:"active", note:"" },
+          ],
+          raBills:[
+            { id:"rb1", label:"RA Bill 1", billDate:"2026-04-01", amount:2500000, retentionAmt:250000, invoiceSubmitted:true, invoiceDate:"2026-04-01", checkPersonName:"Nitin More (EE)", deptBillCopy:false, deptBillDoc:"", deposited:false, depositDate:"", status:"submitted" },
+          ],
+          extraWorkAmt:0, extraWorkApprovalRef:"", extraWorkDoc:"",
+          excessAmount:0, excessApprovalRef:"",
+          letters:[], milestones:[
+            { id:"m1", title:"Soil Testing & Survey", due:"2026-02-20", done:true },
+            { id:"m2", title:"Pile Foundation", due:"2026-05-15", done:false },
+            { id:"m3", title:"Abutment Work", due:"2026-08-31", done:false },
+          ],
+          weeklyProgress:[], documents:[], notes:"",
+        },
+      ],
+      todos:[
+        { id:"t1", projectId:"p1", task:"Collect SD FDR from contractor", doneBy:"Dushyant", done:true, doneDate:"2026-01-10", remark:"Received and filed" },
+        { id:"t2", projectId:"p1", task:"Submit RA Bill 2 to EE office", doneBy:"Ramesh Patel", done:false, doneDate:"", remark:"" },
+        { id:"t3", projectId:"", task:"Follow up on Manjuri – Mavdi extra work", doneBy:"Dushyant", done:false, doneDate:"", remark:"" },
+      ],
+      teamMembers:[
+        { id:"tm1", name:"Dushyant", role:"Project Manager", phone:"9898001122", email:"dushyant@pwd.gov.in" },
+        { id:"tm2", name:"Ramesh Patel", role:"Site Engineer", phone:"9876543210", email:"ramesh@pwd.gov.in" },
+        { id:"tm3", name:"Suresh Dave", role:"DEE", phone:"9765432109", email:"suresh@pwd.gov.in" },
+        { id:"tm4", name:"Anjali Shah", role:"Accountant", phone:"9654321098", email:"anjali@pwd.gov.in" },
+        { id:"tm5", name:"Pradeep Nair", role:"Site Supervisor", phone:"9543210987", email:"pradeep@pwd.gov.in" },
+      ],
+    };
+
+    const fmt = n => "₹" + new Intl.NumberFormat("en-IN",{maximumFractionDigits:0}).format(n||0);
+    const fmtDate = d => d ? new Date(d).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+    const daysLeft = d => d ? Math.ceil((new Date(d)-new Date())/86400000) : null;
+    const uid = () => Math.random().toString(36).slice(2,9);
+    const sColor = s => ({active:"#22c55e",nearing:"#f59e0b",completed:"#6366f1",delayed:"#ef4444"}[s]||"#64748b");
+
+    const CSS = `
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700;800&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#050b14;--card:rgba(8,18,38,0.85);--b:rgba(30,80,160,0.25);--accent:#2563eb;--hi:#60a5fa;--text:#c8deff;--sub:#4a6fa5;--glow:rgba(37,99,235,0.18)}
+    body{background:var(--bg);font-family:'Inter','Segoe UI',sans-serif;color:var(--text)}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(37,99,235,0.3);border-radius:4px}
+    .nm{background:linear-gradient(145deg,rgba(10,22,46,0.9),rgba(5,11,20,0.95));border:1px solid rgba(37,99,235,0.15);border-radius:16px;box-shadow:6px 6px 16px rgba(0,0,0,0.6),-2px -2px 8px rgba(37,99,235,0.08),inset 0 1px 0 rgba(96,165,250,0.06);backdrop-filter:blur(12px);padding:18px}
+    .nm-sm{background:linear-gradient(145deg,rgba(10,22,46,0.8),rgba(5,11,20,0.9));border:1px solid rgba(37,99,235,0.12);border-radius:12px;box-shadow:4px 4px 12px rgba(0,0,0,0.5),-1px -1px 6px rgba(37,99,235,0.06);backdrop-filter:blur(8px);padding:12px 14px}
+    .nm-inset{background:rgba(3,8,18,0.7);border:1px solid rgba(20,50,120,0.2);border-radius:10px;box-shadow:inset 3px 3px 8px rgba(0,0,0,0.5),inset -1px -1px 4px rgba(37,99,235,0.05);padding:10px 13px}
+    .nm-btn{background:linear-gradient(145deg,rgba(15,28,60,0.9),rgba(8,16,36,0.95));border:1px solid rgba(37,99,235,0.2);border-radius:9px;box-shadow:3px 3px 8px rgba(0,0,0,0.4),-1px -1px 4px rgba(37,99,235,0.06);cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:var(--hi);padding:8px 16px;transition:all .18s}
+    .nm-btn:hover{box-shadow:4px 4px 12px rgba(0,0,0,0.5),-1px -1px 6px rgba(37,99,235,0.12),0 0 12px rgba(37,99,235,0.15);border-color:rgba(37,99,235,0.4);color:#93c5fd}
+    .nm-btn:active{box-shadow:inset 2px 2px 6px rgba(0,0,0,0.4),inset -1px -1px 3px rgba(37,99,235,0.05);transform:scale(0.98)}
+    .nm-btn-accent{background:linear-gradient(145deg,#1d4ed8,#1e40af);border:1px solid rgba(96,165,250,0.3);box-shadow:3px 3px 10px rgba(0,0,0,0.4),0 0 14px rgba(37,99,235,0.2);color:#fff}
+    .nm-btn-accent:hover{box-shadow:4px 4px 14px rgba(0,0,0,0.5),0 0 20px rgba(37,99,235,0.35);border-color:rgba(96,165,250,0.5);color:#fff}
+    .nm-btn-danger{background:linear-gradient(145deg,#7f1d1d,#6b1515);border:1px solid rgba(239,68,68,0.25);color:#fca5a5}
+    .nm-btn-danger:hover{box-shadow:4px 4px 12px rgba(0,0,0,0.5),0 0 14px rgba(239,68,68,0.2);color:#fca5a5}
+    .nm-btn-sm{padding:5px 11px;font-size:12px;border-radius:7px}
+    .nm-btn-xs{padding:3px 8px;font-size:11px;border-radius:6px}
+    .nm-input{background:rgba(3,8,18,0.8);border:1px solid rgba(37,99,235,0.2);border-radius:9px;box-shadow:inset 2px 2px 6px rgba(0,0,0,0.45),inset -1px -1px 3px rgba(37,99,235,0.04);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:9px 13px;width:100%;outline:none;transition:border .18s}
+    .nm-input:focus{border-color:rgba(37,99,235,0.55);box-shadow:inset 2px 2px 6px rgba(0,0,0,0.45),0 0 10px rgba(37,99,235,0.12)}
+    select.nm-input option{background:#0a1628}
+    textarea.nm-input{resize:vertical;min-height:80px;line-height:1.6}
+    .nm-tab{cursor:pointer;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;transition:all .18s;color:var(--sub);white-space:nowrap;border:1px solid transparent}
+    .nm-tab.active{background:linear-gradient(145deg,rgba(30,58,138,0.5),rgba(15,28,60,0.7));border-color:rgba(37,99,235,0.3);color:var(--hi);box-shadow:2px 2px 8px rgba(0,0,0,0.3),0 0 10px rgba(37,99,235,0.1)}
+    .nm-tab:hover:not(.active){color:var(--text);background:rgba(10,20,45,0.5)}
+    .sl{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;color:var(--sub);margin-bottom:3px;border:1px solid transparent}
+    .sl.active{background:linear-gradient(145deg,rgba(20,45,100,0.7),rgba(10,22,46,0.8));border-color:rgba(37,99,235,0.25);color:var(--hi);box-shadow:3px 3px 10px rgba(0,0,0,0.4),0 0 12px rgba(37,99,235,0.1)}
+    .sl:hover:not(.active){background:rgba(8,18,38,0.6);color:var(--text)}
+    .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+    .pb{height:5px;background:rgba(20,50,100,0.4);border-radius:3px;overflow:hidden;box-shadow:inset 1px 1px 3px rgba(0,0,0,0.4)}
+    .pf{height:100%;border-radius:3px;transition:width .7s ease}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+    .modal-box{background:linear-gradient(145deg,rgba(8,18,38,0.97),rgba(4,10,22,0.99));border:1px solid rgba(37,99,235,0.2);border-radius:20px;box-shadow:8px 8px 24px rgba(0,0,0,0.7),-2px -2px 10px rgba(37,99,235,0.06),0 0 30px rgba(37,99,235,0.08);padding:26px;width:500px;max-width:95vw;max-height:88vh;overflow-y:auto}
+    input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:rgba(20,50,100,0.5);border-radius:2px;outline:none;cursor:pointer}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:linear-gradient(145deg,#3b82f6,#1d4ed8);box-shadow:0 0 6px rgba(37,99,235,0.4);cursor:pointer}
+    .search-bar{display:flex;align-items:center;gap:8px;background:rgba(3,8,18,0.7);border:1px solid rgba(37,99,235,0.2);border-radius:10px;padding:7px 12px;box-shadow:inset 2px 2px 5px rgba(0,0,0,0.4)}
+    .search-bar input{background:transparent;border:none;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;width:100%}
+    .search-bar input::placeholder{color:var(--sub)}
+    .hov{transition:all .2s}.hov:hover{transform:translateY(-2px);box-shadow:6px 8px 20px rgba(0,0,0,0.55),0 0 16px rgba(37,99,235,0.12)!important;border-color:rgba(37,99,235,0.3)!important;cursor:pointer}
+    .glow-dot{width:8px;height:8px;border-radius:50%;display:inline-block;box-shadow:0 0 6px currentColor}
+    .sh{font-size:11px;font-weight:600;color:var(--sub);letter-spacing:.08em;text-transform:uppercase;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(30,80,160,0.15)}
+    .chk{width:20px;height:20px;border-radius:50%;border:2px solid rgba(37,99,235,0.35);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;background:rgba(3,8,18,0.6);box-shadow:inset 1px 1px 4px rgba(0,0,0,0.4)}
+    .chk.done{background:linear-gradient(145deg,#1d4ed8,#1e40af);border-color:#3b82f6;box-shadow:0 0 8px rgba(37,99,235,0.4)}
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .row{display:flex;gap:8px;align-items:center}
+    .div{height:1px;background:rgba(30,80,160,0.12);margin:12px 0}
+    @keyframes glowPulse{0%,100%{box-shadow:4px 4px 14px rgba(0,0,0,0.5),0 0 8px rgba(37,99,235,0.1)}50%{box-shadow:4px 4px 18px rgba(0,0,0,0.6),0 0 16px rgba(37,99,235,0.2)}}
+    .glow-active{animation:glowPulse 3s ease-in-out infinite}
+    @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .fi{animation:fi .22s ease}
+    .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;backdrop-filter:blur(10px);border:1px solid rgba(96,165,250,0.2)}
+    .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+    `;
+
+    function App() {
+      const [db, setDb] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [saving, setSaving] = useState(false);
+      const [view, setView] = useState("dashboard");
+      const [activePid, setActivePid] = useState(null);
+      const [tab, setTab] = useState("overview");
+      const [notifOpen, setNotifOpen] = useState(false);
+      const [modal, setModal] = useState(null);
+      const [toast, setToast] = useState(null);
+
+      useEffect(() => {
+        (async () => {
+          try { const r = await window.storage.get(DB_KEY); setDb(r ? JSON.parse(r.value) : defaultDB); }
+          catch { setDb(defaultDB); }
+          setLoading(false);
+        })();
+      }, []);
+
+      const save = useCallback(async (nd) => {
+        setSaving(true);
+        try { await window.storage.set(DB_KEY, JSON.stringify(nd)); showToast("Saved ✓"); }
+        catch { showToast("Save failed", true); }
+        setSaving(false);
+      }, []);
+
+      const update = useCallback((fn) => {
+        setDb(prev => { const next = fn(structuredClone(prev)); save(next); return next; });
+      }, [save]);
+
+      const showToast = (msg, err=false) => { setToast({msg,err}); setTimeout(()=>setToast(null),2200); };
+
+      if (loading) return (
+        <div style={{background:"#050b14",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Space Grotesk',sans-serif",color:"#60a5fa",fontSize:20}}>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:48,marginBottom:14,filter:"drop-shadow(0 0 20px rgba(37,99,235,0.5))"}}>🏛</div>
+            <div>Loading SitePro PWD…</div>
+            <div style={{fontSize:13,color:"#4a6fa5",marginTop:6}}>Gujarat PWD · SSA Management</div>
+          </div>
+        </div>
+      );
+
+      const proj = db.projects.find(p => p.id === activePid);
+
+      const alerts = [];
+      db.projects.forEach(p => {
+        const eff = p.extendedEndDate || p.tenderEndDate;
+        const dl = daysLeft(eff);
+        if (dl !== null && dl <= 45 && dl >= 0) alerts.push({type:"timelimit", msg:`Time limit in ${dl} days`, project:p.name, pid:p.id, days:dl});
+        if (dl !== null && dl < 0) alerts.push({type:"overdue", msg:`OVERDUE by ${Math.abs(dl)} days`, project:p.name, pid:p.id, days:dl});
+        if (!p.retentionReleased && p.rmReminderDate) {
+          const rd = daysLeft(p.rmReminderDate);
+          if (rd !== null && rd <= 60) alerts.push({type:"rm", msg:`RM Release due in ${rd}d`, project:p.name, pid:p.id, days:rd});
+        }
+        if (!p.sdReleased && p.sdReminderDate) {
+          const sd = daysLeft(p.sdReminderDate);
+          if (sd !== null && sd <= 60) alerts.push({type:"sd", msg:`SD Release due in ${sd}d`, project:p.name, pid:p.id, days:sd});
+        }
+        p.villages.forEach(v => {
+          const veff = v.extEndDate || v.endDate;
+          const vd = daysLeft(veff);
+          if (vd !== null && vd <= 45 && vd >= 0) alerts.push({type:"village", msg:`${v.name}: ${vd}d to deadline`, project:p.name, pid:p.id, days:vd});
+        });
+      });
+
+      const pSet = (pid,field,val) => update(d=>{d.projects.find(p=>p.id===pid)[field]=val;return d;});
+      const addProject = (data) => { update(d=>{d.projects.push({...data,id:uid(),status:"active",villages:[],raBills:[],timeLimitExtensions:[],letters:[],milestones:[],weeklyProgress:[],documents:[],notes:"",negotiationLetterDoc:"",workOrderDoc:"",sdDoc:"",sdReleased:false,retentionReleased:false,extraWorkDoc:"",excessAmount:0,excessApprovalRef:"",sdReminderDate:"",sdReminderNote:"",rmReminderDate:"",rmReminderNote:""});return d;}); setModal(null); showToast("Project created"); };
+      const delProject = (pid) => { update(d=>{d.projects=d.projects.filter(p=>p.id!==pid);return d;}); setView("projects"); setActivePid(null); };
+      const addVillage = (pid,data) => update(d=>{d.projects.find(p=>p.id===pid).villages.push({...data,id:uid(),status:"active"});return d;});
+      const updateVillage = (pid,vid,field,val) => update(d=>{const v=d.projects.find(p=>p.id===pid).villages.find(v=>v.id===vid);v[field]=val;return d;});
+      const delVillage = (pid,vid) => update(d=>{const p=d.projects.find(p=>p.id===pid);p.villages=p.villages.filter(v=>v.id!==vid);return d;});
+      const addRaBill = (pid,data) => update(d=>{d.projects.find(p=>p.id===pid).raBills.push({...data,id:uid(),deptBillDoc:""});return d;});
+      const updRaBill = (pid,bid,field,val) => update(d=>{const b=d.projects.find(p=>p.id===pid).raBills.find(b=>b.id===bid);b[field]=val;return d;});
+      const delRaBill = (pid,bid) => update(d=>{const p=d.projects.find(p=>p.id===pid);p.raBills=p.raBills.filter(b=>b.id!==bid);return d;});
+      const addTLE = (pid,data) => update(d=>{d.projects.find(p=>p.id===pid).timeLimitExtensions.push({...data,id:uid()});return d;});
+      const delTLE = (pid,id) => update(d=>{const p=d.projects.find(p=>p.id===pid);p.timeLimitExtensions=p.timeLimitExtensions.filter(t=>t.id!==id);return d;});
+      const addLetter = (pid,data) => update(d=>{d.projects.find(p=>p.id===pid).letters.push({...data,id:uid(),doc:""});return d;});
+      const delLetter = (pid,id) => update(d=>{const p=d.projects.find(p=>p.id===pid);p.letters=p.letters.filter(l=>l.id!==id);return d;});
+      const addMilestone = (pid,data) => update(d=>{d.projects.find(p=>p.id===pid).milestones.push({...data,id:uid(),done:false});return d;});
+      const togMilestone = (pid,mid) => update(d=>{const m=d.projects.find(p=>p.id===pid).milestones.find(m=>m.id===mid);m.done=!m.done;return d;});
+      const delMilestone = (pid,mid) => update(d=>{const p=d.projects.find(p=>p.id===pid);p.milestones=p.milestones.filter(m=>m.id!==mid);return d;});
+      const addWeek = (pid) => update(d=>{const p=d.projects.find(p=>p.id===pid);p.weeklyProgress.push({week:`W${p.weeklyProgress.length+1}`,earthwork:0,masonry:0,concrete:0,steel:0,finishing:0});return d;});
+      const updWeek = (pid,i,f,v) => update(d=>{d.projects.find(p=>p.id===pid).weeklyProgress[i][f]=Math.min(100,Math.max(0,parseInt(v)||0));return d;});
+      const addDoc = (pid,data) => update(d=>{d.projects.find(p=>p.id===pid).documents.push({...data,id:uid(),date:new Date().toISOString().slice(0,10)});return d;});
+      const delDoc = (pid,did) => update(d=>{const p=d.projects.find(p=>p.id===pid);p.documents=p.documents.filter(x=>x.id!==did);return d;});
+      const addTodo = (data) => update(d=>{d.todos.push({...data,id:uid(),done:false,doneDate:"",remark:""});return d;});
+      const updTodo = (id,field,val) => update(d=>{const t=d.todos.find(t=>t.id===id);t[field]=val;if(field==="done"&&val)t.doneDate=new Date().toISOString().slice(0,10);return d;});
+      const delTodo = (id) => update(d=>{d.todos=d.todos.filter(t=>t.id!==id);return d;});
+      const addTeam = (data) => update(d=>{d.teamMembers.push({...data,id:uid()});return d;});
+      const updTeam = (id,field,val) => update(d=>{const m=d.teamMembers.find(m=>m.id===id);if(m)m[field]=val;return d;});
+      const delTeam = (id) => update(d=>{d.teamMembers=d.teamMembers.filter(m=>m.id!==id);return d;});
+
+      const openProject = (pid,t="overview") => { setActivePid(pid); setTab(t); setView("project"); };
+
+      const navItems = [
+        {key:"dashboard",icon:"◼",label:"Dashboard"},
+        {key:"projects",icon:"📁",label:"Projects"},
+        {key:"todos",icon:"✅",label:"Daily Tasks"},
+        {key:"rabills",icon:"📑",label:"RA Bills"},
+        {key:"approvals",icon:"🔖",label:"Approvals"},
+        {key:"finance",icon:"₹",label:"Finance"},
+        {key:"team",icon:"👷",label:"Team"},
+        {key:"settings",icon:"⚙",label:"Settings"},
+      ];
+
+      return (
+        <div style={{fontFamily:"'Inter','Segoe UI',sans-serif",background:"#050b14",minHeight:"100vh",color:"#c8deff"}}>
+          <style>{CSS}</style>
+
+          {toast && <div className="toast" style={{background:toast.err?"rgba(100,15,15,0.95)":"rgba(10,22,58,0.95)",color:toast.err?"#fca5a5":"#93c5fd",boxShadow:toast.err?"0 0 20px rgba(239,68,68,0.2)":"0 0 20px rgba(37,99,235,0.2)"}}>{toast.msg}</div>}
+
+          <div style={{position:"fixed",inset:0,pointerEvents:"none",background:"radial-gradient(ellipse 60% 40% at 20% 10%,rgba(37,99,235,0.06) 0%,transparent 70%),radial-gradient(ellipse 40% 30% at 80% 80%,rgba(37,99,235,0.04) 0%,transparent 60%)",zIndex:0}} />
+
+          <div style={{position:"fixed",left:0,top:0,bottom:0,width:205,background:"linear-gradient(180deg,rgba(5,11,24,0.97),rgba(3,8,18,0.99))",borderRight:"1px solid rgba(30,80,160,0.18)",display:"flex",flexDirection:"column",padding:"20px 10px",zIndex:800,backdropFilter:"blur(16px)",boxShadow:"4px 0 20px rgba(0,0,0,0.5)"}}>
+            <div style={{marginBottom:28,padding:"0 6px"}}>
+              <div style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:18,fontWeight:800,background:"linear-gradient(90deg,#60a5fa,#3b82f6)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:-.5}}>🏛 SitePro</div>
+              <div style={{fontSize:10,color:"#2a4a7f",marginTop:1,letterSpacing:.04}}>Gujarat PWD · SSA</div>
+            </div>
+            {navItems.map(({key,icon,label}) => (
+              <div key={key} className={`sl ${view===key&&!activePid?"active":""}`} onClick={()=>{setView(key);setActivePid(null);}}>
+                <span style={{fontSize:14}}>{icon}</span><span>{label}</span>
+              </div>
+            ))}
+            <div style={{marginTop:"auto",marginBottom:4}}>
+              <div className="nm-sm" style={{textAlign:"center"}}>
+                <div style={{fontSize:12,fontWeight:600,color:"#3b82f6",marginBottom:2}}>{db.projects.length} Projects</div>
+                <div style={{fontSize:11,color:"#4a6fa5"}}>{alerts.length} alerts active</div>
+                {saving&&<div style={{fontSize:10,color:"#60a5fa",marginTop:4}}>Saving…</div>}
+              </div>
+            </div>
+          </div>
+
+          <div style={{marginLeft:205,padding:"22px 24px",minHeight:"100vh",position:"relative",zIndex:1}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:22}}>
+              <div>
+                {activePid&&proj ? (
+                  <>
+                    <button className="nm-btn nm-btn-sm" onClick={()=>{setActivePid(null);setView("projects");}} style={{marginBottom:8}}>← Back</button>
+                    <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:19,fontWeight:800,letterSpacing:-.3}}>{proj.name}</h1>
+                    <div style={{fontSize:11,color:"#4a6fa5",marginTop:2}}>WO: {proj.workOrderNo} · {proj.contractorName}</div>
+                  </>
+                ) : (
+                  <h1 style={{fontFamily:"'Space Grotesk',sans-serif",fontSize:19,fontWeight:800,letterSpacing:-.3}}>
+                    {{dashboard:"Dashboard",projects:"Ongoing Projects",todos:"Daily Tasks",rabills:"RA Bills",approvals:"Approvals / Manjuri",finance:"Finance",team:"Team",settings:"Settings"}[view]}
+                  </h1>
+                )}
+              </div>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                {view==="projects"&&!activePid&&<button className="nm-btn nm-btn-accent" onClick={()=>setModal({type:"addProject"})}>+ New Project</button>}
+                {view==="todos"&&!activePid&&<button className="nm-btn nm-btn-accent" onClick={()=>setModal({type:"addTodo"})}>+ Add Task</button>}
+                <button className="nm-btn" style={{position:"relative",padding:"8px 14px"}} onClick={()=>setNotifOpen(o=>!o)}>
+                  🔔
+                  {alerts.length>0&&<span style={{position:"absolute",top:-4,right:-4,background:"linear-gradient(135deg,#dc2626,#991b1b)",color:"#fff",borderRadius:"50%",width:16,height:16,fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 8px rgba(239,68,68,0.5)"}}>{alerts.length}</span>}
+                </button>
+              </div>
+            </div>
+
+            {view==="dashboard"&&!activePid&&<DashboardView db={db} alerts={alerts} fmt={fmt} fmtDate={fmtDate} daysLeft={daysLeft} onOpen={openProject}/>}
+            {view==="projects"&&!activePid&&<ProjectsListView db={db} fmt={fmt} fmtDate={fmtDate} daysLeft={daysLeft} onOpen={openProject}/>}
+            {view==="todos"&&!activePid&&<TodosView db={db} updTodo={updTodo} delTodo={delTodo} fmtDate={fmtDate} setModal={setModal}/>}
+            {view==="rabills"&&!activePid&&<AllRaBillsView db={db} fmt={fmt} fmtDate={fmtDate} onOpen={openProject}/>}
+            {view==="approvals"&&!activePid&&<ApprovalsView db={db} fmt={fmt} fmtDate={fmtDate} daysLeft={daysLeft} onOpen={(pid)=>openProject(pid,"timelimit")}/>}
+            {view==="finance"&&!activePid&&<FinanceView db={db} fmt={fmt} fmtDate={fmtDate}/>}
+            {view==="team"&&!activePid&&<TeamView db={db} addTeam={addTeam} updTeam={updTeam} delTeam={delTeam} setModal={setModal}/>}
+            {view==="settings"&&!activePid&&<SettingsView db={db} save={save} showToast={showToast} setModal={setModal}/>}
+
+            {activePid&&proj&&(
+              <div className="fi">
+                <div style={{display:"flex",gap:6,marginBottom:18,flexWrap:"wrap",alignItems:"center"}}>
+                  {["overview","villages","timelimit","rabills","security","letters","milestones","worksite","documents","notes"].map(t=>(
+                    <span key={t} className={`nm-tab ${tab===t?"active":""}`} onClick={()=>setTab(t)} style={{textTransform:"capitalize"}}>
+                      {{overview:"Overview",villages:"Villages",timelimit:"Time Limit",rabills:"RA Bills",security:"Security/SD",letters:"Letters",milestones:"Milestones",worksite:"Worksite",documents:"Documents",notes:"Notes"}[t]}
+                    </span>
+                  ))}
+                  <button className="nm-btn nm-btn-danger nm-btn-sm" style={{marginLeft:"auto"}} onClick={()=>setModal({type:"confirmDelete",pid:proj.id})}>Delete</button>
+                </div>
+                {tab==="overview"  &&<OverviewTab   proj={proj} fmt={fmt} fmtDate={fmtDate} daysLeft={daysLeft} pSet={pSet}/>}
+                {tab==="villages"  &&<VillagesTab   proj={proj} addVillage={addVillage} updateVillage={updateVillage} delVillage={delVillage} fmtDate={fmtDate} daysLeft={daysLeft} setModal={setModal}/>}
+                {tab==="timelimit" &&<TimeLimitTab  proj={proj} addTLE={addTLE} delTLE={delTLE} pSet={pSet} fmtDate={fmtDate} daysLeft={daysLeft} setModal={setModal}/>}
+                {tab==="rabills"   &&<RaBillsTab    proj={proj} addRaBill={addRaBill} updRaBill={updRaBill} delRaBill={delRaBill} fmt={fmt} fmtDate={fmtDate} setModal={setModal}/>}
+                {tab==="security"  &&<SecurityTab   proj={proj} fmt={fmt} fmtDate={fmtDate} pSet={pSet}/>}
+                {tab==="letters"   &&<LettersTab    proj={proj} addLetter={addLetter} delLetter={delLetter} fmtDate={fmtDate} setModal={setModal}/>}
+                {tab==="milestones"&&<MilestonesTab proj={proj} togMilestone={togMilestone} addMilestone={addMilestone} delMilestone={delMilestone} fmtDate={fmtDate} daysLeft={daysLeft} setModal={setModal}/>}
+                {tab==="worksite"  &&<WorksiteTab   proj={proj} addWeek={addWeek} updWeek={updWeek}/>}
+                {tab==="documents" &&<DocumentsTab  proj={proj} addDoc={addDoc} delDoc={delDoc} fmtDate={fmtDate} setModal={setModal}/>}
+                {tab==="notes"     &&<NotesTab      proj={proj} pSet={pSet}/>}
+              </div>
+            )}
+          </div>
+
+          {notifOpen&&<>
+            <div style={{position:"fixed",inset:0,zIndex:899}} onClick={()=>setNotifOpen(false)}/>
+            <div style={{position:"fixed",right:0,top:0,bottom:0,width:300,background:"linear-gradient(180deg,rgba(5,12,28,0.97),rgba(3,8,18,0.99))",borderLeft:"1px solid rgba(30,80,160,0.2)",zIndex:900,padding:20,overflowY:"auto",backdropFilter:"blur(16px)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:15}}>Alerts</div>
+                <button className="nm-btn nm-btn-sm" onClick={()=>setNotifOpen(false)}>✕</button>
+              </div>
+              {alerts.length===0&&<div style={{color:"#4a6fa5",textAlign:"center",marginTop:40,fontSize:13}}>All clear 🎉</div>}
+              {alerts.map((a,i)=>{
+                const bg={timelimit:"rgba(60,30,0,0.6)",overdue:"rgba(80,0,0,0.6)",rm:"rgba(40,10,80,0.6)",sd:"rgba(20,40,10,0.5)",village:"rgba(10,30,70,0.6)"}[a.type]||"rgba(10,20,45,0.7)";
+                const bc={timelimit:"rgba(180,90,0,0.3)",overdue:"rgba(200,0,0,0.3)",rm:"rgba(120,50,220,0.3)",sd:"rgba(80,180,50,0.3)",village:"rgba(37,99,235,0.3)"}[a.type]||"rgba(37,99,235,0.2)";
+                return(
+                  <div key={i} onClick={()=>{a.pid&&openProject(a.pid);setNotifOpen(false);}} style={{background:bg,border:`1px solid ${bc}`,borderRadius:12,padding:"11px 14px",marginBottom:8,cursor:a.pid?"pointer":"default",backdropFilter:"blur(8px)"}}>
+                    <div style={{fontSize:12,fontWeight:600,marginBottom:2}}>{a.msg}</div>
+                    <div style={{fontSize:11,color:"#4a6fa5"}}>{a.project}</div>
+                    <div style={{fontSize:11,color:a.days<7?"#f87171":a.days<15?"#fb923c":"#f59e0b",marginTop:3,fontWeight:600}}>{a.days>=0?`${a.days} days remaining`:`Overdue by ${Math.abs(a.days)}d`}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </>}
+
+          {modal&&<ModalRouter modal={modal} setModal={setModal} db={db} addProject={addProject} delProject={delProject} addVillage={addVillage} addTLE={addTLE} addRaBill={addRaBill} addLetter={addLetter} addMilestone={addMilestone} addDoc={addDoc} addTodo={addTodo} addTeam={addTeam} save={save} showToast={showToast}/>}
+        </div>
+      );
+    }
+
+    function DashboardView({db,alerts,fmt,fmtDate,daysLeft,onOpen}) {
+      const tb = db.projects.reduce((s,p)=>s+(p.contractAmount||0),0);
+      const rm = db.projects.reduce((s,p)=>s+p.raBills.reduce((a,b)=>a+(b.retentionAmt||0),0),0);
+      const sd = db.projects.reduce((s,p)=>s+(p.securityDeposit||0),0);
+      const pending = db.todos.filter(t=>!t.done).length;
+      return (
+        <div className="fi">
+          <div className="g4" style={{marginBottom:16}}>
+            {[["📁","Projects",db.projects.length,"#3b82f6"],["💼","Contract Value",fmt(tb),"#34d399"],["🔒","Retention Held",fmt(rm),"#a78bfa"],["🏦","Security Deposits",fmt(sd),"#f59e0b"]].map(([icon,label,val,col])=>(
+              <div key={label} className="nm glow-active">
+                <div style={{fontSize:20,marginBottom:8,filter:`drop-shadow(0 0 8px ${col}55)`}}>{icon}</div>
+                <div style={{fontSize:11,color:"#4a6fa5",marginBottom:4,fontWeight:500}}>{label}</div>
+                <div style={{fontSize:18,fontWeight:700,color:col,fontFamily:"'Space Grotesk',sans-serif"}}>{val}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:14,marginBottom:14}}>
+            <div className="nm">
+              <div style={{fontWeight:600,marginBottom:14,fontSize:13,color:"#60a5fa"}}>Projects – Time Limit Status</div>
+              {db.projects.map(p=>{
+                const eff=p.extendedEndDate||p.tenderEndDate;
+                const dl=daysLeft(eff);
+                const pct=Math.round(p.milestones.filter(m=>m.done).length/Math.max(p.milestones.length,1)*100);
+                const col=dl<0?"#ef4444":dl<=15?"#f97316":dl<=45?"#f59e0b":"#22c55e";
+                return(
+                  <div key={p.id} className="hov" onClick={()=>onOpen(p.id)} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 8px",borderBottom:"1px solid rgba(30,80,160,0.1)",borderRadius:8}}>
+                    <div style={{width:34,height:34,borderRadius:9,background:"rgba(10,22,46,0.8)",border:"1px solid rgba(37,99,235,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0,boxShadow:"inset 2px 2px 5px rgba(0,0,0,0.3)"}}>🏫</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:600,fontSize:12,marginBottom:5}}>{p.name}</div>
+                      <div className="pb"><div className="pf" style={{width:`${pct}%`,background:`linear-gradient(90deg,${sColor(p.status)},${sColor(p.status)}99)`}}/></div>
+                    </div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontWeight:700,fontSize:12,color:col}}>{dl!==null?(dl>=0?`${dl}d`:`${Math.abs(dl)}d over`):"—"}</div>
+                      <div style={{fontSize:10,color:"#4a6fa5"}}>{pct}% done</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="nm">
+              <div style={{fontWeight:600,marginBottom:14,fontSize:13,color:"#60a5fa"}}>⚡ Alerts ({alerts.length})</div>
+              {alerts.slice(0,7).map((a,i)=>(
+                <div key={i} onClick={()=>a.pid&&onOpen(a.pid)} style={{cursor:a.pid?"pointer":"default",background:"rgba(5,12,28,0.6)",borderRadius:9,padding:"9px 11px",marginBottom:7,border:"1px solid rgba(37,99,235,0.1)"}}>
+                  <div style={{fontSize:11,fontWeight:600,marginBottom:1}}>{a.msg}</div>
+                  <div style={{fontSize:10,color:"#4a6fa5"}}>{a.project}</div>
+                </div>
+              ))}
+              {alerts.length===0&&<div style={{color:"#4a6fa5",textAlign:"center",padding:20,fontSize:12}}>No alerts 🎉</div>}
+            </div>
+          </div>
+          <div className="nm">
+            <div style={{fontWeight:600,fontSize:13,marginBottom:12,color:"#60a5fa"}}>📋 Pending Tasks ({pending})</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:8}}>
+              {db.todos.filter(t=>!t.done).slice(0,6).map(t=>{
+                const pn=db.projects.find(p=>p.id===t.projectId)?.name||"General";
+                return(
+                  <div key={t.id} className="nm-inset" style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:"#3b82f6",marginTop:4,flexShrink:0,boxShadow:"0 0 6px rgba(59,130,246,0.5)"}}/>
+                    <div>
+                      <div style={{fontSize:12,fontWeight:600}}>{t.task}</div>
+                      <div style={{fontSize:10,color:"#4a6fa5",marginTop:2}}>{pn} · {t.doneBy}</div>
+                    </div>
+                  </div>
+                );
+              })}
+              {pending===0&&<div style={{color:"#22c55e",fontSize:12}}>✓ All tasks complete!</div>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function ProjectsListView({db,fmt,fmtDate,daysLeft,onOpen}) {
+      const [search,setSearch]=useState("");
+      const [sort,setSort]=useState("name");
+      const [filterStatus,setFilterStatus]=useState("all");
+      const filtered = useMemo(()=>{
+        let list=[...db.projects];
+        if(search) list=list.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())||p.workOrderNo.toLowerCase().includes(search.toLowerCase())||p.contractorName.toLowerCase().includes(search.toLowerCase()));
+        if(filterStatus!=="all") list=list.filter(p=>p.status===filterStatus);
+        list.sort((a,b)=>{
+          if(sort==="name") return a.name.localeCompare(b.name);
+          if(sort==="deadline"){ const da=daysLeft(a.extendedEndDate||a.tenderEndDate)||9999,db2=daysLeft(b.extendedEndDate||b.tenderEndDate)||9999; return da-db2; }
+          if(sort==="value") return (b.contractAmount||0)-(a.contractAmount||0);
+          if(sort==="progress"){ const pa=a.milestones.filter(m=>m.done).length/Math.max(a.milestones.length,1),pb2=b.milestones.filter(m=>m.done).length/Math.max(b.milestones.length,1); return pb2-pa; }
+          return 0;
+        });
+        return list;
+      },[db.projects,search,sort,filterStatus]);
+      return (
+        <div>
+          <div className="filter-bar">
+            <div className="search-bar" style={{flex:1,minWidth:200}}>
+              <span style={{color:"#4a6fa5",fontSize:14}}>🔍</span>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by name, WO no, contractor…"/>
+              {search&&<span onClick={()=>setSearch("")} style={{color:"#4a6fa5",cursor:"pointer"}}>✕</span>}
+            </div>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}>
+              <option value="all">All Status</option><option value="active">Active</option><option value="nearing">Nearing</option><option value="completed">Completed</option><option value="delayed">Delayed</option>
+            </select>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={sort} onChange={e=>setSort(e.target.value)}>
+              <option value="name">Sort: Name</option><option value="deadline">Sort: Deadline</option><option value="value">Sort: Value ↓</option><option value="progress">Sort: Progress ↓</option>
+            </select>
+          </div>
+          <div style={{fontSize:12,color:"#4a6fa5",marginBottom:12}}>{filtered.length} of {db.projects.length} projects</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(330px,1fr))",gap:14}}>
+            {filtered.map(p=>{
+              const eff=p.extendedEndDate||p.tenderEndDate;
+              const dl=daysLeft(eff);
+              const pct=Math.round(p.milestones.filter(m=>m.done).length/Math.max(p.milestones.length,1)*100);
+              const rm=p.raBills.reduce((s,b)=>s+(b.retentionAmt||0),0);
+              const col=dl<0?"#ef4444":dl<=15?"#f97316":dl<=45?"#f59e0b":"#22c55e";
+              return (
+                <div key={p.id} className="nm hov glow-active" onClick={()=>onOpen(p.id)} style={{cursor:"pointer"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:13,marginBottom:2}}>{p.name}</div>
+                      <div style={{fontSize:11,color:"#4a6fa5"}}>WO: {p.workOrderNo}</div>
+                    </div>
+                    <span className="pill" style={{background:sColor(p.status)+"22",color:sColor(p.status),border:`1px solid ${sColor(p.status)}44`,alignSelf:"flex-start"}}>{p.status}</span>
+                  </div>
+                  <div style={{marginBottom:10}}>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"#4a6fa5",marginBottom:5}}><span>Progress</span><span style={{color:"#c8deff",fontWeight:600}}>{pct}%</span></div>
+                    <div className="pb"><div className="pf" style={{width:`${pct}%`,background:`linear-gradient(90deg,#1d4ed8,#3b82f6)`}}/></div>
+                  </div>
+                  <div className="g3" style={{marginBottom:10}}>
+                    {[["Contract",fmt(p.contractAmount),"#60a5fa"],["Retention",fmt(rm),"#a78bfa"],["SD",fmt(p.securityDeposit),"#f59e0b"]].map(([k,v,c])=>(
+                      <div key={k} className="nm-inset">
+                        <div style={{fontSize:9,color:"#4a6fa5",marginBottom:2}}>{k}</div>
+                        <div style={{fontSize:11,fontWeight:700,color:c}}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11}}>
+                    <span style={{color:"#4a6fa5"}}>📍 {p.villages.length} village{p.villages.length!==1?"s":""}</span>
+                    <span style={{fontWeight:700,color:col}}>{dl!==null?(dl>=0?`${dl}d left`:`OVERDUE ${Math.abs(dl)}d`):"—"}</span>
+                  </div>
+                </div>
+              );
+            })}
+            {filtered.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",color:"#4a6fa5",padding:60,fontSize:13}}>No projects match your search.</div>}
+          </div>
+        </div>
+      );
+    }
+
+    function TodosView({db,updTodo,delTodo,fmtDate,setModal}) {
+      const [search,setSearch]=useState("");
+      const [sort,setSort]=useState("pending");
+      const [filterProject,setFilterProject]=useState("all");
+      const todos=useMemo(()=>{
+        let list=[...db.todos];
+        if(search) list=list.filter(t=>t.task.toLowerCase().includes(search.toLowerCase())||t.doneBy.toLowerCase().includes(search.toLowerCase()));
+        if(filterProject!=="all") list=list.filter(t=>t.projectId===filterProject||(filterProject==="general"&&!t.projectId));
+        if(sort==="pending") list.sort((a,b)=>Number(a.done)-Number(b.done));
+        if(sort==="az") list.sort((a,b)=>a.task.localeCompare(b.task));
+        if(sort==="assignee") list.sort((a,b)=>a.doneBy.localeCompare(b.doneBy));
+        return list;
+      },[db.todos,search,sort,filterProject]);
+      return (
+        <div>
+          <div className="filter-bar">
+            <div className="search-bar" style={{flex:1}}>
+              <span style={{color:"#4a6fa5"}}>🔍</span>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search tasks or assignee…"/>
+              {search&&<span onClick={()=>setSearch("")} style={{color:"#4a6fa5",cursor:"pointer"}}>✕</span>}
+            </div>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={filterProject} onChange={e=>setFilterProject(e.target.value)}>
+              <option value="all">All Projects</option><option value="general">General</option>
+              {db.projects.map(p=><option key={p.id} value={p.id}>{p.name.slice(0,28)}</option>)}
+            </select>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={sort} onChange={e=>setSort(e.target.value)}>
+              <option value="pending">Sort: Pending First</option><option value="az">Sort: A–Z</option><option value="assignee">Sort: Assignee</option>
+            </select>
+          </div>
+          <div className="nm">
+            {todos.map(t=>{
+              const pn=db.projects.find(p=>p.id===t.projectId)?.name||"General";
+              return(
+                <div key={t.id} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"12px",background:t.done?"rgba(5,12,28,0.4)":"rgba(8,18,40,0.6)",borderRadius:11,marginBottom:8,border:`1px solid ${t.done?"rgba(20,50,100,0.15)":"rgba(37,99,235,0.12)"}`,opacity:t.done?0.6:1}}>
+                  <div className={`chk ${t.done?"done":""}`} onClick={()=>updTodo(t.id,"done",!t.done)}>{t.done&&<span style={{color:"#fff",fontSize:11}}>✓</span>}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,fontSize:13,textDecoration:t.done?"line-through":"none",color:t.done?"#4a6fa5":"#c8deff"}}>{t.task}</div>
+                    <div style={{fontSize:11,color:"#4a6fa5",marginTop:2}}>{pn} · By: <b style={{color:"#60a5fa"}}>{t.doneBy}</b>{t.done&&` · Done ${fmtDate(t.doneDate)}`}</div>
+                    {t.remark&&<div style={{fontSize:11,color:"#4a6fa5",marginTop:3,fontStyle:"italic"}}>{t.remark}</div>}
+                  </div>
+                  {t.done&&<button className="nm-btn nm-btn-xs" onClick={()=>{ const r=prompt("Add remark:",""); if(r!==null)updTodo(t.id,"remark",r); }} style={{flexShrink:0}}>📝</button>}
+                  <button className="nm-btn nm-btn-xs nm-btn-danger" onClick={()=>delTodo(t.id)} style={{flexShrink:0}}>✕</button>
+                </div>
+              );
+            })}
+            {todos.length===0&&<div style={{color:"#4a6fa5",textAlign:"center",padding:30,fontSize:13}}>No tasks found</div>}
+          </div>
+        </div>
+      );
+    }
+
+    function AllRaBillsView({db,fmt,fmtDate,onOpen}) {
+      const [search,setSearch]=useState("");
+      const [sort,setSort]=useState("date");
+      const [filterStatus,setFilterStatus]=useState("all");
+      const bills=useMemo(()=>{
+        let list=db.projects.flatMap(p=>p.raBills.map(b=>({...b,projectName:p.name,projectId:p.id,wono:p.workOrderNo})));
+        if(search) list=list.filter(b=>b.label.toLowerCase().includes(search.toLowerCase())||b.projectName.toLowerCase().includes(search.toLowerCase())||b.checkPersonName?.toLowerCase().includes(search.toLowerCase()));
+        if(filterStatus!=="all") list=list.filter(b=>b.status===filterStatus);
+        if(sort==="date") list.sort((a,b)=>new Date(b.billDate)-new Date(a.billDate));
+        if(sort==="amount") list.sort((a,b)=>b.amount-a.amount);
+        if(sort==="project") list.sort((a,b)=>a.projectName.localeCompare(b.projectName));
+        return list;
+      },[db.projects,search,sort,filterStatus]);
+      return (
+        <div>
+          <div className="filter-bar">
+            <div className="search-bar" style={{flex:1}}>
+              <span style={{color:"#4a6fa5"}}>🔍</span>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search bills, projects, check person…"/>
+              {search&&<span onClick={()=>setSearch("")} style={{color:"#4a6fa5",cursor:"pointer"}}>✕</span>}
+            </div>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}>
+              <option value="all">All Status</option><option value="pending">Pending</option><option value="submitted">Submitted</option><option value="approved">Approved</option><option value="paid">Paid</option>
+            </select>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={sort} onChange={e=>setSort(e.target.value)}>
+              <option value="date">Sort: Date ↓</option><option value="amount">Sort: Amount ↓</option><option value="project">Sort: Project</option>
+            </select>
+          </div>
+          <div className="nm">
+            <div style={{fontSize:12,color:"#4a6fa5",marginBottom:12}}>{bills.length} bills</div>
+            {bills.map(b=>(
+              <div key={`${b.projectId}-${b.id}`} style={{display:"flex",gap:12,alignItems:"center",padding:"11px 14px",background:"rgba(5,12,28,0.6)",borderRadius:11,marginBottom:8,border:"1px solid rgba(30,80,160,0.12)",flexWrap:"wrap"}}>
+                <div style={{minWidth:130}}>
+                  <div style={{fontWeight:600,fontSize:12}}>{b.label}</div>
+                  <div style={{fontSize:10,color:"#4a6fa5",marginTop:1}}>{b.projectName}</div>
+                  <div style={{fontSize:10,color:"#4a6fa5"}}>{fmtDate(b.billDate)}</div>
+                </div>
+                <div style={{fontSize:14,fontWeight:700,color:"#34d399",minWidth:90}}>{fmt(b.amount)}</div>
+                <div style={{fontSize:11,color:"#a78bfa"}}>RM: {fmt(b.retentionAmt||0)}</div>
+                <span className="pill" style={{background:b.invoiceSubmitted?"rgba(20,83,45,0.4)":"rgba(20,30,60,0.5)",color:b.invoiceSubmitted?"#4ade80":"#64748b",border:`1px solid ${b.invoiceSubmitted?"rgba(74,222,128,0.2)":"rgba(100,116,139,0.1)"}`}}>{b.invoiceSubmitted?"Invoice ✓":"No Invoice"}</span>
+                <span className="pill" style={{background:b.deposited?"rgba(20,83,45,0.4)":"rgba(80,10,10,0.4)",color:b.deposited?"#4ade80":"#f87171",border:`1px solid ${b.deposited?"rgba(74,222,128,0.2)":"rgba(248,113,113,0.2)"}`}}>{b.deposited?"Deposited":"Pending"}</span>
+                {b.checkPersonName&&<span style={{fontSize:11,color:"#4a6fa5"}}>🧾 {b.checkPersonName}</span>}
+                <button className="nm-btn nm-btn-xs" onClick={()=>onOpen(b.projectId,"rabills")} style={{marginLeft:"auto"}}>Open →</button>
+              </div>
+            ))}
+            {bills.length===0&&<div style={{color:"#4a6fa5",textAlign:"center",padding:30,fontSize:13}}>No bills match</div>}
+          </div>
+        </div>
+      );
+    }
+
+    function ApprovalsView({db,fmt,fmtDate,daysLeft,onOpen}) {
+      const [search,setSearch]=useState("");
+      const filtered=useMemo(()=>db.projects.filter(p=>!search||p.name.toLowerCase().includes(search.toLowerCase())||p.workOrderNo.toLowerCase().includes(search.toLowerCase())),[db.projects,search]);
+      return (
+        <div>
+          <div className="filter-bar">
+            <div className="search-bar" style={{flex:1}}>
+              <span style={{color:"#4a6fa5"}}>🔍</span>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search project or WO no…"/>
+              {search&&<span onClick={()=>setSearch("")} style={{color:"#4a6fa5",cursor:"pointer"}}>✕</span>}
+            </div>
+          </div>
+          {filtered.map(p=>{
+            const eff=p.extendedEndDate||p.tenderEndDate;
+            const dl=daysLeft(eff);
+            return(
+              <div key={p.id} className="nm" style={{marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                  <div><div style={{fontWeight:700,fontSize:13}}>{p.name}</div><div style={{fontSize:11,color:"#4a6fa5"}}>WO: {p.workOrderNo}</div></div>
+                  <button className="nm-btn nm-btn-sm" onClick={()=>onOpen(p.id)}>Open →</button>
+                </div>
+                <div className="g3">
+                  <div className="nm-inset">
+                    <div style={{fontSize:11,fontWeight:600,color:"#f59e0b",marginBottom:8}}>⏳ Time Limit</div>
+                    {p.timeLimitExtensions.map(t=>(
+                      <div key={t.id} style={{fontSize:11,marginBottom:4}}>
+                        <div style={{color:"#c8deff",fontWeight:600}}>Upto: {fmtDate(t.upto)}</div>
+                        <div style={{color:"#4a6fa5",fontSize:10}}>Ref: {t.approvalRef||"—"} · {t.reason}</div>
+                      </div>
+                    ))}
+                    <div style={{fontSize:11,marginTop:6,color:dl<0?"#ef4444":dl<=45?"#f59e0b":"#22c55e",fontWeight:700}}>
+                      Effective: {fmtDate(eff)}{dl!==null&&` (${dl>=0?dl+"d left":"OVR "+Math.abs(dl)+"d"})`}
+                    </div>
+                  </div>
+                  <div className="nm-inset">
+                    <div style={{fontSize:11,fontWeight:600,color:"#60a5fa",marginBottom:8}}>📋 Extra / Excess</div>
+                    <div style={{fontSize:10,color:"#4a6fa5",marginBottom:2}}>Extra Work</div>
+                    <div style={{fontSize:14,fontWeight:700,color:"#60a5fa",marginBottom:6}}>{fmt(p.extraWorkAmt||0)}</div>
+                    {p.extraWorkApprovalRef&&<div style={{fontSize:10,color:"#4a6fa5"}}>Ref: {p.extraWorkApprovalRef}</div>}
+                    {p.excessAmount>0&&<><div style={{fontSize:10,color:"#4a6fa5",marginTop:6}}>Excess</div><div style={{fontSize:13,fontWeight:700,color:"#f59e0b"}}>{fmt(p.excessAmount)}</div></>}
+                  </div>
+                  <div className="nm-inset">
+                    <div style={{fontSize:11,fontWeight:600,color:"#a78bfa",marginBottom:8}}>📨 Letters ({p.letters.length})</div>
+                    {p.letters.slice(0,3).map(l=>(
+                      <div key={l.id} style={{fontSize:10,marginBottom:5}}>
+                        <span className="pill" style={{background:l.type==="KRS"?"rgba(30,58,138,0.4)":"rgba(76,29,149,0.4)",color:l.type==="KRS"?"#93c5fd":"#c4b5fd",fontSize:9}}>{l.type}</span>
+                        <span style={{color:"#c8deff",marginLeft:4}}>{l.subject.slice(0,30)}{l.subject.length>30?"…":""}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function FinanceView({db,fmt,fmtDate}) {
+      const [search,setSearch]=useState("");
+      const [sort,setSort]=useState("name");
+      const tc=db.projects.reduce((s,p)=>s+(p.contractAmount||0),0);
+      const tb=db.projects.reduce((s,p)=>s+p.raBills.reduce((a,b)=>a+(b.amount||0),0),0);
+      const tr=db.projects.reduce((s,p)=>s+p.raBills.reduce((a,b)=>a+(b.retentionAmt||0),0),0);
+      const ts=db.projects.reduce((s,p)=>s+(p.securityDeposit||0),0);
+      const filtered=useMemo(()=>{
+        let list=[...db.projects];
+        if(search) list=list.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())||p.contractorName.toLowerCase().includes(search.toLowerCase()));
+        if(sort==="name") list.sort((a,b)=>a.name.localeCompare(b.name));
+        if(sort==="value") list.sort((a,b)=>(b.contractAmount||0)-(a.contractAmount||0));
+        if(sort==="billed") list.sort((a,b)=>b.raBills.reduce((s,x)=>s+x.amount,0)-a.raBills.reduce((s,x)=>s+x.amount,0));
+        return list;
+      },[db.projects,search,sort]);
+      return (
+        <div>
+          <div className="g4" style={{marginBottom:16}}>
+            {[["Contract",fmt(tc),"#60a5fa"],["Billed",fmt(tb),"#34d399"],["Retention",fmt(tr),"#a78bfa"],["Security",fmt(ts),"#f59e0b"]].map(([k,v,c])=>(
+              <div key={k} className="nm" style={{textAlign:"center"}}><div style={{fontSize:11,color:"#4a6fa5",marginBottom:6}}>{k}</div><div style={{fontSize:18,fontWeight:700,color:c,fontFamily:"'Space Grotesk',sans-serif"}}>{v}</div></div>
+            ))}
+          </div>
+          <div className="filter-bar">
+            <div className="search-bar" style={{flex:1}}>
+              <span style={{color:"#4a6fa5"}}>🔍</span>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search project or contractor…"/>
+              {search&&<span onClick={()=>setSearch("")} style={{color:"#4a6fa5",cursor:"pointer"}}>✕</span>}
+            </div>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={sort} onChange={e=>setSort(e.target.value)}>
+              <option value="name">Sort: Name</option><option value="value">Sort: Value ↓</option><option value="billed">Sort: Billed ↓</option>
+            </select>
+          </div>
+          {filtered.map(p=>{
+            const billed=p.raBills.reduce((s,b)=>s+(b.amount||0),0);
+            const rm=p.raBills.reduce((s,b)=>s+(b.retentionAmt||0),0);
+            const pct=Math.round(billed/(p.contractAmount||1)*100);
+            return(
+              <div key={p.id} className="nm" style={{marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
+                  <div><div style={{fontWeight:700,fontSize:13}}>{p.name}</div><div style={{fontSize:11,color:"#4a6fa5"}}>{p.contractorName}</div></div>
+                  <div style={{display:"flex",gap:6}}>
+                    <span className="pill" style={{background:"rgba(30,58,138,0.4)",color:"#60a5fa"}}>Billed: {fmt(billed)}</span>
+                    <span className="pill" style={{background:"rgba(76,29,149,0.4)",color:"#a78bfa"}}>RM: {fmt(rm)}</span>
+                  </div>
+                </div>
+                <div className="pb" style={{height:6}}><div className="pf" style={{width:`${pct}%`,background:"linear-gradient(90deg,#3b82f6,#34d399)"}}/></div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function TeamView({db,addTeam,updTeam,delTeam,setModal}) {
+      return(
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{fontWeight:600,fontSize:13,color:"#60a5fa"}}>PWD Team Members ({db.teamMembers.length})</div>
+            <button className="nm-btn nm-btn-accent nm-btn-sm" onClick={()=>setModal({type:"addTeam"})}>+ Add Member</button>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}}>
+            {db.teamMembers.map(m=>(
+              <div key={m.id} className="nm">
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                  <div style={{fontWeight:700,fontSize:13}}>{m.name}</div>
+                  <button className="nm-btn nm-btn-xs nm-btn-danger" onClick={()=>delTeam(m.id)}>✕</button>
+                </div>
+                <div style={{fontSize:11,color:"#60a5fa",fontWeight:600,marginBottom:6}}>{m.role}</div>
+                <div style={{fontSize:11,color:"#4a6fa5"}}>📞 {m.phone||"—"}</div>
+                <div style={{fontSize:11,color:"#4a6fa5",marginTop:2}}>✉ {m.email||"—"}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function SettingsView({db,save,showToast,setModal}) {
+      return(
+        <div className="nm" style={{maxWidth:460}}>
+          <div style={{fontWeight:600,marginBottom:14,fontSize:13,color:"#60a5fa"}}>Database & Settings</div>
+          <div className="nm-inset" style={{marginBottom:14,fontSize:12,color:"#4a6fa5",lineHeight:1.7}}>
+            All data saved automatically to browser storage after every change. Export JSON backup regularly.
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <button className="nm-btn" onClick={async()=>{const b=new Blob([JSON.stringify(db,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sitepro_pwd_backup.json";a.click();showToast("Backup downloaded");}}>⬇ Export JSON</button>
+            <button className="nm-btn nm-btn-danger" onClick={()=>setModal({type:"resetDB"})}>⚠ Reset</button>
+          </div>
+        </div>
+      );
+    }
+
+    function OverviewTab({proj,fmt,fmtDate,daysLeft,pSet}) {
+      const eff=proj.extendedEndDate||proj.tenderEndDate;
+      const dl=daysLeft(eff);
+      const rm=proj.raBills.reduce((s,b)=>s+(b.retentionAmt||0),0);
+      return(
+        <div className="g2">
+          <div>
+            <div className="nm" style={{marginBottom:12}}>
+              <div className="sh">Work Order Details</div>
+              {[["Work Order No.",proj.workOrderNo],["Neg. Letter No.",proj.negotiationLetterNo],["Contractor",proj.contractorName],["Tender Amt",fmt(proj.tenderAmount)],["Contract Amt",fmt(proj.contractAmount)]].map(([k,v])=>(
+                <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid rgba(30,80,160,0.1)",fontSize:12}}>
+                  <span style={{color:"#4a6fa5"}}>{k}</span><span style={{fontWeight:600}}>{v||"—"}</span>
+                </div>
+              ))}
+              <div style={{marginTop:10}}>
+                <div style={{fontSize:12,color:"#4a6fa5",marginBottom:5}}>Status</div>
+                <select className="nm-input" style={{fontSize:12}} value={proj.status} onChange={e=>pSet(proj.id,"status",e.target.value)}>
+                  <option value="active">Active</option><option value="nearing">Nearing</option><option value="completed">Completed</option><option value="delayed">Delayed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="nm" style={{marginBottom:12}}>
+              <div className="sh">Time Limit</div>
+              {[["Start",fmtDate(proj.tenderStartDate)],["Original End",fmtDate(proj.tenderEndDate)],["Extended End",proj.extendedEndDate?fmtDate(proj.extendedEndDate):"—"],["Days Left",dl!==null?(dl>=0?`${dl} days`:`OVERDUE ${Math.abs(dl)}d`):"—"]].map(([k,v])=>(
+                <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid rgba(30,80,160,0.1)",fontSize:12}}>
+                  <span style={{color:"#4a6fa5"}}>{k}</span><span style={{fontWeight:600,color:k==="Days Left"?(dl<0?"#ef4444":dl<=15?"#f97316":dl<=45?"#f59e0b":"#22c55e"):"#c8deff"}}>{v}</span>
+                </div>
+              ))}
+            </div>
+            <div className="nm">
+              <div className="sh">Financial</div>
+              {[["Contract",fmt(proj.contractAmount),"#60a5fa"],["Billed",fmt(proj.raBills.reduce((s,b)=>s+(b.amount||0),0)),"#34d399"],["Retention",fmt(rm),"#a78bfa"],["SD",fmt(proj.securityDeposit),"#f59e0b"]].map(([k,v,c])=>(
+                <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid rgba(30,80,160,0.1)",fontSize:12}}>
+                  <span style={{color:"#4a6fa5"}}>{k}</span><span style={{fontWeight:700,color:c}}>{v}</span>
+                </div>
+              ))}
+              <div style={{display:"flex",gap:8,marginTop:10}}>
+                <div onClick={()=>pSet(proj.id,"retentionReleased",!proj.retentionReleased)} style={{flex:1,background:proj.retentionReleased?"rgba(20,83,45,0.25)":"rgba(76,29,149,0.2)",border:`1px solid ${proj.retentionReleased?"rgba(74,222,128,0.2)":"rgba(167,139,250,0.2)"}`,borderRadius:10,padding:"9px",cursor:"pointer",textAlign:"center"}}>
+                  <div style={{fontSize:9,color:"#4a6fa5",marginBottom:2}}>Retention</div>
+                  <div style={{fontSize:12,fontWeight:600,color:proj.retentionReleased?"#4ade80":"#a78bfa"}}>{proj.retentionReleased?"Released ✓":"Held"}</div>
+                </div>
+                <div onClick={()=>pSet(proj.id,"sdReleased",!proj.sdReleased)} style={{flex:1,background:proj.sdReleased?"rgba(20,83,45,0.25)":"rgba(120,53,15,0.2)",border:`1px solid ${proj.sdReleased?"rgba(74,222,128,0.2)":"rgba(245,158,11,0.2)"}`,borderRadius:10,padding:"9px",cursor:"pointer",textAlign:"center"}}>
+                  <div style={{fontSize:9,color:"#4a6fa5",marginBottom:2}}>Security Dep.</div>
+                  <div style={{fontSize:12,fontWeight:600,color:proj.sdReleased?"#4ade80":"#f59e0b"}}>{proj.sdReleased?"Released ✓":"Held"}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function VillagesTab({proj,addVillage,updateVillage,delVillage,fmtDate,daysLeft,setModal}) {
+      const [search,setSearch]=useState("");
+      const [sort,setSort]=useState("deadline");
+      const [expandId,setExpandId]=useState(null);
+      const filtered=useMemo(()=>{
+        let list=[...proj.villages];
+        if(search) list=list.filter(v=>v.name.toLowerCase().includes(search.toLowerCase()));
+        if(sort==="deadline") list.sort((a,b)=>{const da=daysLeft(a.extEndDate||a.endDate)||9999,db2=daysLeft(b.extEndDate||b.endDate)||9999;return da-db2;});
+        if(sort==="name") list.sort((a,b)=>a.name.localeCompare(b.name));
+        if(sort==="start") list.sort((a,b)=>new Date(a.startDate)-new Date(b.startDate));
+        return list;
+      },[proj.villages,search,sort]);
+      return(
+        <div className="nm">
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <div style={{fontWeight:600,fontSize:13,color:"#60a5fa"}}>Villages / Sites ({proj.villages.length})</div>
+            <button className="nm-btn nm-btn-accent nm-btn-sm" onClick={()=>setModal({type:"addVillage",projectId:proj.id})}>+ Add Village</button>
+          </div>
+          <div className="filter-bar">
+            <div className="search-bar" style={{flex:1}}>
+              <span style={{color:"#4a6fa5"}}>🔍</span>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search village name…"/>
+              {search&&<span onClick={()=>setSearch("")} style={{color:"#4a6fa5",cursor:"pointer"}}>✕</span>}
+            </div>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={sort} onChange={e=>setSort(e.target.value)}>
+              <option value="deadline">Sort: Deadline</option><option value="name">Sort: Name</option><option value="start">Sort: Start Date</option>
+            </select>
+          </div>
+          {filtered.map(v=>{
+            const veff=v.extEndDate||v.endDate;
+            const dl=daysLeft(veff);
+            const col=dl===null?"#64748b":dl<0?"#ef4444":dl<=15?"#f97316":dl<=45?"#f59e0b":"#22c55e";
+            const isExp=expandId===v.id;
+            return(
+              <div key={v.id} style={{background:"rgba(5,12,28,0.55)",borderRadius:12,marginBottom:10,border:"1px solid rgba(30,80,160,0.12)",overflow:"hidden"}}>
+                <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",cursor:"pointer"}} onClick={()=>setExpandId(isExp?null:v.id)}>
+                  <div style={{width:32,height:32,borderRadius:8,background:"rgba(10,22,46,0.8)",border:"1px solid rgba(37,99,235,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>🏘</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,fontSize:13}}>{v.name}</div>
+                    <div style={{fontSize:11,color:"#4a6fa5",marginTop:2}}>{fmtDate(v.startDate)} → {fmtDate(veff)}{v.extEndDate?<span style={{color:"#f59e0b"}}> (extended)</span>:""}</div>
+                  </div>
+                  <div style={{textAlign:"right",marginRight:8}}>
+                    <div style={{fontSize:13,fontWeight:700,color:col}}>{dl!==null?(dl>=0?`${dl}d`:`OVR ${Math.abs(dl)}d`):"—"}</div>
+                    <span className="pill" style={{background:sColor(v.status)+"22",color:sColor(v.status),fontSize:10}}>{v.status}</span>
+                  </div>
+                  <span style={{color:"#4a6fa5",fontSize:12}}>{isExp?"▲":"▼"}</span>
+                </div>
+                {isExp&&(
+                  <div style={{padding:"0 14px 14px",borderTop:"1px solid rgba(30,80,160,0.1)"}}>
+                    <div className="g2" style={{marginTop:10}}>
+                      <div>
+                        <div style={{fontSize:11,color:"#4a6fa5",marginBottom:4}}>Start Date</div>
+                        <input type="date" className="nm-input" style={{fontSize:12}} value={v.startDate||""} onChange={e=>updateVillage(proj.id,v.id,"startDate",e.target.value)}/>
+                      </div>
+                      <div>
+                        <div style={{fontSize:11,color:"#4a6fa5",marginBottom:4}}>Original End Date</div>
+                        <input type="date" className="nm-input" style={{fontSize:12}} value={v.endDate||""} onChange={e=>updateVillage(proj.id,v.id,"endDate",e.target.value)}/>
+                      </div>
+                      <div>
+                        <div style={{fontSize:11,color:"#4a6fa5",marginBottom:4}}>Extended End Date</div>
+                        <input type="date" className="nm-input" style={{fontSize:12}} value={v.extEndDate||""} onChange={e=>updateVillage(proj.id,v.id,"extEndDate",e.target.value)}/>
+                      </div>
+                      <div>
+                        <div style={{fontSize:11,color:"#4a6fa5",marginBottom:4}}>Status</div>
+                        <select className="nm-input" style={{fontSize:12}} value={v.status} onChange={e=>updateVillage(proj.id,v.id,"status",e.target.value)}>
+                          <option value="active">Active</option><option value="nearing">Nearing</option><option value="completed">Completed</option><option value="delayed">Delayed</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{marginTop:8}}>
+                      <div style={{fontSize:11,color:"#4a6fa5",marginBottom:4}}>Note</div>
+                      <input className="nm-input" style={{fontSize:12}} value={v.note||""} onChange={e=>updateVillage(proj.id,v.id,"note",e.target.value)} placeholder="Site note…"/>
+                    </div>
+                    <button className="nm-btn nm-btn-danger nm-btn-xs" style={{marginTop:10}} onClick={()=>delVillage(proj.id,v.id)}>Delete Village</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {filtered.length===0&&<div style={{color:"#4a6fa5",textAlign:"center",padding:30,fontSize:13}}>No villages</div>}
+        </div>
+      );
+    }
+
+    function TimeLimitTab({proj,addTLE,delTLE,pSet,fmtDate,daysLeft,setModal}) {
+      const eff=proj.extendedEndDate||proj.tenderEndDate;
+      const dl=daysLeft(eff);
+      return(
+        <div>
+          <div className="g2" style={{marginBottom:12}}>
+            <div className="nm">
+              <div className="sh">Completion Dates</div>
+              <div style={{marginBottom:10}}>
+                <div style={{fontSize:12,color:"#4a6fa5",marginBottom:5}}>Original End Date</div>
+                <input type="date" className="nm-input" style={{fontSize:12}} value={proj.tenderEndDate||""} onChange={e=>pSet(proj.id,"tenderEndDate",e.target.value)}/>
+              </div>
+              <div style={{marginBottom:10}}>
+                <div style={{fontSize:12,color:"#4a6fa5",marginBottom:5}}>Extended End Date</div>
+                <input type="date" className="nm-input" style={{fontSize:12}} value={proj.extendedEndDate||""} onChange={e=>pSet(proj.id,"extendedEndDate",e.target.value)}/>
+              </div>
+              <div style={{background:dl<0?"rgba(80,0,0,0.4)":dl<=15?"rgba(70,30,0,0.4)":dl<=45?"rgba(50,35,0,0.4)":"rgba(0,40,20,0.3)",borderRadius:10,padding:"12px",border:`1px solid ${dl<0?"rgba(239,68,68,0.3)":dl<=45?"rgba(245,158,11,0.3)":"rgba(34,197,94,0.2)"}`}}>
+                <div style={{fontSize:11,color:"#4a6fa5"}}>Effective End: {fmtDate(eff)}</div>
+                <div style={{fontSize:22,fontWeight:800,fontFamily:"'Space Grotesk',sans-serif",color:dl<0?"#ef4444":dl<=15?"#f97316":dl<=45?"#f59e0b":"#22c55e",marginTop:4}}>{dl!==null?(dl>=0?`${dl} days left`:`OVERDUE ${Math.abs(dl)}d`):"—"}</div>
+                {dl!==null&&dl<=45&&<div style={{fontSize:11,color:"#f59e0b",marginTop:4}}>⚡ 45-day notification active</div>}
+              </div>
+            </div>
+            <div className="nm">
+              <div className="sh">Extra Work & Excess</div>
+              {[["extraWorkAmt","Extra Work Amount (₹)","number"],["extraWorkApprovalRef","Extra Work Approval Ref","text"],["excessAmount","Excess Amount (₹)","number"],["excessApprovalRef","Excess Approval Ref","text"]].map(([f,l,t])=>(
+                <div key={f} style={{marginBottom:10}}>
+                  <div style={{fontSize:12,color:"#4a6fa5",marginBottom:4}}>{l}</div>
+                  <input type={t} className="nm-input" style={{fontSize:12}} value={proj[f]||""} onChange={e=>pSet(proj.id,f,t==="number"?parseFloat(e.target.value)||0:e.target.value)}/>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="nm">
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:14}}>
+              <div style={{fontWeight:600,fontSize:13,color:"#60a5fa"}}>Time Limit Extensions (Manjuri)</div>
+              <button className="nm-btn nm-btn-accent nm-btn-sm" onClick={()=>setModal({type:"addTLE",projectId:proj.id})}>+ Add Extension</button>
+            </div>
+            {proj.timeLimitExtensions.map(t=>(
+              <div key={t.id} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"11px 13px",background:"rgba(5,12,28,0.55)",borderRadius:11,marginBottom:8,border:"1px solid rgba(245,158,11,0.15)"}}>
+                <div style={{fontSize:20,flexShrink:0}}>⏳</div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:12}}>Extended upto: {fmtDate(t.upto)}</div>
+                  <div style={{fontSize:11,color:"#4a6fa5",marginTop:2}}>Reason: {t.reason}</div>
+                  <div style={{fontSize:11,color:"#4a6fa5"}}>Approval: {t.approvalRef||"—"} · Approved: {fmtDate(t.approvedOn)}</div>
+                </div>
+                <button className="nm-btn nm-btn-xs nm-btn-danger" onClick={()=>delTLE(proj.id,t.id)}>✕</button>
+              </div>
+            ))}
+            {proj.timeLimitExtensions.length===0&&<div style={{color:"#4a6fa5",textAlign:"center",padding:20,fontSize:13}}>No extensions</div>}
+          </div>
+        </div>
+      );
+    }
+
+    function RaBillsTab({proj,addRaBill,updRaBill,delRaBill,fmt,fmtDate,setModal}) {
+      const [search,setSearch]=useState("");
+      const [sort,setSort]=useState("date");
+      const tb=proj.raBills.reduce((s,b)=>s+(b.amount||0),0);
+      const tr=proj.raBills.reduce((s,b)=>s+(b.retentionAmt||0),0);
+      const filtered=useMemo(()=>{
+        let list=[...proj.raBills];
+        if(search) list=list.filter(b=>b.label.toLowerCase().includes(search.toLowerCase())||b.checkPersonName?.toLowerCase().includes(search.toLowerCase()));
+        if(sort==="date") list.sort((a,b)=>new Date(b.billDate)-new Date(a.billDate));
+        if(sort==="amount") list.sort((a,b)=>b.amount-a.amount);
+        return list;
+      },[proj.raBills,search,sort]);
+      return(
+        <div>
+          <div className="g3" style={{marginBottom:14}}>
+            {[["Total Billed",fmt(tb),"#34d399"],["Total Retention",fmt(tr),"#a78bfa"],["Net Payable",fmt(tb-tr),"#60a5fa"]].map(([k,v,c])=>(
+              <div key={k} className="nm" style={{textAlign:"center"}}><div style={{fontSize:11,color:"#4a6fa5",marginBottom:5}}>{k}</div><div style={{fontSize:18,fontWeight:700,color:c,fontFamily:"'Space Grotesk',sans-serif"}}>{v}</div></div>
+            ))}
+          </div>
+          <div className="nm">
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+              <div style={{fontWeight:600,fontSize:13,color:"#60a5fa"}}>RA Bills ({proj.raBills.length})</div>
+              <button className="nm-btn nm-btn-accent nm-btn-sm" onClick={()=>setModal({type:"addRaBill",projectId:proj.id})}>+ Add Bill</button>
+            </div>
+            <div className="filter-bar">
+              <div className="search-bar" style={{flex:1}}>
+                <span style={{color:"#4a6fa5"}}>🔍</span>
+                <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search bill or check person…"/>
+                {search&&<span onClick={()=>setSearch("")} style={{color:"#4a6fa5",cursor:"pointer"}}>✕</span>}
+              </div>
+              <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={sort} onChange={e=>setSort(e.target.value)}>
+                <option value="date">Date ↓</option><option value="amount">Amount ↓</option>
+              </select>
+            </div>
+            {filtered.map(b=>(
+              <div key={b.id} style={{background:"rgba(5,12,28,0.55)",borderRadius:13,padding:"13px 14px",marginBottom:10,border:"1px solid rgba(30,80,160,0.12)"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                  <div><div style={{fontWeight:700,fontSize:13}}>{b.label}</div><div style={{fontSize:11,color:"#4a6fa5"}}>{fmtDate(b.billDate)}</div></div>
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <div style={{textAlign:"right"}}><div style={{fontSize:14,fontWeight:700,color:"#34d399"}}>{fmt(b.amount)}</div><div style={{fontSize:11,color:"#a78bfa"}}>RM: {fmt(b.retentionAmt||0)}</div></div>
+                    <button className="nm-btn nm-btn-xs nm-btn-danger" onClick={()=>delRaBill(proj.id,b.id)}>✕</button>
+                  </div>
+                </div>
+                <div className="g2" style={{gap:8}}>
+                  {[["invoiceSubmitted","Invoice Submitted"],["deptBillCopy","Dept Bill Copy Received"],["deposited","Bill Deposited"]].map(([f,l])=>(
+                    <div key={f} className="nm-inset" style={{display:"flex",alignItems:"center",gap:8}}>
+                      <div className={`chk ${b[f]?"done":""}`} onClick={()=>updRaBill(proj.id,b.id,f,!b[f])}>{b[f]&&<span style={{color:"#fff",fontSize:11}}>✓</span>}</div>
+                      <div><div style={{fontSize:11,fontWeight:600}}>{l}</div><div style={{fontSize:10,color:b[f]?"#4ade80":"#4a6fa5"}}>{b[f]?"Yes":"Pending"}</div></div>
+                    </div>
+                  ))}
+                  <div className="nm-inset">
+                    <div style={{fontSize:10,color:"#4a6fa5",marginBottom:4}}>Check Person</div>
+                    <input className="nm-input" style={{fontSize:11,padding:"4px 8px"}} value={b.checkPersonName||""} onChange={e=>updRaBill(proj.id,b.id,"checkPersonName",e.target.value)} placeholder="Name & designation"/>
+                  </div>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}}>
+                  <select className="nm-input" style={{fontSize:11,width:130,padding:"5px 8px"}} value={b.status} onChange={e=>updRaBill(proj.id,b.id,"status",e.target.value)}>
+                    <option value="pending">Pending</option><option value="submitted">Submitted</option><option value="approved">Approved</option><option value="paid">Paid</option>
+                  </select>
+                  <span className="pill" style={{background:b.status==="paid"?"rgba(20,83,45,0.35)":b.status==="approved"?"rgba(30,58,138,0.35)":"rgba(20,30,60,0.5)",color:b.status==="paid"?"#4ade80":b.status==="approved"?"#60a5fa":"#4a6fa5"}}>{b.status.toUpperCase()}</span>
+                </div>
+              </div>
+            ))}
+            {filtered.length===0&&<div style={{color:"#4a6fa5",textAlign:"center",padding:30,fontSize:13}}>No bills</div>}
+          </div>
+        </div>
+      );
+    }
+
+    function SecurityTab({proj,fmt,fmtDate,pSet}) {
+      const rm=proj.raBills.reduce((s,b)=>s+(b.retentionAmt||0),0);
+      return(
+        <div className="g2">
+          <div className="nm">
+            <div className="sh">Security Deposit</div>
+            {[["securityDeposit","SD Amount (₹)","number"],["sdType","SD Type","sdtype"],["sdReminderDate","SD Release Reminder Date","date"],["sdReminderNote","Reminder Note","text"]].map(([f,l,t])=>(
+              <div key={f} style={{marginBottom:10}}>
+                <div style={{fontSize:12,color:"#4a6fa5",marginBottom:4}}>{l}</div>
+                {t==="sdtype"?(
+                  <select className="nm-input" style={{fontSize:12}} value={proj.sdType||"FDR"} onChange={e=>pSet(proj.id,"sdType",e.target.value)}>
+                    <option value="FDR">FDR (Fixed Deposit)</option><option value="BankGuarantee">Bank Guarantee</option><option value="Cash">Cash</option>
+                  </select>
+                ):(
+                  <input type={t==="number"?"number":t==="date"?"date":"text"} className="nm-input" style={{fontSize:12}} value={proj[f]||""} onChange={e=>pSet(proj.id,f,t==="number"?parseFloat(e.target.value)||0:e.target.value)}/>
+                )}
+              </div>
+            ))}
+            {proj.sdReminderDate&&<div style={{background:"rgba(80,53,15,0.3)",borderRadius:9,padding:"9px 12px",fontSize:12,color:"#f59e0b",border:"1px solid rgba(245,158,11,0.2)"}}>⏰ SD Release reminder: {fmtDate(proj.sdReminderDate)}</div>}
+            <div onClick={()=>pSet(proj.id,"sdReleased",!proj.sdReleased)} style={{marginTop:10,background:proj.sdReleased?"rgba(20,83,45,0.25)":"rgba(120,53,15,0.2)",border:`1px solid ${proj.sdReleased?"rgba(74,222,128,0.2)":"rgba(245,158,11,0.2)"}`,borderRadius:10,padding:"10px",cursor:"pointer",textAlign:"center"}}>
+              <div style={{fontSize:10,color:"#4a6fa5",marginBottom:2}}>Security Deposit ({proj.sdType}): {fmt(proj.securityDeposit||0)}</div>
+              <div style={{fontSize:13,fontWeight:600,color:proj.sdReleased?"#4ade80":"#f59e0b"}}>{proj.sdReleased?"Released ✓":"Held – Click to Mark Released"}</div>
+            </div>
+          </div>
+          <div className="nm">
+            <div className="sh">Retention Money</div>
+            {[["rmReminderDate","RM Release Reminder Date","date"],["rmReminderNote","Reminder Note","text"]].map(([f,l,t])=>(
+              <div key={f} style={{marginBottom:10}}>
+                <div style={{fontSize:12,color:"#4a6fa5",marginBottom:4}}>{l}</div>
+                <input type={t} className="nm-input" style={{fontSize:12}} value={proj[f]||""} onChange={e=>pSet(proj.id,f,e.target.value)}/>
+              </div>
+            ))}
+            {proj.rmReminderDate&&<div style={{background:"rgba(76,29,149,0.25)",borderRadius:9,padding:"9px 12px",fontSize:12,color:"#a78bfa",border:"1px solid rgba(167,139,250,0.2)"}}>⏰ RM Release reminder: {fmtDate(proj.rmReminderDate)}</div>}
+            <div className="sh" style={{marginTop:12}}>Per-Bill Retention</div>
+            {proj.raBills.map(b=>(
+              <div key={b.id} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:"1px solid rgba(30,80,160,0.1)",fontSize:12}}>
+                <span style={{color:"#4a6fa5"}}>{b.label}</span><span style={{fontWeight:700,color:"#a78bfa"}}>{fmt(b.retentionAmt||0)}</span>
+              </div>
+            ))}
+            <div style={{display:"flex",justifyContent:"space-between",padding:"9px 0",fontSize:13,fontWeight:700}}>
+              <span>Total RM</span><span style={{color:"#a78bfa"}}>{fmt(rm)}</span>
+            </div>
+            <div onClick={()=>pSet(proj.id,"retentionReleased",!proj.retentionReleased)} style={{background:proj.retentionReleased?"rgba(20,83,45,0.25)":"rgba(76,29,149,0.2)",border:`1px solid ${proj.retentionReleased?"rgba(74,222,128,0.2)":"rgba(167,139,250,0.2)"}`,borderRadius:10,padding:"10px",cursor:"pointer",textAlign:"center",marginTop:6}}>
+              <div style={{fontSize:10,color:"#4a6fa5",marginBottom:2}}>Retention Money @ {proj.retentionPct}%</div>
+              <div style={{fontSize:13,fontWeight:600,color:proj.retentionReleased?"#4ade80":"#a78bfa"}}>{proj.retentionReleased?"Released ✓":"Held – Click to Mark Released"}</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function LettersTab({proj,addLetter,delLetter,fmtDate,setModal}) {
+      const [search,setSearch]=useState("");
+      const [sort,setSort]=useState("date");
+      const [filterType,setFilterType]=useState("all");
+      const filtered=useMemo(()=>{
+        let list=[...proj.letters];
+        if(search) list=list.filter(l=>l.subject.toLowerCase().includes(search.toLowerCase())||l.authorName.toLowerCase().includes(search.toLowerCase()));
+        if(filterType!=="all") list=list.filter(l=>l.type===filterType);
+        if(sort==="date") list.sort((a,b)=>new Date(b.date)-new Date(a.date));
+        if(sort==="type") list.sort((a,b)=>a.type.localeCompare(b.type));
+        return list;
+      },[proj.letters,search,sort,filterType]);
+      return(
+        <div className="nm">
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+            <div style={{fontWeight:600,fontSize:13,color:"#60a5fa"}}>Letters ({proj.letters.length})</div>
+            <button className="nm-btn nm-btn-accent nm-btn-sm" onClick={()=>setModal({type:"addLetter",projectId:proj.id})}>+ Add Letter</button>
+          </div>
+          <div className="filter-bar">
+            <div className="search-bar" style={{flex:1}}>
+              <span style={{color:"#4a6fa5"}}>🔍</span>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search subject or author…"/>
+              {search&&<span onClick={()=>setSearch("")} style={{color:"#4a6fa5",cursor:"pointer"}}>✕</span>}
+            </div>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={filterType} onChange={e=>setFilterType(e.target.value)}>
+              <option value="all">All Types</option><option value="KRS">KRS</option><option value="Department">Department</option><option value="Contractor">Contractor</option><option value="Other">Other</option>
+            </select>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={sort} onChange={e=>setSort(e.target.value)}>
+              <option value="date">Date ↓</option><option value="type">Type</option>
+            </select>
+          </div>
+          {filtered.map(l=>(
+            <div key={l.id} style={{display:"flex",gap:12,alignItems:"flex-start",padding:"11px 13px",background:"rgba(5,12,28,0.55)",borderRadius:11,marginBottom:8,border:"1px solid rgba(30,80,160,0.1)"}}>
+              <div style={{fontSize:18,flexShrink:0}}>📨</div>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:4}}>
+                  <span className="pill" style={{background:l.type==="KRS"?"rgba(30,58,138,0.4)":"rgba(76,29,149,0.4)",color:l.type==="KRS"?"#93c5fd":"#c4b5fd",fontSize:10}}>{l.type}</span>
+                  <span style={{fontWeight:600,fontSize:12}}>{l.subject}</span>
+                </div>
+                <div style={{fontSize:11,color:"#4a6fa5"}}>{l.authorName} · {fmtDate(l.date)}</div>
+              </div>
+              <button className="nm-btn nm-btn-xs nm-btn-danger" onClick={()=>delLetter(proj.id,l.id)}>✕</button>
+            </div>
+          ))}
+          {filtered.length===0&&<div style={{color:"#4a6fa5",textAlign:"center",padding:30,fontSize:13}}>No letters</div>}
+        </div>
+      );
+    }
+
+    function MilestonesTab({proj,togMilestone,addMilestone,delMilestone,fmtDate,daysLeft,setModal}) {
+      const [search,setSearch]=useState("");
+      const [sort,setSort]=useState("due");
+      const filtered=useMemo(()=>{
+        let list=[...proj.milestones];
+        if(search) list=list.filter(m=>m.title.toLowerCase().includes(search.toLowerCase()));
+        if(sort==="due") list.sort((a,b)=>new Date(a.due)-new Date(b.due));
+        if(sort==="status") list.sort((a,b)=>Number(a.done)-Number(b.done));
+        if(sort==="az") list.sort((a,b)=>a.title.localeCompare(b.title));
+        return list;
+      },[proj.milestones,search,sort]);
+      return(
+        <div className="nm">
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+            <div style={{fontWeight:600,fontSize:13,color:"#60a5fa"}}>Milestones ({proj.milestones.filter(m=>m.done).length}/{proj.milestones.length})</div>
+            <button className="nm-btn nm-btn-accent nm-btn-sm" onClick={()=>setModal({type:"addMilestone",projectId:proj.id})}>+ Add</button>
+          </div>
+          <div className="filter-bar">
+            <div className="search-bar" style={{flex:1}}>
+              <span style={{color:"#4a6fa5"}}>🔍</span>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search milestones…"/>
+              {search&&<span onClick={()=>setSearch("")} style={{color:"#4a6fa5",cursor:"pointer"}}>✕</span>}
+            </div>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={sort} onChange={e=>setSort(e.target.value)}>
+              <option value="due">Sort: Due Date</option><option value="status">Sort: Pending First</option><option value="az">Sort: A–Z</option>
+            </select>
+          </div>
+          {filtered.map((m,i)=>(
+            <div key={m.id} style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:14}}>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+                <div className={`chk ${m.done?"done":""}`} onClick={()=>togMilestone(proj.id,m.id)}>{m.done&&<span style={{color:"#fff",fontSize:11}}>✓</span>}</div>
+                {i<filtered.length-1&&<div style={{width:2,height:22,background:m.done?"rgba(37,99,235,0.4)":"rgba(30,80,160,0.15)",marginTop:3}}/>}
+              </div>
+              <div style={{flex:1,paddingTop:1}}>
+                <div style={{fontWeight:600,fontSize:13,color:m.done?"#4a6fa5":"#c8deff",textDecoration:m.done?"line-through":"none"}}>{m.title}</div>
+                <div style={{fontSize:11,color:"#4a6fa5",marginTop:2}}>Due: {fmtDate(m.due)} · {daysLeft(m.due)!==null?(daysLeft(m.due)>=0?`${daysLeft(m.due)}d left`:"Past due"):"—"}</div>
+              </div>
+              <span className="pill" style={{background:m.done?"rgba(20,83,45,0.3)":"rgba(20,30,60,0.5)",color:m.done?"#4ade80":"#4a6fa5"}}>{m.done?"Done":"Pending"}</span>
+              <button className="nm-btn nm-btn-xs nm-btn-danger" onClick={()=>delMilestone(proj.id,m.id)}>✕</button>
+            </div>
+          ))}
+          {filtered.length===0&&<div style={{color:"#4a6fa5",textAlign:"center",padding:30,fontSize:13}}>No milestones</div>}
+        </div>
+      );
+    }
+
+    function WorksiteTab({proj,addWeek,updWeek}) {
+      const fields=[["earthwork","#f59e0b"],["masonry","#3b82f6"],["concrete","#22c55e"],["steel","#a78bfa"],["finishing","#f97316"]];
+      return(
+        <div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:12}}>
+            {proj.weeklyProgress.map((w,i)=>(
+              <div key={i} className="nm">
+                <div style={{fontWeight:600,marginBottom:12,fontSize:13,color:"#60a5fa"}}>{w.week}</div>
+                {fields.map(([f,c])=>(
+                  <div key={f} style={{marginBottom:10}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:4,fontSize:11}}>
+                      <span style={{color:"#94a3b8",textTransform:"capitalize"}}>{f}</span>
+                      <span style={{color:c,fontWeight:700}}>{w[f]}%</span>
+                    </div>
+                    <input type="range" min={0} max={100} value={w[f]} onChange={e=>updWeek(proj.id,i,f,e.target.value)} style={{accentColor:c}}/>
+                  </div>
+                ))}
+                <div style={{fontSize:11,color:"#4a6fa5",marginTop:4}}>Avg: {Math.round(fields.reduce((s,[f])=>s+w[f],0)/fields.length)}%</div>
+              </div>
+            ))}
+          </div>
+          <button className="nm-btn" style={{marginTop:12}} onClick={()=>addWeek(proj.id)}>+ Add Week</button>
+        </div>
+      );
+    }
+
+    function DocumentsTab({proj,addDoc,delDoc,fmtDate,setModal}) {
+      const [search,setSearch]=useState("");
+      const [sort,setSort]=useState("date");
+      const [filterType,setFilterType]=useState("all");
+      const typeColors={Drawing:"#3b82f6",WorkOrder:"#22c55e",SD:"#f59e0b",Legal:"#8b5cf6",Finance:"#f97316",Other:"#64748b"};
+      const filtered=useMemo(()=>{
+        let list=[...proj.documents];
+        if(search) list=list.filter(d=>d.name.toLowerCase().includes(search.toLowerCase()));
+        if(filterType!=="all") list=list.filter(d=>d.type===filterType);
+        if(sort==="date") list.sort((a,b)=>new Date(b.date)-new Date(a.date));
+        if(sort==="name") list.sort((a,b)=>a.name.localeCompare(b.name));
+        if(sort==="type") list.sort((a,b)=>a.type.localeCompare(b.type));
+        return list;
+      },[proj.documents,search,sort,filterType]);
+      return(
+        <div className="nm">
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
+            <div style={{fontWeight:600,fontSize:13,color:"#60a5fa"}}>Documents ({proj.documents.length})</div>
+            <button className="nm-btn nm-btn-accent nm-btn-sm" onClick={()=>setModal({type:"addDoc",projectId:proj.id})}>+ Add</button>
+          </div>
+          <div className="filter-bar">
+            <div className="search-bar" style={{flex:1}}>
+              <span style={{color:"#4a6fa5"}}>🔍</span>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search documents…"/>
+              {search&&<span onClick={()=>setSearch("")} style={{color:"#4a6fa5",cursor:"pointer"}}>✕</span>}
+            </div>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={filterType} onChange={e=>setFilterType(e.target.value)}>
+              <option value="all">All Types</option><option value="Drawing">Drawing</option><option value="WorkOrder">Work Order</option><option value="SD">SD</option><option value="Legal">Legal</option><option value="Finance">Finance</option><option value="Other">Other</option>
+            </select>
+            <select className="nm-input" style={{width:"auto",padding:"7px 12px",fontSize:12}} value={sort} onChange={e=>setSort(e.target.value)}>
+              <option value="date">Date ↓</option><option value="name">Name</option><option value="type">Type</option>
+            </select>
+          </div>
+          {filtered.map(d=>(
+            <div key={d.id} style={{display:"flex",gap:12,alignItems:"center",padding:"10px 12px",background:"rgba(5,12,28,0.55)",borderRadius:11,marginBottom:8,border:"1px solid rgba(30,80,160,0.1)"}}>
+              <div style={{width:34,height:34,borderRadius:8,background:(typeColors[d.type]||"#64748b")+"20",border:`1px solid ${(typeColors[d.type]||"#64748b")}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>📄</div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:12}}>{d.name}</div><div style={{fontSize:11,color:"#4a6fa5",marginTop:2}}>{fmtDate(d.date)}{d.note?` · ${d.note}`:""}</div></div>
+              <span className="pill" style={{background:(typeColors[d.type]||"#64748b")+"20",color:(typeColors[d.type]||"#64748b")}}>{d.type}</span>
+              <button className="nm-btn nm-btn-xs nm-btn-danger" onClick={()=>delDoc(proj.id,d.id)}>✕</button>
+            </div>
+          ))}
+          {filtered.length===0&&<div style={{color:"#4a6fa5",textAlign:"center",padding:30,fontSize:13}}>No documents match</div>}
+        </div>
+      );
+    }
+
+    function NotesTab({proj,pSet}) {
+      const [local,setLocal]=useState(proj.notes||"");
+      useEffect(()=>setLocal(proj.notes||""),[proj.id]);
+      return(
+        <div className="nm">
+          <div style={{fontWeight:600,marginBottom:12,fontSize:13,color:"#60a5fa"}}>Project Notes</div>
+          <textarea className="nm-input" rows={12} value={local} onChange={e=>setLocal(e.target.value)} placeholder="DLP terms, site remarks, special conditions…"/>
+          <button className="nm-btn nm-btn-accent" style={{marginTop:10}} onClick={()=>pSet(proj.id,"notes",local)}>Save Notes</button>
+        </div>
+      );
+    }
+
+    function ModalRouter({modal,setModal,db,addProject,delProject,addVillage,addTLE,addRaBill,addLetter,addMilestone,addDoc,addTodo,addTeam,save,showToast}) {
+      const close=()=>setModal(null);
+      if(modal.type==="addProject") return <NmFormModal title="New Ongoing Project" fields={[
+        {key:"name",label:"Project Name / Package",type:"text",required:true},
+        {key:"workOrderNo",label:"Work Order Number",type:"text"},
+        {key:"negotiationLetterNo",label:"Negotiation Letter No.",type:"text"},
+        {key:"contractorName",label:"Contractor Name",type:"text"},
+        {key:"tenderAmount",label:"Tender Amount (₹)",type:"number"},
+        {key:"contractAmount",label:"Contract Amount (₹)",type:"number"},
+        {key:"securityDeposit",label:"Security Deposit (₹)",type:"number"},
+        {key:"sdType",label:"SD Type",type:"select",options:["FDR","BankGuarantee","Cash"]},
+        {key:"retentionPct",label:"Retention %",type:"number",default:5},
+        {key:"tenderStartDate",label:"Start Date",type:"date"},
+        {key:"tenderEndDate",label:"Tender End Date",type:"date"},
+      ]} onSubmit={d=>addProject({...d,tenderAmount:parseFloat(d.tenderAmount)||0,contractAmount:parseFloat(d.contractAmount)||0,securityDeposit:parseFloat(d.securityDeposit)||0,retentionPct:parseFloat(d.retentionPct)||5})} onClose={close} submitLabel="Create Project"/>;
+
+      if(modal.type==="addVillage") return <NmFormModal title="Add Village / Site" fields={[
+        {key:"name",label:"Village Name",type:"text",required:true},
+        {key:"startDate",label:"Start Date",type:"date",required:true},
+        {key:"endDate",label:"End Date (Original)",type:"date",required:true},
+        {key:"extEndDate",label:"Extended End Date (if any)",type:"date"},
+        {key:"note",label:"Note",type:"text"},
+      ]} onSubmit={d=>addVillage(modal.projectId,d)} onClose={close} submitLabel="Add Village"/>;
+
+      if(modal.type==="addTLE") return <NmFormModal title="Add Time Limit Extension" fields={[
+        {key:"upto",label:"Extended Upto (Date)",type:"date",required:true},
+        {key:"reason",label:"Reason for Extension",type:"text",required:true},
+        {key:"approvalRef",label:"Approval / Manjuri Ref No.",type:"text"},
+        {key:"approvedOn",label:"Approved On",type:"date"},
+      ]} onSubmit={d=>addTLE(modal.projectId,d)} onClose={close} submitLabel="Add Extension"/>;
+
+      if(modal.type==="addRaBill") return <NmFormModal title="Add RA Bill" fields={[
+        {key:"label",label:"Bill Label (e.g. RA Bill 3)",type:"text",required:true},
+        {key:"billDate",label:"Bill Date",type:"date"},
+        {key:"amount",label:"Bill Amount (₹)",type:"number",required:true},
+        {key:"retentionAmt",label:"Retention Deducted (₹)",type:"number"},
+        {key:"checkPersonName",label:"Bill Check Person (Name & Designation)",type:"text"},
+        {key:"invoiceDate",label:"Invoice Submitted Date",type:"date"},
+        {key:"depositDate",label:"Deposit Date",type:"date"},
+        {key:"status",label:"Status",type:"select",options:["pending","submitted","approved","paid"]},
+      ]} onSubmit={d=>addRaBill(modal.projectId,{...d,amount:parseFloat(d.amount)||0,retentionAmt:parseFloat(d.retentionAmt)||0,invoiceSubmitted:!!d.invoiceDate,deptBillCopy:false,deposited:!!d.depositDate})} onClose={close} submitLabel="Add RA Bill"/>;
+
+      if(modal.type==="addLetter") return <NmFormModal title="Add Letter" fields={[
+        {key:"type",label:"Letter Type",type:"select",options:["KRS","Department","Contractor","Other"]},
+        {key:"subject",label:"Subject",type:"text",required:true},
+        {key:"authorName",label:"Author / From",type:"text"},
+        {key:"date",label:"Letter Date",type:"date"},
+      ]} onSubmit={d=>addLetter(modal.projectId,d)} onClose={close} submitLabel="Add Letter"/>;
+
+      if(modal.type==="addMilestone") return <NmFormModal title="Add Milestone" fields={[
+        {key:"title",label:"Milestone Title",type:"text",required:true},
+        {key:"due",label:"Due Date",type:"date",required:true},
+      ]} onSubmit={d=>addMilestone(modal.projectId,d)} onClose={close} submitLabel="Add"/>;
+
+      if(modal.type==="addDoc") return <NmFormModal title="Add Document" fields={[
+        {key:"name",label:"Document Name",type:"text",required:true},
+        {key:"type",label:"Type",type:"select",options:["WorkOrder","Drawing","SD","Legal","Finance","Other"]},
+        {key:"note",label:"Note",type:"text"},
+      ]} onSubmit={d=>addDoc(modal.projectId,d)} onClose={close} submitLabel="Add Document"/>;
+
+      if(modal.type==="addTodo") return <NmFormModal title="Add Daily Task" fields={[
+        {key:"task",label:"Task Description",type:"text",required:true},
+        {key:"doneBy",label:"Assigned To",type:"select",options:db.teamMembers.map(m=>m.name),required:true},
+        {key:"projectId",label:"Project",type:"select",options:["", ...db.projects.map(p=>p.id)],optionLabels:["General",...db.projects.map(p=>p.name)]},
+      ]} onSubmit={d=>addTodo(d)} onClose={close} submitLabel="Add Task"/>;
+
+      if(modal.type==="addTeam") return <NmFormModal title="Add Team Member" fields={[
+        {key:"name",label:"Full Name",type:"text",required:true},
+        {key:"role",label:"Role / Designation",type:"text"},
+        {key:"phone",label:"Phone Number",type:"text"},
+        {key:"email",label:"Email",type:"text"},
+      ]} onSubmit={d=>addTeam(d)} onClose={close} submitLabel="Add Member"/>;
+
+      if(modal.type==="confirmDelete") return(
+        <div className="modal-bg"><div className="modal-box">
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,marginBottom:10,color:"#f87171"}}>Delete Project?</div>
+          <div style={{fontSize:13,color:"#4a6fa5",marginBottom:18,lineHeight:1.6}}>All data including villages, RA bills, letters, and documents will be permanently deleted.</div>
+          <div style={{display:"flex",gap:10}}>
+            <button className="nm-btn nm-btn-danger" style={{flex:1}} onClick={()=>delProject(modal.pid)}>Delete</button>
+            <button className="nm-btn" onClick={close}>Cancel</button>
+          </div>
+        </div></div>
+      );
+
+      if(modal.type==="resetDB") return(
+        <div className="modal-bg"><div className="modal-box">
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,marginBottom:10,color:"#f87171"}}>Reset Database?</div>
+          <div style={{fontSize:13,color:"#4a6fa5",marginBottom:18}}>All data will be wiped and replaced with sample data.</div>
+          <div style={{display:"flex",gap:10}}>
+            <button className="nm-btn nm-btn-danger" style={{flex:1}} onClick={async()=>{try{await save(defaultDB);showToast("Database reset");close();window.location.reload();}catch{showToast("Reset failed",true);}}}>Reset</button>
+            <button className="nm-btn" onClick={close}>Cancel</button>
+          </div>
+        </div></div>
+      );
+      return null;
+    }
+
+    function NmFormModal({title,fields,onSubmit,onClose,submitLabel}) {
+      const [form,setForm]=useState(()=>{const i={};fields.forEach(f=>{i[f.key]=f.default!==undefined?String(f.default):(f.type==="select"?(f.options?.[0]||""):"");});return i;});
+      const handle=()=>{for(const f of fields){if(f.required&&!form[f.key]){alert(`${f.label} is required`);return;}}onSubmit(form);onClose();};
+      return(
+        <div className="modal-bg"><div className="modal-box">
+          <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:800,fontSize:17,marginBottom:18,background:"linear-gradient(90deg,#60a5fa,#3b82f6)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{title}</div>
+          <div style={{display:"grid",gap:10}}>
+            {fields.map(f=>(
+              <div key={f.key}>
+                <div style={{fontSize:12,color:"#4a6fa5",marginBottom:5}}>{f.label}{f.required&&<span style={{color:"#f87171"}}> *</span>}</div>
+                {f.type==="select"?(
+                  <select className="nm-input" style={{fontSize:12}} value={form[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}>
+                    {(f.options||[]).map((o,i)=><option key={o} value={o}>{f.optionLabels?.[i]||o}</option>)}
+                  </select>
+                ):(
+                  <input type={f.type||"text"} className="nm-input" style={{fontSize:12}} value={form[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))}/>
+                )}
+              </div>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:10,marginTop:20}}>
+            <button className="nm-btn nm-btn-accent" style={{flex:1}} onClick={handle}>{submitLabel}</button>
+            <button className="nm-btn" onClick={onClose}>Cancel</button>
+          </div>
+        </div></div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
