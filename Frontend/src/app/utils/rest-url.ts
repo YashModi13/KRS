@@ -1,9 +1,8 @@
-const host = (typeof window !== 'undefined' && window.location && window.location.hostname)
-  ? window.location.hostname
-  : 'localhost';
+import { API_BASE_URL } from './constant';
 
 export const RestUrl = {
-  API_BASE_URL: `http://${host}:8081/api`,
+  API_BASE_URL: API_BASE_URL,
+
   USERS: '/users',
   USER_THEME: '/users/theme',
   USER_VALIDATION: {

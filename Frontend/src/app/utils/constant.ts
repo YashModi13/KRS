@@ -1,4 +1,15 @@
+// Toggle flag: true for local backend (http://localhost:8081/api), false for Render production backend (https://krs-backend-uv4l.onrender.com/api)
+export const IS_LOCAL_ENVIRONMENT = false;
+
+export const BACKEND_URLS = {
+  LOCAL: 'http://localhost:8081/api',
+  PRODUCTION: 'https://krs-backend-uv4l.onrender.com/api'
+};
+
+export const API_BASE_URL = IS_LOCAL_ENVIRONMENT ? BACKEND_URLS.LOCAL : BACKEND_URLS.PRODUCTION;
+
 export const Constants = {
+
   PAGINATION: {
     DEFAULT_LIMIT: 10,
     DEFAULT_OFFSET: 0,
