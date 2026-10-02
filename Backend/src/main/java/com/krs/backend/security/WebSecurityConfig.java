@@ -70,9 +70,10 @@ public class WebSecurityConfig {
                 }
             ))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/**", "/api/test/**", "/api/public/**", "/healthz").permitAll()
                 .anyRequest().authenticated()
             );
+
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
