@@ -1,5 +1,9 @@
+const host = (typeof window !== 'undefined' && window.location && window.location.hostname)
+  ? window.location.hostname
+  : 'localhost';
+
 export const RestUrl = {
-  API_BASE_URL: 'http://localhost:8081/api',
+  API_BASE_URL: `http://${host}:8081/api`,
   USERS: '/users',
   USER_THEME: '/users/theme',
   USER_VALIDATION: {
@@ -13,6 +17,7 @@ export const RestUrl = {
     LOGIN: '/auth/login'
   },
   PROJECTS: '/projects',
+  PROJECTS_CONFIG: '/projects/config',
   NOTIFICATIONS: {
     BASE: '/notifications',
     UNREAD_COUNT: '/notifications/unread-count',

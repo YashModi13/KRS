@@ -78,14 +78,28 @@ export class DashboardComponent implements OnInit {
   /** Temp note typed before confirming done */
   pendingDoneNote: string = '';
 
+  maxTimeLimitDays = 90;
+
   constructor(
     private todoService: TodoService,
     private projectService: ProjectService
   ) {}
 
   ngOnInit() {
+    this.loadDashboardConfig();
     this.loadTodos();
     this.loadProjectMetrics();
+  }
+
+  loadDashboardConfig() {
+    this.projectService.getDashboardConfig().subscribe({
+      next: (config) => {
+        if (config && config.maxTimeLimitDays) {
+          this.maxTimeLimitDays = config.maxTimeLimitDays;
+        }
+      },
+      error: () => {}
+    });
   }
 
   loadProjectMetrics() {
@@ -204,7 +218,7 @@ export class DashboardComponent implements OnInit {
         daysColor,
         progressPct
       };
-    }).filter((p): p is any => p !== null);
+    }).filter((p): p is any => p !== null && p.daysLeft <= this.maxTimeLimitDays);
 
     return list.sort((a, b) => a.daysLeft - b.daysLeft);
   }

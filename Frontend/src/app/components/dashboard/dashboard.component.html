@@ -61,7 +61,7 @@
         </div>
       </div>
       <div *ngIf="timeLimitProjects.length === 0" class="sitepro-empty-state">
-        No projects nearing time limit (90 days) or overdue 🎉
+        No projects nearing time limit (≤ {{ maxTimeLimitDays }} days) or overdue 🎉
       </div>
     </div>
   </div>

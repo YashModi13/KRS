@@ -304,10 +304,35 @@ export class UserManagementComponent implements OnInit {
       .replace('{{PASSWORD}}', pwd)
       .replace('{{ROLES}}', rolesStr);
     
-    navigator.clipboard.writeText(message).then(() => {
+    const setSuccess = () => {
       this.isCopied = true;
-      setTimeout(() => this.isCopied = false, 2000);
-    });
+      this.toastService.success('User credentials copied to clipboard!');
+      setTimeout(() => this.isCopied = false, 2500);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(message).then(setSuccess).catch(() => {
+        this.fallbackCopyText(message);
+        setSuccess();
+      });
+    } else {
+      this.fallbackCopyText(message);
+      setSuccess();
+    }
+  }
+
+  private fallbackCopyText(text: string) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+    } catch (err) {}
+    document.body.removeChild(textArea);
   }
 
   savePassword() {

@@ -132,6 +132,10 @@ export interface ProjectResponse {
 export class ProjectService {
   private krsService = inject(KrsService);
 
+  getDashboardConfig(): Observable<{ maxTimeLimitDays: number }> {
+    return this.krsService.get<{ maxTimeLimitDays: number }>(RestUrl.PROJECTS_CONFIG);
+  }
+
   getAllProjects(limit: number = 10, offset: number = 0, sortBy?: string, sortDir?: string, filters?: any): Observable<ProjectResponse> {
     let params = new HttpParams()
       .set('limit', limit.toString())

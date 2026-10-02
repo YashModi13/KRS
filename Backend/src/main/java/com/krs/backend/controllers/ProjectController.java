@@ -27,9 +27,19 @@ public class ProjectController {
     private final ProjectRepository projectRepository;
     private final EntityManager entityManager;
 
+    @org.springframework.beans.factory.annotation.Value("${app.dashboard.max-time-limit-days:90}")
+    private int maxTimeLimitDays;
+
     public ProjectController(ProjectRepository projectRepository, EntityManager entityManager) {
         this.projectRepository = projectRepository;
         this.entityManager = entityManager;
+    }
+
+    @GetMapping("/config")
+    public ResponseEntity<Map<String, Object>> getProjectConfig() {
+        Map<String, Object> config = new HashMap<>();
+        config.put("maxTimeLimitDays", maxTimeLimitDays);
+        return ResponseEntity.ok(config);
     }
 
     @GetMapping
