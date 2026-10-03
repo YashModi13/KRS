@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ProjectService, Project, ProjectLocation, ProjectDocument } from '../../services/project.service';
 import { Constants } from '../../utils/constant';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
 import { ToastService } from '../../services/toast.service';
@@ -16,8 +16,8 @@ import { ToastService } from '../../services/toast.service';
   styleUrl: './projects.component.css'
 })
 export class ProjectsComponent implements OnInit {
-  projectService = inject(ProjectService);
-  toastService = inject(ToastService);
+  readonly projectService = inject(ProjectService);
+  readonly toastService = inject(ToastService);
   readonly Constants = Constants;
   
   pageTitle = '';
@@ -51,6 +51,7 @@ export class ProjectsComponent implements OnInit {
   filters: any = { status: '', workAwardedStatus: '' };
 
   private filterSubject = new Subject<void>();
+  private loadSub?: Subscription;
 
   ngOnInit() {
     this.pageTitle = Constants.PROJECTS.PAGE_TITLE;
@@ -82,14 +83,21 @@ export class ProjectsComponent implements OnInit {
 
   loadProjects() {
     this.isLoading = true;
-    this.projectService.getAllProjects(this.limit, this.offset, this.sortBy, this.sortDir, this.filters).subscribe({
+    this.loadSub?.unsubscribe();
+    this.loadSub = this.projectService.getAllProjects(this.limit, this.offset, this.sortBy, this.sortDir, this.filters).subscribe({
       next: (res) => {
         this.projects = res.data;
         this.totalRecords = res.total;
         
         this.projects.forEach(p => {
           if (!p.status) {
-            p.status = p.workAwardedStatus === 'Work Completed' ? 'Completed' : (p.workAwardedStatus === 'Not' ? 'Not Awarded' : 'Running');
+            if (p.workAwardedStatus === 'Work Completed') {
+              p.status = 'Completed';
+            } else if (p.workAwardedStatus === 'Not') {
+              p.status = 'Not Awarded';
+            } else {
+              p.status = 'Running';
+            }
           }
         });
 
@@ -146,8 +154,18 @@ export class ProjectsComponent implements OnInit {
 
   get showingText() {
     if (this.totalRecords === 0) return 'Showing 0 to 0 of 0';
-    const end = Math.min(this.offset + Number(this.limit), this.totalRecords);
-    return `Showing ${this.offset + 1} to ${end} of ${this.totalRecords}`;
+    const currentOffset = Number(this.offset);
+    const currentLimit = Number(this.limit);
+    const end = Math.min(currentOffset + currentLimit, this.totalRecords);
+    return `Showing ${currentOffset + 1} to ${end} of ${this.totalRecords}`;
+  }
+
+  get isPrevDisabled(): boolean {
+    return Number(this.offset) <= 0;
+  }
+
+  get isNextDisabled(): boolean {
+    return Number(this.offset) + Number(this.limit) >= this.totalRecords;
   }
 
   onLimitChange(newLimit: any) {
@@ -157,34 +175,46 @@ export class ProjectsComponent implements OnInit {
   }
 
   nextPage() {
-    if (this.offset + Number(this.limit) < this.totalRecords) {
-      this.offset += Number(this.limit);
+    const currentOffset = Number(this.offset);
+    const currentLimit = Number(this.limit);
+    if (currentOffset + currentLimit < this.totalRecords) {
+      this.offset = currentOffset + currentLimit;
       this.loadProjects();
     }
   }
 
   prevPage() {
-    if (this.offset >= Number(this.limit)) {
-      this.offset -= Number(this.limit);
-      this.loadProjects();
+    const currentOffset = Number(this.offset);
+    const currentLimit = Number(this.limit);
+    if (currentOffset >= currentLimit) {
+      this.offset = currentOffset - currentLimit;
+    } else {
+      this.offset = 0;
     }
+    this.loadProjects();
   }
 
-  getAboveBelow(tenderAmt: number | undefined, agreementAmt: number | undefined, pct?: number): { text: string, class: string } {
-    if (pct !== undefined && pct !== null) {
-      if (pct === 0) return { text: 'At Par', class: 'text-grey' };
-      if (pct < 0) return { text: `${pct}% Below`, class: 'text-green' };
-      return { text: `+${pct}% Above`, class: 'text-red' };
+
+  getVariance(p: Project | null): { text: string, cls: string, icon: string, tip: string } {
+    let value: number | null = null;
+    if (p?.variancePct !== undefined && p?.variancePct !== null) {
+      value = Number(p.variancePct);
+    } else if (p?.estimatedTenderCost && p?.tenderedCost) {
+      // Fallback for records not yet saved (e.g. create/edit form)
+      value = ((p.tenderedCost - p.estimatedTenderCost) / p.estimatedTenderCost) * 100;
     }
-    if (!tenderAmt || !agreementAmt) return { text: 'N/A', class: 'text-grey' };
-    const diff = agreementAmt - tenderAmt;
-    if (diff === 0) return { text: 'At Par', class: 'text-grey' };
-    const percent = (diff / tenderAmt) * 100;
-    if (percent < 0) {
-      return { text: `${percent.toFixed(1)}% Below`, class: 'text-green' };
-    } else {
-      return { text: `+${percent.toFixed(1)}% Above`, class: 'text-red' };
+
+    if (value === null || Number.isNaN(value)) {
+      return { text: 'N/A', cls: 'variance-na', icon: '', tip: 'Estimated / tendered cost not available' };
     }
+    if (Math.abs(value) < 0.005) {
+      return { text: 'At Par', cls: 'variance-par', icon: '●', tip: 'Tendered cost equals estimated cost' };
+    }
+
+    const abs = Math.abs(value).toFixed(2);
+    return value < 0
+      ? { text: `-${abs}% Below`, cls: 'variance-below', icon: '▼', tip: `Tendered ${abs}% below estimate` }
+      : { text: `+${abs}% Above`, cls: 'variance-above', icon: '▲', tip: `Tendered ${abs}% above estimate` };
   }
 
   setTab(tab: 'overview' | 'locations' | 'rabills' | 'approvals' | 'milestones' | 'team' | 'documents') {
@@ -291,13 +321,13 @@ export class ProjectsComponent implements OnInit {
   }
 
   getPhysicalProgress(project: Project | null): number {
-    if (!project || !project.locations || project.locations.length === 0) return 0;
+    if (!project?.locations?.length) return 0;
     const total = project.locations.reduce((acc, loc) => acc + (loc.physicalProgress || 0), 0);
     return Math.round(total / project.locations.length);
   }
 
   getFinancialProgress(project: Project | null): number {
-    if (!project || !project.tenderedCost || project.tenderedCost <= 0) return 0;
+    if (!project?.tenderedCost || project.tenderedCost <= 0) return 0;
     const totalPaid = (project.raBills || [])
       .filter(b => b.status === 'Paid' || b.billDeposited || b.status === 'paid')
       .reduce((acc, b) => acc + (b.netPayment || b.grossBillAmount || 0), 0);
@@ -308,7 +338,7 @@ export class ProjectsComponent implements OnInit {
   getDaysRemaining(endDateStr?: string): { days: number, label: string, isOverdue: boolean } | null {
     if (!endDateStr) return null;
     const end = new Date(endDateStr).getTime();
-    const now = new Date().getTime();
+    const now = Date.now();
     const diffDays = Math.ceil((end - now) / (1000 * 3600 * 24));
     if (diffDays < 0) {
       return { days: Math.abs(diffDays), label: `${Math.abs(diffDays)} Days Overdue`, isOverdue: true };
@@ -318,13 +348,11 @@ export class ProjectsComponent implements OnInit {
   }
 
   getTotalRaBilled(project: Project | null): number {
-    if (!project || !project.raBills) return 0;
-    return project.raBills.reduce((acc, b) => acc + (b.grossBillAmount || 0), 0);
+    return project?.raBills?.reduce((acc, b) => acc + (b.grossBillAmount || 0), 0) ?? 0;
   }
 
   getTotalRaPaid(project: Project | null): number {
-    if (!project || !project.raBills) return 0;
-    return project.raBills.reduce((acc, b) => acc + (b.netPayment || 0), 0);
+    return project?.raBills?.reduce((acc, b) => acc + (b.netPayment || 0), 0) ?? 0;
   }
 
   openCreateMode() {
@@ -424,9 +452,7 @@ export class ProjectsComponent implements OnInit {
         });
       }
     } else if (this.mode === 'create' || this.mode === 'edit') {
-      if (!this.projectData.locations) {
-        this.projectData.locations = [];
-      }
+      this.projectData.locations ??= [];
       if (this.locationModalMode === 'add') {
         this.projectData.locations.push({ ...this.editingLocation });
       } else {

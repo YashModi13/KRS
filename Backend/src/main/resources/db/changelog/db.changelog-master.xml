@@ -22,5 +22,6 @@
     <include file="db/changelog/changes/v15_add_user_theme_preference.sql" />
     <include file="db/changelog/changes/v16_add_location_start_closed_dates.sql" />
     <include file="db/changelog/changes/v17_create_project_documents.sql" />
+    <include file="db/changelog/changes/v18_reorder_projects_columns.sql" />
 
 </databaseChangeLog>

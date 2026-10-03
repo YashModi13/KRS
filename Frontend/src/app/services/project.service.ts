@@ -89,6 +89,8 @@ export interface Project {
   estimatedTenderCost?: number;
   tenderedCost?: number;
   aboveBelowPercentage?: number;
+  /** Read-only, computed by backend SELECT query */
+  variancePct?: number | null;
   refPerson?: string;
   workAwardedStatus?: string;
   workOrderNumber?: string;

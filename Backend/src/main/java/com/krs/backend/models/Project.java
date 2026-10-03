@@ -110,6 +110,18 @@ public class Project {
     @Column(name = "above_below_percentage")
     private BigDecimal aboveBelowPercentage;
 
+    /**
+     * Variance % calculated in the SELECT query (not stored).
+     * Uses the manually entered percentage if present, otherwise
+     * (tenderedCost - estimatedTenderCost) / estimatedTenderCost * 100.
+     */
+    @org.hibernate.annotations.Formula(
+        "COALESCE(above_below_percentage, " +
+        "CASE WHEN estimated_tender_cost IS NOT NULL AND estimated_tender_cost <> 0 AND tendered_cost IS NOT NULL " +
+        "THEN ROUND((tendered_cost - estimated_tender_cost) * 100.0 / estimated_tender_cost, 2) END)"
+    )
+    private BigDecimal variancePct;
+
     @Column(name = "ref_person")
     private String refPerson;
 

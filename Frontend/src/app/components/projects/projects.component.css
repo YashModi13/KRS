@@ -1,4 +1,56 @@
 /* Master Project Register Styles */
+
+/* Sort button inside table headers */
+.th-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  justify-content: flex-start;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.th-sort-btn.text-right { justify-content: flex-end; }
+.th-sort-btn.text-center { justify-content: center; }
+.th-sort-btn:hover { color: var(--accent); }
+
+/* Consistent column alignment for header, filter and data cells */
+.master-table th,
+.master-table td,
+.master-table .filter-row td { padding-left: 12px; padding-right: 12px; }
+.master-table th.text-right,
+.master-table td.text-right { text-align: right; }
+.master-table th.text-center,
+.master-table td.text-center { text-align: center; }
+.master-table th { vertical-align: middle; }
+
+/* Variance pill */
+.variance-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+.variance-icon { font-size: 9px; line-height: 1; }
+.variance-below { color: #f87171; background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.35); }
+.variance-above { color: #4ade80; background: rgba(34, 197, 94, 0.12); border-color: rgba(34, 197, 94, 0.35); }
+.variance-par   { color: #94a3b8; background: rgba(148, 163, 184, 0.12); border-color: rgba(148, 163, 184, 0.3); }
+.variance-na    { color: #64748b; background: transparent; border-color: rgba(100, 116, 139, 0.3); font-weight: 500; }
 .card.p-0 {
   padding: 0;
   overflow: hidden;
@@ -108,7 +160,7 @@
 .master-table th {
   background-color: var(--navy);
   color: #e2e8f0;
-  padding: 12px 10px;
+  padding: 12px 12px;
   text-align: left;
   font-weight: 600;
   text-transform: uppercase;
@@ -118,7 +170,7 @@
 }
 
 .filter-row td {
-  padding: 8px;
+  padding: 8px 12px;
   background-color: var(--bg);
   border-bottom: 1px solid var(--border);
 }
@@ -252,7 +304,7 @@
 }
 
 .master-table td {
-  padding: 10px 8px;
+  padding: 10px 12px;
   vertical-align: middle;
   border: none;
   border-bottom: 1px solid var(--border);

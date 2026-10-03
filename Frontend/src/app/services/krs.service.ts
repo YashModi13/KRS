@@ -19,7 +19,9 @@ export class KrsService {
 
   get<T>(url: string, params?: any): Observable<T> {
     let httpParams = new HttpParams();
-    if (params) {
+    if (params instanceof HttpParams) {
+      httpParams = params;
+    } else if (params) {
       Object.keys(params).forEach(key => {
         if (params[key] !== null && params[key] !== undefined) {
           httpParams = httpParams.set(key, params[key]);
