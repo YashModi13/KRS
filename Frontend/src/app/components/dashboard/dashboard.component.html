@@ -113,7 +113,7 @@
               <td>
                 <strong style="color: var(--text); font-size: 12.5px;">{{ p.nameOfWork || 'Construction Work' }}</strong>
                 <div style="font-size: 10.5px; color: var(--muted); margin-top: 2px; font-weight: 500;">
-                  WO: {{ p.workOrderNumber || 'WO-2026-' + p.id }} · {{ p.villageName || 'Site Location' }}
+                  WO: {{ p.workOrderNumber || 'WO-2026-' + p.id }} · {{ (p.locations && p.locations.length > 0 ? p.locations[0].villageName : 'Site Location') }}
                 </div>
               </td>
               <td>

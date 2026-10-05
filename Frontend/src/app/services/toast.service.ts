@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 
 export interface Toast {
   message: string;
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'warning' | 'info';
 }
 
 @Injectable({
@@ -14,7 +14,7 @@ export class ToastService {
   toast$ = this._toast$.asObservable();
   private timer: any = null;
 
-  show(message: string, type: 'success' | 'error', duration = 4000) {
+  show(message: string, type: 'success' | 'error' | 'warning' | 'info', duration = 4000) {
     if (this.timer) clearTimeout(this.timer);
     this._toast$.next({ message, type });
     this.timer = setTimeout(() => this._toast$.next(null), duration);
@@ -22,6 +22,9 @@ export class ToastService {
 
   success(message: string) { this.show(message, 'success'); }
   error(message: string)   { this.show(message, 'error'); }
+  warning(message: string) { this.show(message, 'warning'); }
+  info(message: string)    { this.show(message, 'info'); }
+
   clear() {
     if (this.timer) clearTimeout(this.timer);
     this._toast$.next(null);

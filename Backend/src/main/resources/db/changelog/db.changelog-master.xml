@@ -23,5 +23,15 @@
     <include file="db/changelog/changes/v16_add_location_start_closed_dates.sql" />
     <include file="db/changelog/changes/v17_create_project_documents.sql" />
     <include file="db/changelog/changes/v18_reorder_projects_columns.sql" />
+    <include file="db/changelog/changes/v19_create_upload_history.sql" />
+    <include file="db/changelog/changes/v20_create_system_error_logs.sql" />
+    <include file="db/changelog/changes/v21_create_related_to_master.sql" />
+    <include file="db/changelog/changes/v22_create_department_and_ref_person_masters.sql" />
+    <include file="db/changelog/changes/v23_rename_master_id_columns_in_projects.sql" />
+    <include file="db/changelog/changes/v24_remove_sr_no.sql" />
+    <include file="db/changelog/changes/v25_add_city_village_state_to_department_master.sql" />
+    <include file="db/changelog/changes/v26_projects_not_null_tender_and_dept.sql" />
+    <include file="db/changelog/changes/v27_project_locations_tender_id_and_remove_project_village_name.sql" />
+    <include file="db/changelog/changes/v28_increase_column_lengths_to_text.sql" />
 
 </databaseChangeLog>

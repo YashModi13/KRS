@@ -16,6 +16,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.krs.backend.services.SystemErrorLogService;
+import jakarta.servlet.DispatcherType;
 import java.util.Arrays;
 
 @Configuration
@@ -23,6 +25,7 @@ import java.util.Arrays;
 public class WebSecurityConfig {
 
     private final AuthTokenFilter authTokenFilter;
+    private final SystemErrorLogService systemErrorLogService;
     
     @Value("${app.cors.origins}")
     private String corsOrigins;
@@ -30,8 +33,9 @@ public class WebSecurityConfig {
     @Value("${app.messages.error.unauthorized}")
     private String unauthorizedMessage;
 
-    public WebSecurityConfig(AuthTokenFilter authTokenFilter) {
+    public WebSecurityConfig(AuthTokenFilter authTokenFilter, SystemErrorLogService systemErrorLogService) {
         this.authTokenFilter = authTokenFilter;
+        this.systemErrorLogService = systemErrorLogService;
     }
     
     @Bean
@@ -59,17 +63,29 @@ public class WebSecurityConfig {
         http.cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(exception -> exception.authenticationEntryPoint(
-                (request, response, authException) -> {
-                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
-                    response.setHeader("Pragma", "no-cache");
-                    response.setHeader("Expires", "0");
-                    response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + unauthorizedMessage + "\"}");
-                }
-            ))
+            .exceptionHandling(exception -> exception
+                .authenticationEntryPoint((request, response, authException) -> {
+                    systemErrorLogService.logError("AuthenticationException", authException.getMessage(), authException, request, 401);
+                    if (!response.isCommitted()) {
+                        response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+                        response.setHeader("Pragma", "no-cache");
+                        response.setHeader("Expires", "0");
+                        response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + unauthorizedMessage + "\"}");
+                    }
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    systemErrorLogService.logError("AccessDeniedException", accessDeniedException.getMessage(), accessDeniedException, request, 403);
+                    if (!response.isCommitted()) {
+                        response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error\": \"Forbidden\", \"message\": \"" + accessDeniedException.getMessage() + "\"}");
+                    }
+                })
+            )
             .authorizeHttpRequests(auth -> auth
+                .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
                 .requestMatchers("/api/auth/**", "/api/test/**", "/api/public/**", "/healthz").permitAll()
                 .anyRequest().authenticated()
             );

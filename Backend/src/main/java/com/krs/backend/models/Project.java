@@ -22,17 +22,11 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "sr_no")
-    private Long srNo;
-
     @Column(name = "work_order_number")
     private String workOrderNumber;
 
     @Column(name = "negotiation_letter_file")
     private String negotiationLetterFile;
-
-    @Column(name = "village_name")
-    private String villageName;
 
     @Column(name = "security_deposit_amount")
     private BigDecimal securityDepositAmount;
@@ -65,31 +59,31 @@ public class Project {
     private String letterByDeptFile;
 
     // --- Extended Fields from Tender Details ---
-    @Column(name = "department_name")
+    @Column(name = "department_name_id", nullable = false, length = 2000)
     private String departmentName;
 
     @Column(name = "date_of_sub")
     private LocalDate dateOfSub;
 
-    @Column(name = "package_no")
+    @Column(name = "package_no", length = 2000)
     private String packageNo;
 
-    @Column(name = "notice_no")
+    @Column(name = "notice_no", length = 2000)
     private String noticeNo;
 
-    @Column(name = "tender_id")
+    @Column(name = "tender_id", nullable = false)
     private String tenderId;
 
     @Column(name = "name_of_work", columnDefinition = "TEXT")
     private String nameOfWork;
 
-    @Column(name = "related_to")
+    @Column(name = "related_to_id")
     private String relatedTo;
 
     @Column(name = "tender_fee")
     private BigDecimal tenderFee;
 
-    @Column(name = "tender_fee_no")
+    @Column(name = "tender_fee_no", length = 2000)
     private String tenderFeeNo;
 
     @Column(name = "dd_no")
@@ -98,7 +92,7 @@ public class Project {
     @Column(name = "emd_amt")
     private BigDecimal emdAmt;
 
-    @Column(name = "emd_no")
+    @Column(name = "emd_no", length = 2000)
     private String emdNo;
 
     @Column(name = "estimated_tender_cost")
@@ -122,7 +116,7 @@ public class Project {
     )
     private BigDecimal variancePct;
 
-    @Column(name = "ref_person")
+    @Column(name = "ref_person_id")
     private String refPerson;
 
     @Column(name = "work_awarded_status")
@@ -131,10 +125,10 @@ public class Project {
     @Column(name = "work_order_date")
     private LocalDate workOrderDate;
 
-    @Column(name = "time_limit")
+    @Column(name = "time_limit", length = 2000)
     private String timeLimit;
 
-    @Column(name = "sd_fdr_no")
+    @Column(name = "sd_fdr_no", length = 2000)
     private String sdFdrNo;
 
     @Column(name = "remarks", columnDefinition = "TEXT")
@@ -146,7 +140,7 @@ public class Project {
     @Column(name = "sd_rab_return_amount")
     private BigDecimal sdRabReturnAmount;
 
-    @Column(name = "additional_deduction")
+    @Column(name = "additional_deduction", length = 2000)
     private String additionalDeduction;
 
     @Column(name = "work_completed_amount")

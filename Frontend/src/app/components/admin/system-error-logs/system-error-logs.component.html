@@ -1,0 +1,172 @@
+<div class="header-flex" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <div>
+    <h1 class="page-title" style="display: flex; align-items: center; gap: 10px;">
+      <span>🚨</span> System Error Logs & Exception Audit
+    </h1>
+    <p class="page-sub">Comprehensive audit trail of all system exceptions, HTTP errors, stack traces, and backend failures</p>
+  </div>
+
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <button class="btn btn-secondary" (click)="loadErrorLogs()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+      <span>🔄</span> Refresh Logs
+    </button>
+    <button class="btn btn-secondary" (click)="clearLogs()" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #ef4444;" title="Purge all error logs">
+      <span>🗑️</span> Clear All Logs
+    </button>
+  </div>
+</div>
+
+<!-- MAIN CARD -->
+<div class="card" style="padding: 24px; border-radius: 12px;">
+  
+  <!-- SEARCH & FILTER BAR -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; flex: 1;">
+      
+      <!-- Search Input -->
+      <div style="position: relative; min-width: 260px; flex: 1; max-width: 400px;">
+        <input type="text" [(ngModel)]="searchQuery" (input)="onSearchInput()" placeholder="Search error type, message, endpoint, or username..." class="filter-select" style="width: 100%; padding: 8px 12px 8px 34px;">
+        <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.6;">🔍</span>
+      </div>
+
+      <!-- Status Code Filter -->
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <label for="statusCodeSelect" style="font-size: 13px; color: var(--muted); font-weight: 600;">Status:</label>
+        <select id="statusCodeSelect" [(ngModel)]="selectedStatusCode" (change)="onFilterChange()" class="filter-select" style="padding: 8px 12px; min-width: 140px;">
+          <option [ngValue]="0">All Status Codes</option>
+          <option [ngValue]="500">500 Server Error</option>
+          <option [ngValue]="400">400 Bad Request</option>
+          <option [ngValue]="403">403 Forbidden</option>
+          <option [ngValue]="404">404 Not Found</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE CONTAINER -->
+  <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 10px;">
+    <table class="master-table" style="width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th style="padding: 14px 16px;">Timestamp ⬇️</th>
+          <th class="text-center">HTTP Status</th>
+          <th>Error Type</th>
+          <th>Endpoint Path</th>
+          <th class="text-center">Method</th>
+          <th>User</th>
+          <th>Message</th>
+          <th class="text-center" style="min-width: 140px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="isLoading">
+          <td colspan="8" style="text-align: center; padding: 50px;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 14px;">
+              <div class="spinner" style="width: 32px; height: 32px; border-width: 3px;"></div>
+              <span>Fetching system error audit logs...</span>
+            </div>
+          </td>
+        </tr>
+        <ng-container *ngIf="!isLoading">
+          <tr *ngIf="errorLogs.length === 0">
+            <td colspan="8" style="text-align: center; padding: 40px; color: var(--muted); font-size: 14px;">
+              🎉 No system error logs found matching your criteria.
+            </td>
+          </tr>
+          <tr *ngFor="let item of errorLogs">
+            <td style="padding: 14px 16px; font-size: 12px; font-weight: 600; white-space: nowrap;">
+              {{item.timestamp ? (item.timestamp | date:'dd MMM yyyy, hh:mm:ss a') : 'N/A'}}
+            </td>
+            <td class="text-center">
+              <span class="badge" [ngClass]="getStatusBadgeClass(item.statusCode)" style="padding: 4px 10px; font-size: 12px; font-weight: 800;">
+                {{item.statusCode || 500}}
+              </span>
+            </td>
+            <td style="font-weight: 700; font-size: 13px; color: #ef4444;">
+              {{item.errorType || 'Exception'}}
+            </td>
+            <td style="font-size: 12px; font-family: monospace;" [title]="item.endpoint || '-'">
+              {{item.endpoint || '-'}}
+            </td>
+            <td class="text-center" style="font-size: 11px; font-weight: 700;">
+              <span style="background: var(--bg); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border);">
+                {{item.httpMethod || 'GET'}}
+              </span>
+            </td>
+            <td style="font-size: 12px; color: var(--muted);">
+              👤 {{item.userName || 'system'}}
+            </td>
+            <td style="font-size: 12px; max-width: 280px;" class="truncate-text" [title]="item.message || '-'">
+              {{item.message || '-'}}
+            </td>
+            <td class="text-center">
+              <button class="btn btn-secondary" (click)="viewLogDetails(item)" style="padding: 5px 12px; font-size: 11px; font-weight: 600;" title="View complete stack trace">
+                🔍 Stack Trace
+              </button>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION BAR (Matching Project List Table Pattern) -->
+  <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border); background-color: var(--white); margin-top: 16px;">
+    <div class="limit-selector" style="display: flex; align-items: center; gap: 10px;">
+      <label for="errorRowsPerPageSelect" style="font-size: 13px; color: var(--muted); font-weight: 500;">Rows per page:</label>
+      <select id="errorRowsPerPageSelect" [(ngModel)]="limit" (change)="onLimitChange()" class="filter-select" style="padding: 6px 10px;">
+        <option *ngFor="let opt of Constants.PAGINATION.OPTIONS" [ngValue]="opt">{{opt}}</option>
+      </select>
+    </div>
+
+    <div class="page-controls" style="display: flex; align-items: center; gap: 20px;">
+      <span style="font-size: 13px; color: var(--muted); font-weight: 500;">{{showingText}}</span>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" [disabled]="isPrevDisabled" (click)="prevPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="isPrevDisabled ? '0.5' : '1'">Previous</button>
+        <button class="btn btn-secondary" [disabled]="isNextDisabled" (click)="nextPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="isNextDisabled ? '0.5' : '1'">Next</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DETAILED STACK TRACE MODAL / DRAWER -->
+<div class="modal-backdrop" *ngIf="selectedLog" (click)="closeLogDetails()" style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 1200; backdrop-filter: blur(4px);">
+  <div class="modal-card card" (click)="$event.stopPropagation()" style="width: 100%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);">
+    
+    <!-- Modal Header -->
+    <div style="padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #0f172a; color: #fff;">
+      <div>
+        <h3 style="margin: 0; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; color: #f87171;">
+          <span>🚨</span> Exception Stack Trace: {{selectedLog.errorType}}
+        </h3>
+        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">
+          {{selectedLog.httpMethod}} {{selectedLog.endpoint}} • Status {{selectedLog.statusCode}} • User: {{selectedLog.userName}} • {{selectedLog.timestamp | date:'dd MMM yyyy, hh:mm:ss a'}}
+        </div>
+      </div>
+      <button type="button" (click)="closeLogDetails()" style="background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">✕</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div style="padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; background: #020617; color: #e2e8f0;">
+      
+      <!-- Error Message Banner -->
+      <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 14px 16px;">
+        <div style="font-weight: 700; font-size: 13px; color: #fca5a5; margin-bottom: 4px;">Message:</div>
+        <div style="font-size: 13px; font-family: monospace; white-space: pre-wrap; color: #fee2e2;">{{selectedLog.message || 'No exception message available.'}}</div>
+      </div>
+
+      <!-- Stack Trace Code Box -->
+      <div>
+        <div style="font-weight: 700; font-size: 13px; color: #94a3b8; margin-bottom: 8px;">Full Exception Stack Trace:</div>
+        <pre style="background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 16px; font-family: 'Consolas', 'Fira Code', monospace; font-size: 12px; line-height: 1.5; color: #38bdf8; overflow-x: auto; max-height: 400px; white-space: pre-wrap; margin: 0;">{{selectedLog.stackTrace || 'No stack trace recorded.'}}</pre>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="padding: 14px 24px; border-top: 1px solid #1e293b; background: #0f172a; display: flex; justify-content: flex-end;">
+      <button class="btn btn-secondary" (click)="closeLogDetails()" style="background: #334155; color: #fff; border: none;">Close</button>
+    </div>
+  </div>
+</div>

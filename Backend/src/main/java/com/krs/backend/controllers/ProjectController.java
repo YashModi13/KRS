@@ -18,10 +18,23 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.stream.Collectors;
 import jakarta.persistence.criteria.CriteriaQuery;
+
+import com.krs.backend.models.ProjectUploadHistory;
+import com.krs.backend.services.ProjectExcelService;
+import com.krs.backend.services.SystemErrorLogService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @SuppressWarnings("java:S4684")
 @CrossOrigin(origins = "${app.cors.origins}", maxAge = 3600)
@@ -50,13 +63,147 @@ public class ProjectController {
 
     private final ProjectRepository projectRepository;
     private final EntityManager entityManager;
+    private final ProjectExcelService projectExcelService;
+    private final SystemErrorLogService systemErrorLogService;
+    private final com.krs.backend.services.DepartmentMasterService departmentMasterService;
+    private final com.krs.backend.services.RelatedToMasterService relatedToMasterService;
+    private final com.krs.backend.services.RefPersonMasterService refPersonMasterService;
 
     @org.springframework.beans.factory.annotation.Value("${app.dashboard.max-time-limit-days:90}")
     private int maxTimeLimitDays;
 
-    public ProjectController(ProjectRepository projectRepository, EntityManager entityManager) {
+    public ProjectController(ProjectRepository projectRepository,
+                             EntityManager entityManager,
+                             ProjectExcelService projectExcelService,
+                             SystemErrorLogService systemErrorLogService,
+                             com.krs.backend.services.DepartmentMasterService departmentMasterService,
+                             com.krs.backend.services.RelatedToMasterService relatedToMasterService,
+                             com.krs.backend.services.RefPersonMasterService refPersonMasterService) {
         this.projectRepository = projectRepository;
         this.entityManager = entityManager;
+        this.projectExcelService = projectExcelService;
+        this.systemErrorLogService = systemErrorLogService;
+        this.departmentMasterService = departmentMasterService;
+        this.relatedToMasterService = relatedToMasterService;
+        this.refPersonMasterService = refPersonMasterService;
+    }
+
+    /**
+     * Upload Projects Excel File with streaming batching and error details logging
+     */
+    @PostMapping("/upload")
+    public ResponseEntity<ProjectUploadHistory> uploadProjectsExcel(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+        String username = "system";
+        try {
+            if (SecurityContextHolder.getContext().getAuthentication() != null) {
+                username = SecurityContextHolder.getContext().getAuthentication().getName();
+            }
+        } catch (Exception ignored) {}
+
+        try {
+            ProjectUploadHistory history = projectExcelService.uploadProjectsExcel(file, username);
+            return ResponseEntity.ok(history);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            systemErrorLogService.logError(e.getClass().getSimpleName(), e.getMessage(), e, request, HttpStatus.BAD_REQUEST.value());
+            return ResponseEntity.badRequest().body(ProjectUploadHistory.builder()
+                    .filename(file.getOriginalFilename())
+                    .uploadedBy(username)
+                    .totalRows(0)
+                    .successCount(0)
+                    .failedCount(0)
+                    .status("FAILED")
+                    .errorDetails("[\"" + e.getMessage() + "\"]")
+                    .build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            systemErrorLogService.logError(e.getClass().getSimpleName(), e.getMessage(), e, request, HttpStatus.INTERNAL_SERVER_ERROR.value());
+            String detailMsg = e.getMessage() != null ? e.getMessage() : e.toString();
+            if (e.getCause() != null && e.getCause().getMessage() != null) {
+                detailMsg += " | Cause: " + e.getCause().getMessage();
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ProjectUploadHistory.builder()
+                    .filename(file.getOriginalFilename())
+                    .uploadedBy(username)
+                    .totalRows(0)
+                    .successCount(0)
+                    .failedCount(0)
+                    .status("FAILED")
+                    .errorDetails("[\"Failed to process excel file: " + detailMsg.replace("\"", "'") + "\"]")
+                    .build());
+        }
+    }
+
+    /**
+     * Get Upload History records
+     */
+    @GetMapping("/upload-history")
+    public ResponseEntity<List<ProjectUploadHistory>> getUploadHistory() {
+        return ResponseEntity.ok(projectExcelService.getUploadHistory());
+    }
+
+    /**
+     * Download Excel Report for a specific Bulk Upload execution (ALL, SUCCESS, or FAILED rows)
+     */
+    @GetMapping("/upload-history/{id}/export")
+    public ResponseEntity<StreamingResponseBody> exportUploadHistoryExcel(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "ALL") String type,
+            HttpServletRequest request) {
+
+        StreamingResponseBody responseBody = outputStream -> {
+            try {
+                projectExcelService.exportUploadHistoryDataToExcel(id, type, outputStream);
+            } catch (Exception e) {
+                systemErrorLogService.logError(e.getClass().getSimpleName(), "Excel Export Failed: " + e.getMessage(), e, request, HttpStatus.INTERNAL_SERVER_ERROR.value());
+                throw new RuntimeException("Failed to export upload history data", e);
+            }
+        };
+
+        String filename = String.format("Upload_History_%d_%s.xlsx", id, type.toUpperCase());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(responseBody);
+    }
+
+    /**
+     * Download Excel Template
+     */
+    @GetMapping("/template")
+    public ResponseEntity<StreamingResponseBody> downloadTemplate(HttpServletRequest request) {
+        StreamingResponseBody responseBody = outputStream -> {
+            try {
+                projectExcelService.generateTemplate(outputStream);
+            } catch (Exception e) {
+                systemErrorLogService.logError(e.getClass().getSimpleName(), "Template Download Failed: " + e.getMessage(), e, request, HttpStatus.INTERNAL_SERVER_ERROR.value());
+                throw new RuntimeException("Failed to generate template", e);
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Tender_Details_Template.xlsx\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(responseBody);
+    }
+
+    /**
+     * Stream Export Projects Excel
+     */
+    @GetMapping("/export/excel")
+    public ResponseEntity<StreamingResponseBody> exportProjectsExcel() {
+        StreamingResponseBody responseBody = outputStream -> {
+            try {
+                projectExcelService.exportProjectsToExcel(outputStream);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to export projects", e);
+            }
+        };
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Projects_Master_Export.xlsx\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(responseBody);
     }
 
     @GetMapping("/config")
@@ -106,11 +253,44 @@ public class ProjectController {
             p.setRaBills(null);
             p.setApprovals(null);
         }
+
+        resolveMasterDisplayNames(projects);
         
         Map<String, Object> response = new HashMap<>();
         response.put("data", projects);
         response.put("total", total);
         return response;
+    }
+
+    private void resolveMasterDisplayNames(List<Project> projects) {
+        if (projects == null || projects.isEmpty()) return;
+
+        Map<String, String> deptMap = departmentMasterService.getAllDepartmentMasters().stream()
+                .filter(d -> d.getId() != null && d.getName() != null)
+                .collect(Collectors.toMap(d -> d.getId().toString(), com.krs.backend.models.DepartmentMaster::getName, (a, b) -> a));
+
+        Map<String, String> relatedToMap = relatedToMasterService.getAllRelatedToMasters().stream()
+                .filter(r -> r.getId() != null && r.getName() != null)
+                .collect(Collectors.toMap(r -> r.getId().toString(), com.krs.backend.models.RelatedToMaster::getName, (a, b) -> a));
+
+        Map<String, String> refPersonMap = refPersonMasterService.getAllRefPersonMasters().stream()
+                .filter(r -> r.getId() != null && r.getName() != null)
+                .collect(Collectors.toMap(r -> r.getId().toString(), com.krs.backend.models.RefPersonMaster::getName, (a, b) -> a));
+
+        for (Project p : projects) {
+            if (p.getDepartmentName() != null && !p.getDepartmentName().trim().isEmpty()) {
+                String key = p.getDepartmentName().trim();
+                p.setDepartmentName(deptMap.getOrDefault(key, key));
+            }
+            if (p.getRelatedTo() != null && !p.getRelatedTo().trim().isEmpty()) {
+                String key = p.getRelatedTo().trim();
+                p.setRelatedTo(relatedToMap.getOrDefault(key, key));
+            }
+            if (p.getRefPerson() != null && !p.getRefPerson().trim().isEmpty()) {
+                String key = p.getRefPerson().trim();
+                p.setRefPerson(refPersonMap.getOrDefault(key, key));
+            }
+        }
     }
 
     private static final Set<String> TEXT_SORT_FIELDS = Set.of(
@@ -171,10 +351,7 @@ public class ProjectController {
             String srVal = allParams.get("srNo").trim();
             try {
                 long num = Long.parseLong(srVal);
-                predicates.add(cb.or(
-                    cb.equal(root.get("srNo"), num),
-                    cb.equal(root.get("id"), num)
-                ));
+                predicates.add(cb.equal(root.get("id"), num));
             } catch (NumberFormatException e) {
                 predicates.add(cb.like(cb.lower(root.get(PARAM_TENDER_ID)), "%" + srVal.toLowerCase() + "%"));
             }
@@ -294,6 +471,7 @@ public class ProjectController {
             if (project.getLocations() != null) { project.getLocations().size(); }
             if (project.getRaBills() != null) { project.getRaBills().size(); }
             if (project.getApprovals() != null) { project.getApprovals().size(); }
+            resolveMasterDisplayNames(Collections.singletonList(project));
             return ResponseEntity.ok(project);
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -301,9 +479,7 @@ public class ProjectController {
     @PutMapping("/{id}")
     public ResponseEntity<Project> updateProject(@PathVariable Long id, @RequestBody Project projectDetails) {
         return projectRepository.findById(id).map(project -> {
-            project.setSrNo(projectDetails.getSrNo());
             project.setWorkOrderNumber(projectDetails.getWorkOrderNumber());
-            project.setVillageName(projectDetails.getVillageName());
             project.setDepartmentName(projectDetails.getDepartmentName());
             project.setDateOfSub(projectDetails.getDateOfSub());
             project.setPackageNo(projectDetails.getPackageNo());
@@ -369,6 +545,7 @@ public class ProjectController {
     public ResponseEntity<ProjectLocation> addLocation(@PathVariable Long id, @RequestBody ProjectLocation location) {
         return projectRepository.findById(id).map(project -> {
             location.setProject(project);
+            location.setTenderId(project.getTenderId());
             if (project.getLocations() == null) {
                 project.setLocations(new ArrayList<>());
             }
@@ -396,6 +573,7 @@ public class ProjectController {
                 }
             }
             if (target != null) {
+                target.setTenderId(project.getTenderId());
                 target.setVillageName(locationDetails.getVillageName());
                 target.setTaluka(locationDetails.getTaluka());
                 target.setDistrict(locationDetails.getDistrict());

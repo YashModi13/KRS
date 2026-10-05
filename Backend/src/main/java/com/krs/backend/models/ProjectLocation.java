@@ -24,14 +24,17 @@ public class ProjectLocation {
     @JsonIgnore
     private Project project;
 
-    @Column(name = "village_name") private String villageName;
+    @Column(name = "tender_id")
+    private String tenderId;
+
+    @Column(name = "village_name", length = 2000) private String villageName;
     @Column(name = "taluka") private String taluka;
     @Column(name = "district") private String district;
-    @Column(name = "block") private String block;
+    @Column(name = "block", length = 2000) private String block;
     @Column(name = "school_id") private String schoolId;
-    @Column(name = "school_name") private String schoolName;
-    @Column(name = "head") private String head;
-    @Column(name = "repairing") private String repairing;
+    @Column(name = "school_name", length = 2000) private String schoolName;
+    @Column(name = "head", length = 2000) private String head;
+    @Column(name = "repairing", length = 2000) private String repairing;
     @Column(name = "new_acr") private String newAcr;
     @Column(name = "new_mdm_sqm") private String newMdmSqm;
     @Column(name = "new_cw_rmt") private String newCwRmt;
@@ -42,7 +45,7 @@ public class ProjectLocation {
     @Column(name = "status") private String status;
     @Column(name = "physical_progress") private BigDecimal physicalProgress;
     @Column(name = "financial_progress") private BigDecimal financialProgress;
-    @Column(name = "time_limit") private String timeLimit;
+    @Column(name = "time_limit", length = 2000) private String timeLimit;
     @Column(name = "start_date") private java.time.LocalDate startDate;
     @Column(name = "closed_date") private java.time.LocalDate closedDate;
     

@@ -14,6 +14,8 @@ import { UserManagementComponent } from './components/admin/user-management/user
 import { RoleManagementComponent } from './components/admin/role-management/role-management.component';
 import { SettingsComponent } from './components/settings/settings.component';
 import { DailyTasksComponent } from './components/daily-tasks/daily-tasks.component';
+import { SystemErrorLogsComponent } from './components/admin/system-error-logs/system-error-logs.component';
+import { MasterDataComponent } from './components/admin/master-data/master-data.component';
 import { authGuard } from './auth.guard';
 
 export const routes: Routes = [
@@ -31,6 +33,8 @@ export const routes: Routes = [
   { path: 'completion', component: CompletionComponent, canActivate: [authGuard] },
   { path: 'admin/users', component: UserManagementComponent, canActivate: [authGuard] },
   { path: 'admin/roles', component: RoleManagementComponent, canActivate: [authGuard] },
+  { path: 'admin/master-data', component: MasterDataComponent, canActivate: [authGuard] },
+  { path: 'admin/error-logs', component: SystemErrorLogsComponent, canActivate: [authGuard] },
   { path: 'settings', component: SettingsComponent, canActivate: [authGuard] },
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: '**', redirectTo: '/dashboard' }

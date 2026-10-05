@@ -17,6 +17,12 @@ export const RestUrl = {
   },
   PROJECTS: '/projects',
   PROJECTS_CONFIG: '/projects/config',
+  PROJECTS_EXCEL: {
+    UPLOAD: '/projects/upload',
+    HISTORY: '/projects/upload-history',
+    TEMPLATE: '/projects/template',
+    EXPORT: '/projects/export/excel'
+  },
   NOTIFICATIONS: {
     BASE: '/notifications',
     UNREAD_COUNT: '/notifications/unread-count',
@@ -24,5 +30,9 @@ export const RestUrl = {
     READ_SINGLE: (id: number | string) => `/notifications/${id}/read`,
     UNREAD_SINGLE: (id: number | string) => `/notifications/${id}/unread`
   },
-  TODOS: '/todos'
+  TODOS: '/todos',
+  SYSTEM_ERROR_LOGS: `${API_BASE_URL}/admin/error-logs`,
+  DEPARTMENT_MASTERS: '/department-masters',
+  REF_PERSON_MASTERS: '/ref-person-masters',
+  RELATED_TO_MASTERS: '/related-to-masters'
 };

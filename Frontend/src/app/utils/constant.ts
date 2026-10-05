@@ -34,6 +34,14 @@ export const Constants = {
     STATUS_OPTIONS: ["Running", "Completed", "Work Completed", "Delayed", "Hold", "Not Started"],
     CONSTRUCTION_TYPES: ["School", "Hospital", "Road", "Bridge", "Residential"]
   },
+  MASTER_DATA: {
+    DEFAULT_STATE: "Gujarat",
+    TABS: {
+      DEPARTMENT: "department",
+      REF_PERSON: "ref_person",
+      RELATED_TO: "related_to"
+    }
+  },
   PROJECT_OFFICIALS: {
     EXECUTIVE_ENGINEER: {
       TITLE: "Executive Engineer (PWD)",

@@ -1,11 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpParams } from '@angular/common/http';
+import { HttpParams, HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { KrsService } from './krs.service';
 import { RestUrl } from '../utils/rest-url';
 
 export interface ProjectLocation {
   id?: number;
+  tenderId?: string;
   villageName?: string;
   taluka?: string;
   district?: string;
@@ -73,7 +74,6 @@ export interface Approval {
 
 export interface Project {
   id?: number;
-  srNo?: number;
   dateOfSub?: string;
   departmentName?: string;
   tenderId?: string;
@@ -114,7 +114,6 @@ export interface Project {
   sdReturnStatus?: string;
   sdRmRabReturnStatus?: string;
   status?: string;
-  villageName?: string;
   retentionMoneyPerBill?: number;
   extraExcessAmount?: number;
   timeLimitExtension?: string;
@@ -209,6 +208,45 @@ export class ProjectService {
   deleteProjectDocument(documentId: number): Observable<any> {
     return this.krsService.delete<any>(`${RestUrl.PROJECTS}/documents/${documentId}`, 'Document deleted successfully');
   }
+
+  // --- Bulk Excel Import & Export Methods ---
+  private http = inject(HttpClient);
+
+  uploadExcel(file: File): Observable<ProjectUploadHistory> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.krsService.post<ProjectUploadHistory>(RestUrl.PROJECTS_EXCEL.UPLOAD, formData, 'Excel processing completed');
+  }
+
+  getUploadHistory(): Observable<ProjectUploadHistory[]> {
+    return this.krsService.get<ProjectUploadHistory[]>(RestUrl.PROJECTS_EXCEL.HISTORY);
+  }
+
+  downloadTemplate(): Observable<Blob> {
+    return this.http.get(`${RestUrl.API_BASE_URL}${RestUrl.PROJECTS_EXCEL.TEMPLATE}`, { responseType: 'blob' });
+  }
+
+  exportProjectsExcel(): Observable<Blob> {
+    return this.http.get(`${RestUrl.API_BASE_URL}${RestUrl.PROJECTS_EXCEL.EXPORT}`, { responseType: 'blob' });
+  }
+
+  downloadUploadHistoryExport(id: number, type: string = 'ALL'): Observable<Blob> {
+    return this.http.get(`${RestUrl.API_BASE_URL}${RestUrl.PROJECTS_EXCEL.HISTORY}/${id}/export?type=${type}`, { responseType: 'blob' });
+  }
+}
+
+export interface ProjectUploadHistory {
+  id?: number;
+  filename?: string;
+  uploadedBy?: string;
+  uploadTime?: string;
+  totalRows?: number;
+  successCount?: number;
+  failedCount?: number;
+  status?: string; // 'SUCCESS', 'PARTIAL_SUCCESS', 'FAILED'
+  errorDetails?: string; // JSON string array of row errors
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProjectDocument {

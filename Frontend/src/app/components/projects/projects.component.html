@@ -1,4 +1,5 @@
-<div class="header-flex" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+<div class="header-flex"
+  style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
   <!-- List Mode Header -->
   <div *ngIf="mode === 'list'">
     <h1 class="page-title">{{pageTitle}}</h1>
@@ -8,9 +9,12 @@
   <!-- Detail Mode Header (Breadcrumb) -->
   <div *ngIf="mode === 'detail'">
     <h1 class="page-title" style="display: flex; align-items: center; gap: 8px;">
-      <button type="button" (click)="mode = 'list'" style="background: none; border: none; padding: 0; font: inherit; color: #64748b; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Projects</button> 
-      <span style="color: #cbd5e1;">/</span> 
-      <span style="font-size: 20px;">Tender #{{selectedProject?.tenderId || selectedProject?.srNo}} - {{selectedProject?.noticeNo || selectedProject?.packageNo || 'Details'}}</span>
+      <button type="button" (click)="mode = 'list'"
+        style="background: none; border: none; padding: 0; font: inherit; color: #64748b; cursor: pointer; transition: color 0.2s;"
+        onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Projects</button>
+      <span style="color: #cbd5e1;">/</span>
+      <span style="font-size: 20px;">Tender #{{selectedProject?.tenderId || selectedProject?.id}} -
+        {{selectedProject?.noticeNo || selectedProject?.packageNo || 'Details'}}</span>
     </h1>
     <p class="page-sub">Comprehensive Project & Site Location Master Record</p>
   </div>
@@ -18,34 +22,74 @@
   <!-- Create/Edit Mode Header (Breadcrumb) -->
   <div *ngIf="mode === 'create' || mode === 'edit'">
     <h1 class="page-title" style="display: flex; align-items: center; gap: 8px;">
-      <button type="button" (click)="mode = 'list'" style="background: none; border: none; padding: 0; font: inherit; color: #64748b; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Projects</button> 
-      <span style="color: #cbd5e1;">/</span> 
-      <span style="font-size: 20px;">{{mode === 'edit' ? 'Edit Project #' + projectData.tenderId : 'Register New Project Tender'}}</span>
+      <button type="button" (click)="mode = 'list'"
+        style="background: none; border: none; padding: 0; font: inherit; color: #64748b; cursor: pointer; transition: color 0.2s;"
+        onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Projects</button>
+      <span style="color: #cbd5e1;">/</span>
+      <span style="font-size: 20px;">{{mode === 'edit' ? 'Edit Project #' + projectData.tenderId : 'Register New Project
+        Tender'}}</span>
     </h1>
-    <p class="page-sub">{{mode === 'edit' ? 'Update master project parameters' : 'Add new tender details to master database'}}</p>
+    <p class="page-sub">{{mode === 'edit' ? 'Update master project parameters' : 'Add new tender details to master
+      database'}}</p>
+  </div>
+
+  <!-- Upload Mode Header (Breadcrumb) -->
+  <div *ngIf="mode === 'upload'">
+    <h1 class="page-title" style="display: flex; align-items: center; gap: 8px;">
+      <button type="button" (click)="mode = 'list'"
+        style="background: none; border: none; padding: 0; font: inherit; color: #64748b; cursor: pointer; transition: color 0.2s;"
+        onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#64748b'">Projects</button>
+      <span style="color: #cbd5e1;">/</span>
+      <span style="font-size: 20px;">Excel Bulk Upload & Execution History</span>
+    </h1>
+    <p class="page-sub">Upload project Excel sheets, validate duplicate tenders, and view detailed audit execution
+      history</p>
   </div>
 
   <!-- Action Buttons in Header -->
-  <div *ngIf="mode === 'list'" style="display: flex; gap: 12px; align-items: center;">
+  <div *ngIf="mode === 'list'" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
     <button class="btn btn-primary btn-add" (click)="openCreateMode()">+ Add Project</button>
+    <button class="btn btn-secondary" (click)="openExcelUploadModal()"
+      style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+      <span>📊</span> Upload Data (Excel)
+    </button>
+    <button class="btn btn-secondary" (click)="openUploadHistoryModal()"
+      style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+      <span>📜</span> Upload History
+    </button>
+
     <div style="position: relative;">
-      <button class="btn btn-export" (click)="toggleExportMenu($event)">
-        <span style="margin-right: 6px;">📥</span> Export <span style="font-size: 10px; margin-left: 4px;">▼</span>
+      <button class="btn btn-export" (click)="toggleExportMenu($event)"
+        style="display: inline-flex; align-items: center; gap: 6px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export <span style="font-size: 10px; margin-left: 2px;">▼</span>
       </button>
-      
-      <div class="filter-popup" *ngIf="exportMenuOpen" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" style="top: 100%; right: 0; margin-top: 8px; width: 180px; padding: 8px 0; border-radius: 8px;">
-        <button type="button" class="dropdown-item" (click)="exportData('csv')" style="width: 100%; text-align: left; background: none; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 500; color: #1e293b; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
-          Export as CSV (.csv)
+
+      <div class="filter-popup" *ngIf="exportMenuOpen" (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
+        style="top: 100%; right: 0; margin-top: 8px; width: 220px; padding: 8px 0; border-radius: 8px;">
+        <button type="button" class="dropdown-item" (click)="exportExcel()"
+          style="width: 100%; text-align: left; background: none; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text); transition: background-color 0.2s;">
+          📊 Export as Excel (.xlsx)
         </button>
-        <button type="button" class="dropdown-item" (click)="exportData('excel')" style="width: 100%; text-align: left; background: none; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 500; color: #1e293b; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">
-          Export as Excel (.xlsx)
+        <button type="button" class="dropdown-item" (click)="downloadTemplate()"
+          style="width: 100%; text-align: left; background: none; border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text); transition: background-color 0.2s;">
+          📋 Download Excel Template (.xlsx)
         </button>
       </div>
     </div>
   </div>
 
   <div *ngIf="mode !== 'list'" style="display: flex; gap: 10px;">
-    <button class="btn btn-secondary" (click)="mode = 'list'">Back to Projects List</button>
+    <button class="btn btn-secondary" (click)="mode = 'list'"
+      style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+      <span>←</span> Back to Projects List
+    </button>
   </div>
 </div>
 
@@ -55,47 +99,88 @@
     <table class="master-table">
       <thead>
         <tr>
-          <th><button type="button" class="th-sort-btn" (click)="onSort('noticeNo')">Notice / Pkg No <span *ngIf="sortBy==='noticeNo'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
-          <th><button type="button" class="th-sort-btn" (click)="onSort('tenderId')">Tender ID <span *ngIf="sortBy==='tenderId'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
-          <th><button type="button" class="th-sort-btn" (click)="onSort('departmentName')">Department & Work Title <span *ngIf="sortBy==='departmentName'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
-          <th><button type="button" class="th-sort-btn" (click)="onSort('relatedTo')">Related To / Ref <span *ngIf="sortBy==='relatedTo'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
-          <th class="text-right"><button type="button" class="th-sort-btn text-right" (click)="onSort('estimatedTenderCost')">Est. Cost <span *ngIf="sortBy==='estimatedTenderCost'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
-          <th class="text-right"><button type="button" class="th-sort-btn text-right" (click)="onSort('tenderedCost')">Tender Cost <span *ngIf="sortBy==='tenderedCost'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
-          <th class="text-right"><button type="button" class="th-sort-btn text-right" (click)="onSort('aboveBelowPercentage')">Variance <span *ngIf="sortBy==='aboveBelowPercentage'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
-          <th class="text-center"><button type="button" class="th-sort-btn text-center" (click)="onSort('workAwardedStatus')">Award Status <span *ngIf="sortBy==='workAwardedStatus'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
-          <th class="text-center"><button type="button" class="th-sort-btn text-center" (click)="onSort('workOrderDate')">Order Date <span *ngIf="sortBy==='workOrderDate'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
-          <th class="text-center"><button type="button" class="th-sort-btn text-center" (click)="onSort('emdReturnStatus')">EMD Return <span *ngIf="sortBy==='emdReturnStatus'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
-          <th class="text-center"><button type="button" class="th-sort-btn text-center" (click)="onSort('status')">Overall Status <span *ngIf="sortBy==='status'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th><button type="button" class="th-sort-btn" (click)="onSort('tenderId')">Tender ID <span
+                *ngIf="sortBy==='tenderId'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th><button type="button" class="th-sort-btn" (click)="onSort('noticeNo')">Notice / Pkg No <span
+                *ngIf="sortBy==='noticeNo'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th><button type="button" class="th-sort-btn" (click)="onSort('departmentName')">Department Name <span
+                *ngIf="sortBy==='departmentName'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th><button type="button" class="th-sort-btn" (click)="onSort('relatedTo')">Related To / Ref <span
+                *ngIf="sortBy==='relatedTo'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th class="text-right"><button type="button" class="th-sort-btn text-right"
+              (click)="onSort('estimatedTenderCost')">Est. Cost <span
+                *ngIf="sortBy==='estimatedTenderCost'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th class="text-right"><button type="button" class="th-sort-btn text-right"
+              (click)="onSort('tenderedCost')">Tender Cost <span
+                *ngIf="sortBy==='tenderedCost'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th class="text-right"><button type="button" class="th-sort-btn text-right"
+              (click)="onSort('aboveBelowPercentage')">Variance <span
+                *ngIf="sortBy==='aboveBelowPercentage'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th class="text-center"><button type="button" class="th-sort-btn text-center"
+              (click)="onSort('workAwardedStatus')">Award Status <span
+                *ngIf="sortBy==='workAwardedStatus'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th class="text-center"><button type="button" class="th-sort-btn text-center"
+              (click)="onSort('workOrderDate')">Order Date <span
+                *ngIf="sortBy==='workOrderDate'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th class="text-center"><button type="button" class="th-sort-btn text-center"
+              (click)="onSort('emdReturnStatus')">EMD Return <span
+                *ngIf="sortBy==='emdReturnStatus'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
+          <th class="text-center"><button type="button" class="th-sort-btn text-center"
+              (click)="onSort('status')">Overall Status <span
+                *ngIf="sortBy==='status'">{{sortDir==='asc'?'↑':'↓'}}</span></button></th>
           <th class="text-center">Actions</th>
         </tr>
         <tr class="filter-row">
           <td>
-            <label for="filterNoticeNo" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter Notice/Pkg</label>
-            <input id="filterNoticeNo" type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['noticeNo']" placeholder="🔍 Notice/Pkg" class="col-filter">
+            <label for="filterTenderId" class="sr-only"
+              style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter
+              Tender ID</label>
+            <input id="filterTenderId" type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()"
+              [(ngModel)]="filters['tenderId']" placeholder="🔍 Tender ID" class="col-filter">
           </td>
           <td>
-            <label for="filterTenderId" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter Tender ID</label>
-            <input id="filterTenderId" type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['tenderId']" placeholder="🔍 Tender ID" class="col-filter">
+            <label for="filterNoticeNo" class="sr-only"
+              style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter
+              Notice/Pkg</label>
+            <input id="filterNoticeNo" type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()"
+              [(ngModel)]="filters['noticeNo']" placeholder="🔍 Notice/Pkg" class="col-filter">
           </td>
           <td>
-            <label for="filterNameOfWork" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter Department or Work</label>
-            <input id="filterNameOfWork" type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['nameOfWork']" placeholder="🔍 Department / Work" class="col-filter">
+            <label for="filterDepartmentName" class="sr-only"
+              style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter
+              Department</label>
+            <input id="filterDepartmentName" type="text" (keyup.enter)="applyFilters()"
+              (ngModelChange)="onSearchInput()" [(ngModel)]="filters['departmentName']" placeholder="🔍 Department"
+              class="col-filter">
           </td>
           <td>
-            <label for="filterRelatedTo" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter by Person or Reference</label>
-            <input id="filterRelatedTo" type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['relatedTo']" placeholder="🔍 Person/Ref" class="col-filter">
+            <label for="filterRelatedTo" class="sr-only"
+              style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter
+              by Person or Reference</label>
+            <input id="filterRelatedTo" type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()"
+              [(ngModel)]="filters['relatedTo']" placeholder="🔍 Person/Ref" class="col-filter">
           </td>
           <td style="position: relative;">
-            <label for="filterTenderAmtRange" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter Est. Range</label>
-            <input id="filterTenderAmtRange" type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Est. Range" 
+            <label for="filterTenderAmtRange" class="sr-only"
+              style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter
+              Est. Range</label>
+            <input id="filterTenderAmtRange" type="text" class="col-filter" readonly
+              style="cursor: pointer; text-align: center;" placeholder="Est. Range"
               (click)="toggleFilter('tenderAmtPicker', $event)"
               [value]="(filters['tenderAmtMin'] ? '≥'+filters['tenderAmtMin'] : '') + (filters['tenderAmtMin'] && filters['tenderAmtMax'] ? ' - ' : '') + (filters['tenderAmtMax'] ? '≤'+filters['tenderAmtMax'] : '')">
-            
-            <div class="filter-popup" *ngIf="activeFilterMenu === 'tenderAmtPicker'" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-              <label for="filterTenderAmtMin" style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Est. Cost</label>
-              <input id="filterTenderAmtMin" type="number" [(ngModel)]="filters['tenderAmtMin']" class="col-filter" style="margin-bottom: 8px;">
-              <label for="filterTenderAmtMax" style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Est. Cost</label>
-              <input id="filterTenderAmtMax" type="number" [(ngModel)]="filters['tenderAmtMax']" class="col-filter" style="margin-bottom: 12px;">
+
+            <div class="filter-popup" *ngIf="activeFilterMenu === 'tenderAmtPicker'" (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()">
+              <label for="filterTenderAmtMin"
+                style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Est.
+                Cost</label>
+              <input id="filterTenderAmtMin" type="number" [(ngModel)]="filters['tenderAmtMin']" class="col-filter"
+                style="margin-bottom: 8px;">
+              <label for="filterTenderAmtMax"
+                style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Est.
+                Cost</label>
+              <input id="filterTenderAmtMax" type="number" [(ngModel)]="filters['tenderAmtMax']" class="col-filter"
+                style="margin-bottom: 12px;">
               <div class="filter-popup-actions">
                 <button class="btn-filter-clear" (click)="clearFilter('tenderAmt')">Clear</button>
                 <button class="btn-filter-apply" (click)="applyFilters()">Apply</button>
@@ -103,16 +188,26 @@
             </div>
           </td>
           <td style="position: relative;">
-            <label for="agreementCostRange" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Cost Range</label>
-            <input id="agreementCostRange" type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Cost Range" 
+            <label for="agreementCostRange" class="sr-only"
+              style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Cost
+              Range</label>
+            <input id="agreementCostRange" type="text" class="col-filter" readonly
+              style="cursor: pointer; text-align: center;" placeholder="Cost Range"
               (click)="toggleFilter('agreementAmtPicker', $event)"
               [value]="(filters['agreementAmtMin'] ? '≥'+filters['agreementAmtMin'] : '') + (filters['agreementAmtMin'] && filters['agreementAmtMax'] ? ' - ' : '') + (filters['agreementAmtMax'] ? '≤'+filters['agreementAmtMax'] : '')">
-            
-            <div class="filter-popup" *ngIf="activeFilterMenu === 'agreementAmtPicker'" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-              <label for="filterAgreementAmtMin" style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min Tender Cost</label>
-              <input id="filterAgreementAmtMin" type="number" [(ngModel)]="filters['agreementAmtMin']" class="col-filter" style="margin-bottom: 8px;">
-              <label for="filterAgreementAmtMax" style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max Tender Cost</label>
-              <input id="filterAgreementAmtMax" type="number" [(ngModel)]="filters['agreementAmtMax']" class="col-filter" style="margin-bottom: 12px;">
+
+            <div class="filter-popup" *ngIf="activeFilterMenu === 'agreementAmtPicker'"
+              (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+              <label for="filterAgreementAmtMin"
+                style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Min
+                Tender Cost</label>
+              <input id="filterAgreementAmtMin" type="number" [(ngModel)]="filters['agreementAmtMin']"
+                class="col-filter" style="margin-bottom: 8px;">
+              <label for="filterAgreementAmtMax"
+                style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Max
+                Tender Cost</label>
+              <input id="filterAgreementAmtMax" type="number" [(ngModel)]="filters['agreementAmtMax']"
+                class="col-filter" style="margin-bottom: 12px;">
               <div class="filter-popup-actions">
                 <button class="btn-filter-clear" (click)="clearFilter('agreementAmt')">Clear</button>
                 <button class="btn-filter-apply" (click)="applyFilters()">Apply</button>
@@ -121,22 +216,34 @@
           </td>
           <td></td>
           <td>
-            <label for="filterWorkAwardedStatus" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Awarded Status</label>
-            <input id="filterWorkAwardedStatus" type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()" [(ngModel)]="filters['workAwardedStatus']" placeholder="🔍 Awarded Status" class="col-filter">
+            <label for="filterWorkAwardedStatus" class="sr-only"
+              style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Awarded
+              Status</label>
+            <input id="filterWorkAwardedStatus" type="text" (keyup.enter)="applyFilters()"
+              (ngModelChange)="onSearchInput()" [(ngModel)]="filters['workAwardedStatus']"
+              placeholder="🔍 Awarded Status" class="col-filter">
           </td>
           <td style="position: relative;">
-            <label for="filterDateRange" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Date Range</label>
-            <input id="filterDateRange" type="text" class="col-filter" readonly style="cursor: pointer; text-align: center;" placeholder="Date Range 📅" 
+            <label for="filterDateRange" class="sr-only"
+              style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Date
+              Range</label>
+            <input id="filterDateRange" type="text" class="col-filter" readonly
+              style="cursor: pointer; text-align: center;" placeholder="Date Range 📅"
               (click)="toggleFilter('datePicker', $event)"
               [value]="(filters['startDateMin'] ? filters['startDateMin'] : '') + (filters['startDateMin'] && filters['startDateMax'] ? ' - ' : '') + (filters['startDateMax'] ? filters['startDateMax'] : '')">
-            
-            <div class="filter-popup" *ngIf="activeFilterMenu === 'datePicker'" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" style="left: auto; right: 0;">
+
+            <div class="filter-popup" *ngIf="activeFilterMenu === 'datePicker'" (click)="$event.stopPropagation()"
+              (keydown)="$event.stopPropagation()" style="left: auto; right: 0;">
               <div style="margin-bottom: 8px;">
-                <label for="filterStartDateMin" style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">From Date</label>
+                <label for="filterStartDateMin"
+                  style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">From
+                  Date</label>
                 <input id="filterStartDateMin" type="date" [(ngModel)]="filters['startDateMin']" class="col-filter">
               </div>
               <div style="margin-bottom: 12px;">
-                <label for="filterStartDateMax" style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">To Date</label>
+                <label for="filterStartDateMax"
+                  style="font-size: 11px; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">To
+                  Date</label>
                 <input id="filterStartDateMax" type="date" [(ngModel)]="filters['startDateMax']" class="col-filter">
               </div>
               <div class="filter-popup-actions">
@@ -146,8 +253,11 @@
             </div>
           </td>
           <td>
-            <label for="filterEmdReturnStatus" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter EMD Return Status</label>
-            <select id="filterEmdReturnStatus" class="col-filter" [(ngModel)]="filters['emdReturnStatus']" (change)="applyFilters()">
+            <label for="filterEmdReturnStatus" class="sr-only"
+              style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter
+              EMD Return Status</label>
+            <select id="filterEmdReturnStatus" class="col-filter" [(ngModel)]="filters['emdReturnStatus']"
+              (change)="applyFilters()">
               <option value="">All EMD</option>
               <option value="Yes">Yes</option>
               <option value="No">No</option>
@@ -155,8 +265,11 @@
             </select>
           </td>
           <td>
-            <label for="filterOverallStatus" class="sr-only" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter Overall Status</label>
-            <select id="filterOverallStatus" class="col-filter" [(ngModel)]="filters['status']" (change)="applyFilters()">
+            <label for="filterOverallStatus" class="sr-only"
+              style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter
+              Overall Status</label>
+            <select id="filterOverallStatus" class="col-filter" [(ngModel)]="filters['status']"
+              (change)="applyFilters()">
               <option value="">All Status</option>
               <option value="Work Completed">Work Completed</option>
               <option value="Tender Not Awarded">Tender Not Awarded</option>
@@ -171,27 +284,30 @@
       <tbody>
         <tr *ngIf="isLoading">
           <td colspan="12" style="text-align: center; padding: 60px;">
-            <div class="notif-loading" style="display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 14px;">
+            <div class="notif-loading"
+              style="display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 14px;">
               <div class="spinner" style="width: 32px; height: 32px; border-width: 3px;"></div>
               <span>Fetching project tender master records...</span>
             </div>
           </td>
         </tr>
         <ng-container *ngIf="!isLoading">
-          <tr *ngFor="let p of projects" (click)="viewDetails(p.id!)" (keydown.enter)="viewDetails(p.id!)" tabindex="0" class="clickable-row">
-            <td>
-              <div class="main-text highlighted font-weight-600 truncate-text" style="max-width: 140px;" [title]="p.noticeNo || p.packageNo || 'N/A'">
-                {{p.noticeNo || p.packageNo || 'N/A'}}
-              </div>
-            </td>
+          <tr *ngFor="let p of projects" (click)="viewDetails(p.id!)" (keydown.enter)="viewDetails(p.id!)" tabindex="0"
+            class="clickable-row">
             <td>
               <div class="main-text font-weight-600">{{p.tenderId || 'N/A'}}</div>
             </td>
             <td>
-              <div class="tooltip-wrapper" [attr.data-tooltip]="p.nameOfWork || 'N/A'">
-                <div class="main-text font-weight-600 truncate-text" style="max-width: 260px;">{{p.nameOfWork || 'N/A'}}</div>
+              <div class="main-text highlighted font-weight-600 truncate-text" style="max-width: 140px;"
+                [title]="p.noticeNo || p.packageNo || 'N/A'">
+                {{p.noticeNo || p.packageNo || 'N/A'}}
               </div>
-              <div class="sub-text truncate-text" style="max-width: 260px;">🏢 {{p.departmentName || 'N/A'}}</div>
+            </td>
+            <td>
+              <div class="tooltip-wrapper" [attr.data-tooltip]="p.departmentName || 'N/A'">
+                <div class="main-text font-weight-600 truncate-text" style="max-width: 280px;">{{p.departmentName ||
+                  'N/A'}}</div>
+              </div>
             </td>
             <td>
               <div class="main-text font-weight-500">{{p.relatedTo || 'N/A'}}</div>
@@ -203,15 +319,17 @@
             <td class="text-right font-weight-600 main-text">
               {{p.tenderedCost ? (p.tenderedCost | currency:'INR':'symbol':'1.0-0') : 'N/A'}}
             </td>
-            
+
             <td class="text-right">
               <span class="variance-pill" [ngClass]="getVariance(p).cls" [title]="getVariance(p).tip">
-                <span class="variance-icon" *ngIf="getVariance(p).icon">{{getVariance(p).icon}}</span>{{getVariance(p).text}}
+                <span class="variance-icon"
+                  *ngIf="getVariance(p).icon">{{getVariance(p).icon}}</span>{{getVariance(p).text}}
               </span>
             </td>
-            
+
             <td class="text-center font-weight-500">
-              <span class="badge" [ngClass]="p.workAwardedStatus === 'Work Completed' ? 'badge-completed' : (p.workAwardedStatus === 'Not' ? 'badge-grey' : 'badge-running')">
+              <span class="badge"
+                [ngClass]="p.workAwardedStatus === 'Work Completed' ? 'badge-completed' : (p.workAwardedStatus === 'Not' ? 'badge-grey' : 'badge-running')">
                 {{p.workAwardedStatus || 'N/A'}}
               </span>
             </td>
@@ -219,53 +337,68 @@
             <td class="text-center text-sm font-weight-500">
               {{p.workOrderDate ? (p.workOrderDate | date:'dd MMM yyyy') : 'NA'}}
             </td>
-            
+
             <td class="text-center">
               <span class="badge" [ngClass]="p.emdReturnStatus === 'Yes' ? 'badge-green' : 'badge-amber'">
                 EMD: {{p.emdReturnStatus || 'N/A'}}
               </span>
             </td>
-            
+
             <td class="text-center">
-              <span class="badge" [ngClass]="p.status === 'Work Completed' ? 'badge-completed' : (p.status === 'Tender Not Awarded' ? 'badge-grey' : 'badge-running')">
+              <span class="badge"
+                [ngClass]="p.status === 'Work Completed' ? 'badge-completed' : (p.status === 'Tender Not Awarded' ? 'badge-grey' : 'badge-running')">
                 {{p.status || 'N/A'}}
               </span>
             </td>
-            
+
             <td class="text-center actions-cell">
               <button class="btn-icon edit" title="Edit Project" (click)="editProject(p, $event)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
               </button>
               <button class="btn-icon del" title="Delete Project" (click)="deleteProject(p.id!, $event)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
               </button>
             </td>
           </tr>
           <tr *ngIf="projects.length === 0">
-            <td colspan="12" style="text-align: center; color: #7f8c8d; padding: 40px;">No tender project records found.</td>
+            <td colspan="12" style="text-align: center; color: #7f8c8d; padding: 40px;">No tender project records found.
+            </td>
           </tr>
         </ng-container>
       </tbody>
 
     </table>
   </div>
-  
-  <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border); background-color: var(--white);">
+
+  <div class="pagination-bar"
+    style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border); background-color: var(--white);">
     <div class="limit-selector" style="display: flex; align-items: center; gap: 10px;">
-      <label for="rowsPerPageSelect" style="font-size: 13px; color: var(--muted); font-weight: 500;">Rows per page:</label>
-      <select id="rowsPerPageSelect" [ngModel]="limit" (ngModelChange)="onLimitChange($event)" class="filter-select" style="padding: 6px 10px;">
+      <label for="rowsPerPageSelect" style="font-size: 13px; color: var(--muted); font-weight: 500;">Rows per
+        page:</label>
+      <select id="rowsPerPageSelect" [ngModel]="limit" (ngModelChange)="onLimitChange($event)" class="filter-select"
+        style="padding: 6px 10px;">
         <option [value]="10">10</option>
         <option [value]="25">25</option>
         <option [value]="50">50</option>
         <option [value]="100">100</option>
       </select>
     </div>
-    
+
     <div class="page-controls" style="display: flex; align-items: center; gap: 20px;">
       <span style="font-size: 13px; color: var(--muted); font-weight: 500;">{{showingText}}</span>
       <div style="display: flex; gap: 8px;">
-        <button class="btn btn-secondary" [disabled]="isPrevDisabled" (click)="prevPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="isPrevDisabled ? '0.5' : '1'">Previous</button>
-        <button class="btn btn-secondary" [disabled]="isNextDisabled" (click)="nextPage()" style="padding: 6px 12px; font-weight: 600;" [style.opacity]="isNextDisabled ? '0.5' : '1'">Next</button>
+        <button class="btn btn-secondary" [disabled]="isPrevDisabled" (click)="prevPage()"
+          style="padding: 6px 12px; font-weight: 600;" [style.opacity]="isPrevDisabled ? '0.5' : '1'">Previous</button>
+        <button class="btn btn-secondary" [disabled]="isNextDisabled" (click)="nextPage()"
+          style="padding: 6px 12px; font-weight: 600;" [style.opacity]="isNextDisabled ? '0.5' : '1'">Next</button>
       </div>
 
     </div>
@@ -280,22 +413,28 @@
     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
       <div>
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
-          <h2 style="font-size: 20px; font-weight: 700; color: #ffffff; margin: 0; font-family: 'Space Grotesk', sans-serif;">
+          <h2
+            style="font-size: 20px; font-weight: 700; color: #ffffff; margin: 0; font-family: 'Space Grotesk', sans-serif;">
             {{selectedProject.nameOfWork || 'SSA Tender Project Details'}}
           </h2>
-          <span class="sitepro-badge" [ngClass]="selectedProject.status === 'Work Completed' ? 'sitepro-badge-green' : 'sitepro-badge-blue'">
+          <span class="sitepro-badge"
+            [ngClass]="selectedProject.status === 'Work Completed' ? 'sitepro-badge-green' : 'sitepro-badge-blue'">
             ● {{selectedProject.status || 'Active'}}
           </span>
         </div>
         <div style="display: flex; align-items: center; gap: 16px; font-size: 13px; color: #94a3b8; flex-wrap: wrap;">
-          <span>📋 Tender ID: <strong style="color: #60a5fa;">{{selectedProject.tenderId || selectedProject.srNo || 'N/A'}}</strong></span>
-          <span>📄 Notice/Pkg: <strong style="color: #e2e8f0;">{{selectedProject.noticeNo || selectedProject.packageNo || 'N/A'}}</strong></span>
-          <span>📝 Work Order #: <strong style="color: #e2e8f0;">{{selectedProject.workOrderNumber || 'N/A'}}</strong></span>
+          <span>📋 Tender ID: <strong style="color: #60a5fa;">{{selectedProject.tenderId ||
+              'N/A'}}</strong></span>
+          <span>📄 Notice/Pkg: <strong style="color: #e2e8f0;">{{selectedProject.noticeNo || selectedProject.packageNo
+              || 'N/A'}}</strong></span>
+          <span>📝 Work Order #: <strong style="color: #e2e8f0;">{{selectedProject.workOrderNumber ||
+              'N/A'}}</strong></span>
           <span>🏢 Dept: <strong style="color: #cbd5e1;">{{selectedProject.departmentName || 'N/A'}}</strong></span>
         </div>
       </div>
       <div style="display: flex; gap: 10px; align-items: center;">
-        <button class="btn btn-secondary" (click)="mode = 'list'" style="padding: 8px 16px; font-weight: 600; font-size: 13px;">
+        <button class="btn btn-secondary" (click)="mode = 'list'"
+          style="padding: 8px 16px; font-weight: 600; font-size: 13px;">
           ← Back to Master List
         </button>
       </div>
@@ -338,10 +477,13 @@
         <div class="sitepro-kpi-val" style="color: #2563eb;">
           ₹{{(selectedProject.tenderedCost || selectedProject.estimatedTenderCost || 0) | number:'1.0-0'}}
         </div>
-        <div style="font-size: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+        <div
+          style="font-size: 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
           <span style="color: var(--muted);">Est: ₹{{selectedProject.estimatedTenderCost | number:'1.0-0'}}</span>
-          <span class="variance-pill" [ngClass]="getVariance(selectedProject).cls" [title]="getVariance(selectedProject).tip">
-            <span class="variance-icon" *ngIf="getVariance(selectedProject).icon">{{getVariance(selectedProject).icon}}</span>{{getVariance(selectedProject).text}}
+          <span class="variance-pill" [ngClass]="getVariance(selectedProject).cls"
+            [title]="getVariance(selectedProject).tip">
+            <span class="variance-icon"
+              *ngIf="getVariance(selectedProject).icon">{{getVariance(selectedProject).icon}}</span>{{getVariance(selectedProject).text}}
           </span>
         </div>
       </div>
@@ -351,14 +493,16 @@
         <div class="sitepro-kpi-lbl">Physical & Financial Progress</div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0 4px 0;">
           <span style="font-size: 13px; font-weight: 600; color: var(--text);">Physical Progress</span>
-          <span style="font-size: 14px; font-weight: 700; color: #16a34a;">{{getPhysicalProgress(selectedProject)}}%</span>
+          <span
+            style="font-size: 14px; font-weight: 700; color: #16a34a;">{{getPhysicalProgress(selectedProject)}}%</span>
         </div>
         <div class="sitepro-progress-track">
           <div class="sitepro-progress-fill green" [style.width.%]="getPhysicalProgress(selectedProject)"></div>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0 4px 0;">
           <span style="font-size: 13px; font-weight: 600; color: var(--text);">Financial Progress</span>
-          <span style="font-size: 14px; font-weight: 700; color: #2563eb;">{{getFinancialProgress(selectedProject)}}%</span>
+          <span
+            style="font-size: 14px; font-weight: 700; color: #2563eb;">{{getFinancialProgress(selectedProject)}}%</span>
         </div>
         <div class="sitepro-progress-track">
           <div class="sitepro-progress-fill" [style.width.%]="getFinancialProgress(selectedProject)"></div>
@@ -375,7 +519,8 @@
           </div>
           <div style="font-size: 12px; color: var(--muted); margin-top: 6px;">Target Completion Date:</div>
           <div style="font-size: 14px; font-weight: 700; color: #2563eb;">
-            🏁 {{selectedProject.completionDateActual ? (selectedProject.completionDateActual | date:'dd MMM yyyy') : 'Not Set'}}
+            🏁 {{selectedProject.completionDateActual ? (selectedProject.completionDateActual | date:'dd MMM yyyy') :
+            'Not Set'}}
           </div>
         </div>
       </div>
@@ -386,7 +531,8 @@
         <div class="sitepro-kpi-val" style="color: #d97706; font-size: 18px;">
           ₹{{selectedProject.securityDepositAmount ? (selectedProject.securityDepositAmount | number:'1.0-0') : '0'}}
         </div>
-        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">FDR No: {{selectedProject.sdFdrNo || 'N/A'}}</div>
+        <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">FDR No: {{selectedProject.sdFdrNo || 'N/A'}}
+        </div>
         <div style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
           <span class="sitepro-badge sitepro-badge-amber">SD: {{selectedProject.sdReturnStatus || 'Pending'}}</span>
           <span class="sitepro-badge sitepro-badge-blue">EMD: {{selectedProject.emdReturnStatus || 'Pending'}}</span>
@@ -400,7 +546,9 @@
       <div>
         <strong style="font-size: 14px;">Sub-site Date Sync Active:</strong>
         <span style="font-size: 13px; margin-left: 6px;">
-          Project Start Date is aligned to the earliest location start date ({{selectedProject.workOrderDate | date:'dd MMM yyyy'}}), and Project Completion Date is set to the maximum closed date ({{selectedProject.completionDateActual | date:'dd MMM yyyy'}}).
+          Project Start Date is aligned to the earliest location start date ({{selectedProject.workOrderDate | date:'dd
+          MMM yyyy'}}), and Project Completion Date is set to the maximum closed date
+          ({{selectedProject.completionDateActual | date:'dd MMM yyyy'}}).
         </span>
       </div>
     </div>
@@ -413,13 +561,18 @@
         <div class="card-body">
           <div class="detail-item"><strong>Department Name:</strong> {{selectedProject.departmentName || 'N/A'}}</div>
           <div class="detail-item"><strong>Tender ID:</strong> {{selectedProject.tenderId || 'N/A'}}</div>
-          <div class="detail-item"><strong>Notice No / Package:</strong> {{selectedProject.noticeNo || selectedProject.packageNo || 'N/A'}}</div>
-          <div class="detail-item"><strong>Tender Submission Date:</strong> {{selectedProject.dateOfSub ? (selectedProject.dateOfSub | date:'dd MMM yyyy') : 'N/A'}}</div>
+          <div class="detail-item"><strong>Notice No / Package:</strong> {{selectedProject.noticeNo ||
+            selectedProject.packageNo || 'N/A'}}</div>
+          <div class="detail-item"><strong>Tender Submission Date:</strong> {{selectedProject.dateOfSub ?
+            (selectedProject.dateOfSub | date:'dd MMM yyyy') : 'N/A'}}</div>
           <div class="detail-item"><strong>Related To:</strong> {{selectedProject.relatedTo || 'N/A'}}</div>
           <div class="detail-item"><strong>Reference Person:</strong> {{selectedProject.refPerson || 'N/A'}}</div>
-          <div class="detail-item"><strong>Tender Fee:</strong> ₹{{selectedProject.tenderFee ? (selectedProject.tenderFee | number) : 'N/A'}} (Fee No: {{selectedProject.tenderFeeNo || 'N/A'}})</div>
-          <div class="detail-item"><strong>EMD Amount:</strong> ₹{{selectedProject.emdAmt ? (selectedProject.emdAmt | number) : 'N/A'}} (EMD No: {{selectedProject.emdNo || 'N/A'}})</div>
-          <div class="detail-item"><strong>EMD Return Status:</strong> <span class="badge badge-green">{{selectedProject.emdReturnStatus || 'N/A'}}</span></div>
+          <div class="detail-item"><strong>Tender Fee:</strong> ₹{{selectedProject.tenderFee ?
+            (selectedProject.tenderFee | number) : 'N/A'}} (Fee No: {{selectedProject.tenderFeeNo || 'N/A'}})</div>
+          <div class="detail-item"><strong>EMD Amount:</strong> ₹{{selectedProject.emdAmt ? (selectedProject.emdAmt |
+            number) : 'N/A'}} (EMD No: {{selectedProject.emdNo || 'N/A'}})</div>
+          <div class="detail-item"><strong>EMD Return Status:</strong> <span
+              class="badge badge-green">{{selectedProject.emdReturnStatus || 'N/A'}}</span></div>
         </div>
       </div>
 
@@ -428,12 +581,17 @@
         <div class="card-hdr">🗓️ Work Order & Execution Parameters</div>
         <div class="card-body">
           <div class="detail-item"><strong>Work Order No:</strong> {{selectedProject.workOrderNumber || 'N/A'}}</div>
-          <div class="detail-item"><strong>Work Order Date:</strong> {{selectedProject.workOrderDate ? (selectedProject.workOrderDate | date:'dd MMM yyyy') : 'N/A'}}</div>
+          <div class="detail-item"><strong>Work Order Date:</strong> {{selectedProject.workOrderDate ?
+            (selectedProject.workOrderDate | date:'dd MMM yyyy') : 'N/A'}}</div>
           <div class="detail-item"><strong>Time Limit:</strong> {{selectedProject.timeLimit || 'N/A'}}</div>
-          <div class="detail-item"><strong>Target Completion Date:</strong> {{selectedProject.completionDateActual ? (selectedProject.completionDateActual | date:'dd MMM yyyy') : 'N/A'}}</div>
-          <div class="detail-item"><strong>Defects Liability Period (DLP):</strong> {{selectedProject.defectsLiabilityPeriod || 'N/A'}}</div>
-          <div class="detail-item"><strong>DLP Ended On:</strong> {{selectedProject.dlpEndedOn ? (selectedProject.dlpEndedOn | date:'dd MMM yyyy') : 'N/A'}}</div>
-          <div class="detail-item"><strong>SD RAB Return Status:</strong> <span class="badge badge-amber">{{selectedProject.sdRmRabReturnStatus || 'N/A'}}</span></div>
+          <div class="detail-item"><strong>Target Completion Date:</strong> {{selectedProject.completionDateActual ?
+            (selectedProject.completionDateActual | date:'dd MMM yyyy') : 'N/A'}}</div>
+          <div class="detail-item"><strong>Defects Liability Period (DLP):</strong>
+            {{selectedProject.defectsLiabilityPeriod || 'N/A'}}</div>
+          <div class="detail-item"><strong>DLP Ended On:</strong> {{selectedProject.dlpEndedOn ?
+            (selectedProject.dlpEndedOn | date:'dd MMM yyyy') : 'N/A'}}</div>
+          <div class="detail-item"><strong>SD RAB Return Status:</strong> <span
+              class="badge badge-amber">{{selectedProject.sdRmRabReturnStatus || 'N/A'}}</span></div>
           <div class="detail-item"><strong>Remarks:</strong> {{selectedProject.remarks || 'N/A'}}</div>
         </div>
       </div>
@@ -444,8 +602,10 @@
   <div *ngIf="activeTab === 'locations'">
     <div class="card">
       <div class="card-hdr" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>🏫 Sub-site Locations & Dates (Min Location Start Date = Project Start Date, Max Location Closed Date = Project Closed Date)</span>
-        <button class="btn btn-primary btn-sm" (click)="openAddLocationModal()" style="font-size: 12px; padding: 6px 14px;">+ Add Sub-site Location</button>
+        <span>🏫 Sub-site Locations & Dates (Min Location Start Date = Project Start Date, Max Location Closed Date =
+          Project Closed Date)</span>
+        <button class="btn btn-primary btn-sm" (click)="openAddLocationModal()"
+          style="font-size: 12px; padding: 6px 14px;">+ Add Sub-site Location</button>
       </div>
       <div class="card-body" style="padding: 0;">
         <table class="data-table" style="width: 100%; border-collapse: collapse;">
@@ -473,10 +633,12 @@
               </td>
               <td>{{loc.head || '-'}}</td>
               <td>
-                <span class="badge badge-grey" style="font-size: 12px; font-weight: 600;">📅 {{loc.startDate ? (loc.startDate | date:'dd MMM yyyy') : 'Not Set'}}</span>
+                <span class="badge badge-grey" style="font-size: 12px; font-weight: 600;">📅 {{loc.startDate ?
+                  (loc.startDate | date:'dd MMM yyyy') : 'Not Set'}}</span>
               </td>
               <td>
-                <span class="badge badge-grey" style="font-size: 12px; font-weight: 600;">🏁 {{loc.closedDate ? (loc.closedDate | date:'dd MMM yyyy') : 'Not Set'}}</span>
+                <span class="badge badge-grey" style="font-size: 12px; font-weight: 600;">🏁 {{loc.closedDate ?
+                  (loc.closedDate | date:'dd MMM yyyy') : 'Not Set'}}</span>
               </td>
               <td>
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -486,9 +648,12 @@
                   <span style="font-weight: 700; font-size: 12px;">{{loc.physicalProgress || 0}}%</span>
                 </div>
               </td>
-              <td><span class="badge" [ngClass]="loc.status === 'Completed' ? 'badge-completed' : 'badge-running'">{{loc.status || 'Running'}}</span></td>
+              <td><span class="badge"
+                  [ngClass]="loc.status === 'Completed' ? 'badge-completed' : 'badge-running'">{{loc.status ||
+                  'Running'}}</span></td>
               <td class="text-center actions-cell">
-                <button class="btn-icon edit" title="Edit Sub-site Location" (click)="openEditLocationModal(loc, $event)">
+                <button class="btn-icon edit" title="Edit Sub-site Location"
+                  (click)="openEditLocationModal(loc, $event)">
                   ✏️
                 </button>
                 <button class="btn-icon del" title="Delete Location" (click)="deleteLocationSite(loc.id, i, $event)">
@@ -497,7 +662,8 @@
               </td>
             </tr>
             <tr *ngIf="!selectedProject.locations || selectedProject.locations.length === 0">
-              <td colspan="8" style="text-align: center; color: var(--muted); padding: 30px;">No sub-site locations registered for this project. Click "+ Add Sub-site Location" to configure site dates and progress.</td>
+              <td colspan="8" style="text-align: center; color: var(--muted); padding: 30px;">No sub-site locations
+                registered for this project. Click "+ Add Sub-site Location" to configure site dates and progress.</td>
             </tr>
           </tbody>
         </table>
@@ -509,7 +675,8 @@
   <div *ngIf="activeTab === 'rabills'">
     <div class="card">
       <div class="card-hdr" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>🧾 RA Bills & Payment Records (Total Billed: ₹{{getTotalRaBilled(selectedProject) | number:'1.0-0'}}, Paid: ₹{{getTotalRaPaid(selectedProject) | number:'1.0-0'}})</span>
+        <span>🧾 RA Bills & Payment Records (Total Billed: ₹{{getTotalRaBilled(selectedProject) | number:'1.0-0'}},
+          Paid: ₹{{getTotalRaPaid(selectedProject) | number:'1.0-0'}})</span>
         <span class="sitepro-badge sitepro-badge-blue">{{selectedProject.raBills?.length || 0}} Bills Recorded</span>
       </div>
       <div class="card-body" style="padding: 0;">
@@ -535,12 +702,16 @@
               <td>₹{{((bill.rm5Percent || 0) + (bill.tds2Percent || 0) + (bill.labourCess1Percent || 0)) | number}}</td>
               <td style="font-weight: 800; color: #16a34a;">₹{{bill.netPayment ? (bill.netPayment | number) : '0'}}</td>
               <td>
-                <span style="font-size: 11px;">Sub: {{bill.invoiceSubmitted ? '✅' : '❌'}} | Dep: {{bill.billDeposited ? '✅' : '❌'}}</span>
+                <span style="font-size: 11px;">Sub: {{bill.invoiceSubmitted ? '✅' : '❌'}} | Dep: {{bill.billDeposited ?
+                  '✅' : '❌'}}</span>
               </td>
-              <td><span class="badge" [ngClass]="bill.status === 'Paid' || bill.status === 'paid' ? 'badge-completed' : 'badge-running'">{{bill.status || 'Submitted'}}</span></td>
+              <td><span class="badge"
+                  [ngClass]="bill.status === 'Paid' || bill.status === 'paid' ? 'badge-completed' : 'badge-running'">{{bill.status
+                  || 'Submitted'}}</span></td>
             </tr>
             <tr *ngIf="!selectedProject.raBills || selectedProject.raBills.length === 0">
-              <td colspan="8" style="text-align: center; color: var(--muted); padding: 30px;">No RA bills recorded for this project yet.</td>
+              <td colspan="8" style="text-align: center; color: var(--muted); padding: 30px;">No RA bills recorded for
+                this project yet.</td>
             </tr>
           </tbody>
         </table>
@@ -567,14 +738,17 @@
           <tbody>
             <tr *ngFor="let app of selectedProject.approvals">
               <td style="padding: 12px 16px; font-weight: 700;">{{app.approvalType || 'Time Extension'}}</td>
-              <td>{{app.approvalNumber || '-'}} ({{app.approvalDate ? (app.approvalDate | date:'dd MMM yyyy') : 'N/A'}})</td>
+              <td>{{app.approvalNumber || '-'}} ({{app.approvalDate ? (app.approvalDate | date:'dd MMM yyyy') : 'N/A'}})
+              </td>
               <td style="font-weight: 600;">₹{{app.amount ? (app.amount | number) : '0'}}</td>
-              <td style="font-weight: 600; color: #2563eb;">{{app.timeLimitExtensionDate ? (app.timeLimitExtensionDate | date:'dd MMM yyyy') : 'N/A'}}</td>
+              <td style="font-weight: 600; color: #2563eb;">{{app.timeLimitExtensionDate ? (app.timeLimitExtensionDate |
+                date:'dd MMM yyyy') : 'N/A'}}</td>
               <td>{{app.description || '-'}}</td>
               <td><span class="badge badge-green">{{app.status || 'Approved'}}</span></td>
             </tr>
             <tr *ngIf="!selectedProject.approvals || selectedProject.approvals.length === 0">
-              <td colspan="6" style="text-align: center; color: var(--muted); padding: 30px;">No extension or extra work approvals recorded for this project yet.</td>
+              <td colspan="6" style="text-align: center; color: var(--muted); padding: 30px;">No extension or extra work
+                approvals recorded for this project yet.</td>
             </tr>
           </tbody>
         </table>
@@ -588,15 +762,19 @@
       <div class="card-hdr">🗓️ Project Execution Milestones & Target Phases</div>
       <div class="card-body">
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
             <div>
               <strong style="font-size: 14px; color: var(--text);">Phase 1: Site Survey & Foundation Work</strong>
-              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Target Completion: {{selectedProject.workOrderDate ? (selectedProject.workOrderDate | date:'dd MMM yyyy') : 'Project Start'}}</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Target Completion:
+                {{selectedProject.workOrderDate ? (selectedProject.workOrderDate | date:'dd MMM yyyy') : 'Project
+                Start'}}</div>
             </div>
             <span class="badge badge-completed">✅ Completed</span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
             <div>
               <strong style="font-size: 14px; color: var(--text);">Phase 2: Superstructure & Masonry Work</strong>
               <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Target Completion: In Progress</div>
@@ -604,18 +782,23 @@
             <span class="badge badge-running">🔄 In Progress ({{getPhysicalProgress(selectedProject)}}%)</span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
             <div>
               <strong style="font-size: 14px; color: var(--text);">Phase 3: Roofing, Plaster & Finishing Work</strong>
-              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Target Completion: {{selectedProject.completionDateActual ? (selectedProject.completionDateActual | date:'dd MMM yyyy') : 'Target End'}}</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">Target Completion:
+                {{selectedProject.completionDateActual ? (selectedProject.completionDateActual | date:'dd MMM yyyy') :
+                'Target End'}}</div>
             </div>
             <span class="badge badge-grey">⏳ Pending</span>
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
             <div>
               <strong style="font-size: 14px; color: var(--text);">Phase 4: Inspection, DLP Period & Handover</strong>
-              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">DLP Ended Date: {{selectedProject.dlpEndedOn ? (selectedProject.dlpEndedOn | date:'dd MMM yyyy') : 'N/A'}}</div>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;">DLP Ended Date:
+                {{selectedProject.dlpEndedOn ? (selectedProject.dlpEndedOn | date:'dd MMM yyyy') : 'N/A'}}</div>
             </div>
             <span class="badge badge-grey">⏳ Pending</span>
           </div>
@@ -629,23 +812,33 @@
     <div class="card">
       <div class="card-hdr">👥 Project Key Officials & Contact Directory</div>
       <div class="card-body">
-        <div class="grid grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+        <div class="grid grid-3"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
           <div style="padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);">
-            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Reference Person</div>
-            <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px;">{{selectedProject.refPerson || 'N/A'}}</div>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Related To: {{selectedProject.relatedTo || 'N/A'}}</div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Reference
+              Person</div>
+            <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px;">
+              {{selectedProject.refPerson || 'N/A'}}</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">Related To: {{selectedProject.relatedTo
+              || 'N/A'}}</div>
           </div>
 
           <div style="padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);">
-            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">{{Constants.PROJECT_OFFICIALS.EXECUTIVE_ENGINEER.TITLE}}</div>
-            <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px;">{{Constants.PROJECT_OFFICIALS.EXECUTIVE_ENGINEER.NAME}}</div>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">📞 {{Constants.PROJECT_OFFICIALS.EXECUTIVE_ENGINEER.PHONE}}</div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">
+              {{Constants.PROJECT_OFFICIALS.EXECUTIVE_ENGINEER.TITLE}}</div>
+            <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px;">
+              {{Constants.PROJECT_OFFICIALS.EXECUTIVE_ENGINEER.NAME}}</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">📞
+              {{Constants.PROJECT_OFFICIALS.EXECUTIVE_ENGINEER.PHONE}}</div>
           </div>
 
           <div style="padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);">
-            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">{{Constants.PROJECT_OFFICIALS.DEPUTY_EXECUTIVE_ENGINEER.TITLE}}</div>
-            <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px;">{{Constants.PROJECT_OFFICIALS.DEPUTY_EXECUTIVE_ENGINEER.NAME}}</div>
-            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">📞 {{Constants.PROJECT_OFFICIALS.DEPUTY_EXECUTIVE_ENGINEER.PHONE}}</div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">
+              {{Constants.PROJECT_OFFICIALS.DEPUTY_EXECUTIVE_ENGINEER.TITLE}}</div>
+            <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-top: 4px;">
+              {{Constants.PROJECT_OFFICIALS.DEPUTY_EXECUTIVE_ENGINEER.NAME}}</div>
+            <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">📞
+              {{Constants.PROJECT_OFFICIALS.DEPUTY_EXECUTIVE_ENGINEER.PHONE}}</div>
           </div>
         </div>
       </div>
@@ -705,34 +898,50 @@
 </div>
 
 <!-- UPLOAD DOCUMENT MODAL DIALOG -->
-<div class="modal-backdrop" *ngIf="showUploadModal" (click)="closeUploadModal()" style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px);">
-  <div class="modal-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" style="background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 500px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+<div class="modal-backdrop" *ngIf="showUploadModal" (click)="closeUploadModal()"
+  style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px);">
+  <div class="modal-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()"
+    style="background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 500px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
       <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text);">📁 Upload Project Document</h3>
-      <button (click)="closeUploadModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted);">✕</button>
+      <button (click)="closeUploadModal()"
+        style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted);">✕</button>
     </div>
 
     <div style="margin-bottom: 16px;">
-      <label for="uploadFileInput" style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Select Document File *</label>
-      <input id="uploadFileInput" type="file" (change)="onFileSelected($event)" class="col-filter" style="padding: 8px;">
+      <label for="uploadFileInput"
+        style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Select
+        Document File *</label>
+      <input id="uploadFileInput" type="file" (change)="onFileSelected($event)" class="col-filter"
+        style="padding: 8px;">
       <div style="font-size: 11px; color: var(--muted); margin-top: 4px;" *ngIf="selectedFileToUpload">
         Selected: <strong>{{selectedFileToUpload.name}}</strong> ({{(selectedFileToUpload.size / 1024).toFixed(1)}} KB)
       </div>
     </div>
 
     <div style="margin-bottom: 16px;">
-      <label for="uploadDocumentNameInput" style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Document Name / Title</label>
-      <input id="uploadDocumentNameInput" type="text" [(ngModel)]="uploadDocumentName" placeholder="E.g. Approved Structural Drawing (Default: file name)" class="col-filter" style="padding: 10px; width: 100%;">
+      <label for="uploadDocumentNameInput"
+        style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Document Name
+        / Title</label>
+      <input id="uploadDocumentNameInput" type="text" [(ngModel)]="uploadDocumentName"
+        placeholder="E.g. Approved Structural Drawing (Default: file name)" class="col-filter"
+        style="padding: 10px; width: 100%;">
     </div>
 
     <div style="margin-bottom: 20px;">
-      <label for="uploadNotesInput" style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Document Notes / Description</label>
-      <textarea id="uploadNotesInput" [(ngModel)]="uploadNotes" placeholder="Enter notes or remarks regarding this document..." class="col-filter" style="width: 100%; height: 85px; resize: vertical; padding: 10px;"></textarea>
+      <label for="uploadNotesInput"
+        style="display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Document
+        Notes / Description</label>
+      <textarea id="uploadNotesInput" [(ngModel)]="uploadNotes"
+        placeholder="Enter notes or remarks regarding this document..." class="col-filter"
+        style="width: 100%; height: 85px; resize: vertical; padding: 10px;"></textarea>
     </div>
 
     <div style="display: flex; justify-content: flex-end; gap: 12px;">
       <button class="btn btn-secondary" (click)="closeUploadModal()" [disabled]="isUploading">Cancel</button>
-      <button class="btn btn-primary" (click)="submitUploadDocument()" [disabled]="isUploading || !selectedFileToUpload">
+      <button class="btn btn-primary" (click)="submitUploadDocument()"
+        [disabled]="isUploading || !selectedFileToUpload">
         {{isUploading ? 'Uploading...' : 'Upload File'}}
       </button>
     </div>
@@ -740,230 +949,850 @@
 </div>
 
 <!-- CREATE / EDIT MODE -->
-<div class="card" *ngIf="mode === 'create' || mode === 'edit'">
-  <div class="card-hdr">{{mode === 'edit' ? 'Update Tender Project' : 'Register Tender Project'}}</div>
+<div class="card tender-details-form" *ngIf="mode === 'create' || mode === 'edit'">
+  
+  <!-- Form Header with Actions -->
+  <div class="card-hdr wizard-header">
+    <div class="hdr-left">
+      <h2>{{mode === 'edit' ? 'Update Tender Project' : 'Register Tender Project'}}</h2>
+      <p class="hdr-sub">Fill out project tender details step by step or switch view modes</p>
+    </div>
+    <div class="hdr-actions">
+      <button type="button" class="btn btn-secondary mode-toggle-btn" (click)="toggleFormViewMode()">
+        {{ formViewMode === 'wizard' ? '📜 Single Page View' : '🧙 Stepped Wizard View' }}
+      </button>
+      <button type="button" class="btn btn-primary save-btn-top" (click)="saveProject()">
+        💾 Save Project Tender
+      </button>
+      <button type="button" class="btn btn-secondary text-sm" (click)="mode = 'list'">
+        ✕ Cancel
+      </button>
+    </div>
+  </div>
+
   <div class="card-body">
-    <div class="grid grid-3">
-      <div class="form-group">
-        <label for="projSrNo">Sr No.</label>
-        <input id="projSrNo" type="number" [(ngModel)]="projectData.srNo" placeholder="Sr No.">
-      </div>
-      <div class="form-group">
-        <label for="projDepartmentName">Department Name</label>
-        <input id="projDepartmentName" type="text" [(ngModel)]="projectData.departmentName" placeholder="E.g. Jamnagar Municipal Corporation">
-      </div>
-      <div class="form-group">
-        <label for="projTenderId">Tender ID</label>
-        <input id="projTenderId" type="text" [(ngModel)]="projectData.tenderId" placeholder="Tender ID">
-      </div>
-      <div class="form-group">
-        <label for="projNoticeNo">Notice No. / Package No.</label>
-        <input id="projNoticeNo" type="text" [(ngModel)]="projectData.noticeNo" placeholder="Notice / Package No.">
-      </div>
-      <div class="form-group">
-        <label for="projDateOfSub">Tender Submission Date</label>
-        <input id="projDateOfSub" type="date" [(ngModel)]="projectData.dateOfSub">
-      </div>
-      <div class="form-group">
-        <label for="projRelatedTo">Related To</label>
-        <input id="projRelatedTo" type="text" [(ngModel)]="projectData.relatedTo" placeholder="E.g. Gokulbhai">
-      </div>
-      <div class="form-group">
-        <label for="projRefPerson">Reference Person (Ref)</label>
-        <input id="projRefPerson" type="text" [(ngModel)]="projectData.refPerson" placeholder="E.g. Narenra Nakum">
-      </div>
-      <div class="form-group">
-        <label for="projTenderFee">Tender Fee</label>
-        <input id="projTenderFee" type="number" [(ngModel)]="projectData.tenderFee" placeholder="Tender Fee">
-      </div>
-      <div class="form-group">
-        <label for="projTenderFeeNo">Tender Fee No.</label>
-        <input id="projTenderFeeNo" type="text" [(ngModel)]="projectData.tenderFeeNo" placeholder="Fee Receipt / DD No.">
-      </div>
-      <div class="form-group">
-        <label for="projEmdAmt">EMD Amount</label>
-        <input id="projEmdAmt" type="number" [(ngModel)]="projectData.emdAmt" placeholder="EMD Amount">
-      </div>
-      <div class="form-group">
-        <label for="projEmdNo">EMD No.</label>
-        <input id="projEmdNo" type="text" [(ngModel)]="projectData.emdNo" placeholder="EMD Transaction No.">
-      </div>
-      <div class="form-group">
-        <label for="projEstCost">Estimated Cost (EST. COST)</label>
-        <input id="projEstCost" type="number" [(ngModel)]="projectData.estimatedTenderCost" placeholder="Estimated Cost">
-      </div>
-      <div class="form-group">
-        <label for="projTedCost">Tendered Cost (TED COST)</label>
-        <input id="projTedCost" type="number" [(ngModel)]="projectData.tenderedCost" placeholder="Tendered Cost">
-      </div>
-      <div class="form-group">
-        <label for="projAboveBelow">Above / Below %</label>
-        <input id="projAboveBelow" type="number" [(ngModel)]="projectData.aboveBelowPercentage" placeholder="E.g. 15 or -65.3">
-      </div>
-      <div class="form-group">
-        <label for="projWorkAwardedStatus">Work Awarded Status</label>
-        <select id="projWorkAwardedStatus" [(ngModel)]="projectData.workAwardedStatus" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
-          <option value="Work Completed">Work Completed</option>
-          <option value="Not">Not</option>
-          <option value="In Progress">In Progress</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="projWorkOrderNumber">Work Order No.</label>
-        <input id="projWorkOrderNumber" type="text" [(ngModel)]="projectData.workOrderNumber" placeholder="Work Order No.">
-      </div>
-      <div class="form-group">
-        <label for="projWorkOrderDate">Work Order Date</label>
-        <input id="projWorkOrderDate" type="date" [(ngModel)]="projectData.workOrderDate">
-      </div>
-      <div class="form-group">
-        <label for="projTimeLimit">Time Limit</label>
-        <input id="projTimeLimit" type="text" [(ngModel)]="projectData.timeLimit" placeholder="E.g. 12 M">
-      </div>
-      <div class="form-group">
-        <label for="projSecurityDepositAmount">Security Deposit (SD Amount)</label>
-        <input id="projSecurityDepositAmount" type="number" [(ngModel)]="projectData.securityDepositAmount" placeholder="SD Amount">
-      </div>
-      <div class="form-group">
-        <label for="projSdFdrNo">SD FDR NO</label>
-        <input id="projSdFdrNo" type="text" [(ngModel)]="projectData.sdFdrNo" placeholder="FDR No.">
-      </div>
-      <div class="form-group">
-        <label for="projSdRabDeduction">SD RAB Deduction</label>
-        <input id="projSdRabDeduction" type="number" [(ngModel)]="projectData.sdRabDeduction" placeholder="SD RAB Deduction">
-      </div>
-      <div class="form-group">
-        <label for="projSdRabReturnAmount">SD RAB Return Amount</label>
-        <input id="projSdRabReturnAmount" type="number" [(ngModel)]="projectData.sdRabReturnAmount" placeholder="SD RAB Return">
-      </div>
-      <div class="form-group">
-        <label for="projAdditionalDeduction">Additional Deduction</label>
-        <input id="projAdditionalDeduction" type="text" [(ngModel)]="projectData.additionalDeduction" placeholder="Additional Deduction">
-      </div>
-      <div class="form-group">
-        <label for="projWorkCompletedAmount">Work Completed Amount</label>
-        <input id="projWorkCompletedAmount" type="number" [(ngModel)]="projectData.workCompletedAmount" placeholder="Completed Amount">
-      </div>
-      <div class="form-group">
-        <label for="projPendingWorkAmount">Pending Work Amount</label>
-        <input id="projPendingWorkAmount" type="number" [(ngModel)]="projectData.pendingWorkAmount" placeholder="Pending Amount">
-      </div>
-      <div class="form-group">
-        <label for="projCompletionDateActual">Completion Date of Work</label>
-        <input id="projCompletionDateActual" type="date" [(ngModel)]="projectData.completionDateActual">
-      </div>
-      <div class="form-group">
-        <label for="projDefectsLiabilityPeriod">Defects Liability Period</label>
-        <input id="projDefectsLiabilityPeriod" type="text" [(ngModel)]="projectData.defectsLiabilityPeriod" placeholder="DLP">
-      </div>
-      <div class="form-group">
-        <label for="projDlpEndedOn">DLP Ended On</label>
-        <input id="projDlpEndedOn" type="date" [(ngModel)]="projectData.dlpEndedOn">
-      </div>
-      <div class="form-group">
-        <label for="projEmdReturnStatus">EMD Return Status</label>
-        <input id="projEmdReturnStatus" type="text" [(ngModel)]="projectData.emdReturnStatus" placeholder="E.g. Yes / Pending">
-      </div>
-      <div class="form-group">
-        <label for="projSdReturnStatus">SD Return Status</label>
-        <input id="projSdReturnStatus" type="text" [(ngModel)]="projectData.sdReturnStatus" placeholder="E.g. Pending">
-      </div>
-      <div class="form-group">
-        <label for="projSdRmRabReturnStatus">SD RM/RAB Return Status</label>
-        <input id="projSdRmRabReturnStatus" type="text" [(ngModel)]="projectData.sdRmRabReturnStatus" placeholder="E.g. Pending">
-      </div>
-      <div class="form-group">
-        <label for="projStatus">Overall Status</label>
-        <input id="projStatus" type="text" [(ngModel)]="projectData.status" placeholder="E.g. Work Completed / Tender Not Awarded">
-      </div>
-    </div>
 
-    <div class="form-group" style="margin-top: 15px;">
-      <label for="projNameOfWork">Name of Work</label>
-      <textarea id="projNameOfWork" [(ngModel)]="projectData.nameOfWork" rows="3" placeholder="Full name of work / description"></textarea>
-    </div>
+    <!-- Interactive Stepped Progress Tabs -->
+    <div class="wizard-stepper">
+      <button type="button" class="step-pill" [class.active]="formStep === 1 || formViewMode === 'full'" (click)="setFormStep(1)">
+        <span class="step-num">1</span>
+        <div class="step-info">
+          <span class="step-title">Tender Header</span>
+          <span class="step-desc">Department & Info</span>
+        </div>
+      </button>
+      
+      <button type="button" class="step-pill" [class.active]="formStep === 2 || formViewMode === 'full'" (click)="setFormStep(2)">
+        <span class="step-num">2</span>
+        <div class="step-info">
+          <span class="step-title">TF & EMD & Cost</span>
+          <span class="step-desc">Fees & Costs</span>
+        </div>
+      </button>
 
-    <div class="form-group" style="margin-top: 10px;">
-      <label for="projRemarks">Remarks</label>
-      <textarea id="projRemarks" [(ngModel)]="projectData.remarks" rows="2" placeholder="Remarks"></textarea>
+      <button type="button" class="step-pill" [class.active]="formStep === 3 || formViewMode === 'full'" (click)="setFormStep(3)">
+        <span class="step-num">3</span>
+        <div class="step-info">
+          <span class="step-title">Work Order & SD</span>
+          <span class="step-desc">Order & Deposits</span>
+        </div>
+      </button>
+
+      <button type="button" class="step-pill" [class.active]="formStep === 4 || formViewMode === 'full'" (click)="setFormStep(4)">
+        <span class="step-num">4</span>
+        <div class="step-info">
+          <span class="step-title">Location Sub-Sites</span>
+          <span class="step-desc">Schools & Sites</span>
+        </div>
+      </button>
+
+      <button type="button" class="step-pill" [class.active]="formStep === 5 || formViewMode === 'full'" (click)="setFormStep(5)">
+        <span class="step-num">5</span>
+        <div class="step-info">
+          <span class="step-title">Status & Remarks</span>
+          <span class="step-desc">Status & Notes</span>
+        </div>
+      </button>
     </div>
     
+    <!-- STEP 1: Tender Details Header -->
+    <div class="form-section step-card" *ngIf="formStep === 1 || formViewMode === 'full'">
+      <div class="section-title"><i class="fas fa-file-contract"></i> Step 1: Tender Details Header</div>
+      <div class="grid grid-3">
+
+        <div class="form-group autocomplete-container" style="grid-column: span 2;">
+          <label for="projDepartmentName">Department Name <span class="req-star">*</span></label>
+          <input id="projDepartmentName" type="text" [(ngModel)]="projectData.departmentName"
+            (focus)="showDeptDropdown = true; showRelatedToDropdown = false; showRefPersonDropdown = false;"
+            (input)="showDeptDropdown = true"
+            placeholder="E.g. Gujarat Council of School Education Samagra Shiksha" autocomplete="off">
+
+          <div class="autocomplete-dropdown" *ngIf="showDeptDropdown" (click)="$event.stopPropagation()">
+            <div class="dropdown-item create-new-item" (click)="createDepartment(projectData.departmentName)">
+              <span>+ Create New "{{ projectData.departmentName || 'Department' }}"</span>
+            </div>
+            <div class="dropdown-item" *ngFor="let dept of filteredDepartments" (click)="selectDepartment(dept)">
+              <span>{{ dept.name }}</span>
+              <span class="badge-sub" *ngIf="dept.cityVillage">({{ dept.cityVillage }})</span>
+            </div>
+            <div class="dropdown-empty" *ngIf="filteredDepartments.length === 0 && !projectData.departmentName">
+              No matching departments
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="projDateOfSub">Date of Sub.</label>
+          <input id="projDateOfSub" type="date" [(ngModel)]="projectData.dateOfSub">
+        </div>
+
+        <div class="form-group">
+          <label for="projNoticeNo">Package No. / Notice No.</label>
+          <input id="projNoticeNo" type="text" [(ngModel)]="projectData.noticeNo" placeholder="E.g. SS/SOE/DEV/4338">
+        </div>
+
+        <div class="form-group">
+          <label for="projTenderId">Tender ID <span class="req-star">*</span></label>
+          <input id="projTenderId" type="text" [(ngModel)]="projectData.tenderId" placeholder="E.g. 125497">
+        </div>
+
+        <div class="form-group autocomplete-container">
+          <label for="projRelatedTo">Related To</label>
+          <input id="projRelatedTo" type="text" [(ngModel)]="projectData.relatedTo"
+            (focus)="showRelatedToDropdown = true; showDeptDropdown = false; showRefPersonDropdown = false;"
+            (input)="showRelatedToDropdown = true"
+            placeholder="E.g. Gokulbhai" autocomplete="off">
+
+          <div class="autocomplete-dropdown" *ngIf="showRelatedToDropdown" (click)="$event.stopPropagation()">
+            <div class="dropdown-item create-new-item" (click)="createRelatedTo(projectData.relatedTo)">
+              <span>+ Create New "{{ projectData.relatedTo || 'Related To' }}"</span>
+            </div>
+            <div class="dropdown-item" *ngFor="let rel of filteredRelatedTos" (click)="selectRelatedTo(rel)">
+              <span>{{ rel.name }}</span>
+            </div>
+            <div class="dropdown-empty" *ngIf="filteredRelatedTos.length === 0 && !projectData.relatedTo">
+              No matching records
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group autocomplete-container">
+          <label for="projRefPerson">Reference Person (Ref)</label>
+          <input id="projRefPerson" type="text" [(ngModel)]="projectData.refPerson"
+            (focus)="showRefPersonDropdown = true; showDeptDropdown = false; showRelatedToDropdown = false;"
+            (input)="showRefPersonDropdown = true"
+            placeholder="E.g. Narenra Nakum" autocomplete="off">
+
+          <div class="autocomplete-dropdown" *ngIf="showRefPersonDropdown" (click)="$event.stopPropagation()">
+            <div class="dropdown-item create-new-item" (click)="createRefPerson(projectData.refPerson)">
+              <span>+ Create New "{{ projectData.refPerson || 'Ref Person' }}"</span>
+            </div>
+            <div class="dropdown-item" *ngFor="let ref of filteredRefPersons" (click)="selectRefPerson(ref)">
+              <span>{{ ref.name }}</span>
+            </div>
+            <div class="dropdown-empty" *ngIf="filteredRefPersons.length === 0 && !projectData.refPerson">
+              No matching reference persons
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label for="projNameOfWork">Name of Work</label>
+        <textarea id="projNameOfWork" [(ngModel)]="projectData.nameOfWork" rows="3"
+          placeholder="Upgradation of 3 School for School of Excellence at various Location in DEVBHOOMI DWARKA district."></textarea>
+      </div>
+    </div>
+
+    <!-- STEP 2: Tender TF & EMD & Costs -->
+    <div class="form-section step-card" *ngIf="formStep === 2 || formViewMode === 'full'" style="margin-top: 20px;">
+      <div class="section-title"><i class="fas fa-receipt"></i> Step 2: Tender TF, EMD & Costs</div>
+      
+      <div class="grid grid-2">
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label for="projTenderFeeNo">DD NO. / Tender Fee Receipt</label>
+            <input id="projTenderFeeNo" type="text" [(ngModel)]="projectData.tenderFeeNo" placeholder="E.g. 033612">
+          </div>
+          <div class="form-group">
+            <label for="projTenderFee">Tender Fee Amt (in Rs.)</label>
+            <input id="projTenderFee" type="number" [(ngModel)]="projectData.tenderFee" placeholder="E.g. 3600.00">
+          </div>
+        </div>
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label for="projEmdNo">EMD FDR / Transaction No.</label>
+            <input id="projEmdNo" type="text" [(ngModel)]="projectData.emdNo" placeholder="E.g. NA / FDR No">
+          </div>
+          <div class="form-group">
+            <label for="projEmdAmt">EMD Amt (in Rs.)</label>
+            <input id="projEmdAmt" type="number" [(ngModel)]="projectData.emdAmt" placeholder="EMD Amount">
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
+        <div class="form-group">
+          <label for="projEstCost">Estimated Tender Cost (EST. COST)</label>
+          <input id="projEstCost" type="number" [(ngModel)]="projectData.estimatedTenderCost" placeholder="27980700.00">
+        </div>
+        <div class="form-group">
+          <label for="projTedCost">Tendered Cost (After Negotiation)</label>
+          <input id="projTedCost" type="number" [(ngModel)]="projectData.tenderedCost" placeholder="28960024.50">
+        </div>
+        <div class="form-group">
+          <label for="projAboveBelow">Rate / Above Below %</label>
+          <input id="projAboveBelow" type="number" [(ngModel)]="projectData.aboveBelowPercentage" placeholder="E.g. 3.50 or -5.2">
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Work Order & Time Limit & Security Deposit -->
+    <div class="form-section step-card" *ngIf="formStep === 3 || formViewMode === 'full'" style="margin-top: 20px;">
+      <div class="section-title"><i class="fas fa-briefcase"></i> Step 3: Work Order & Security Deposit (SD)</div>
+      <div class="grid grid-3">
+        <div class="form-group">
+          <label for="projWorkOrderNumber">Work Order No.</label>
+          <input id="projWorkOrderNumber" type="text" [(ngModel)]="projectData.workOrderNumber" placeholder="SS/CIVIL/2025/46865-867">
+        </div>
+        <div class="form-group">
+          <label for="projWorkOrderDate">Work Order Date</label>
+          <input id="projWorkOrderDate" type="date" [(ngModel)]="projectData.workOrderDate">
+        </div>
+        <div class="form-group">
+          <label for="projWorkAwardedStatus">Work Awarded Status</label>
+          <select id="projWorkAwardedStatus" [(ngModel)]="projectData.workAwardedStatus"
+            style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--white); color: var(--text);">
+            <option value="Running">Running / Work Awarded</option>
+            <option value="Work Completed">Work Completed</option>
+            <option value="Not">Not Awarded</option>
+            <option value="In Progress">In Progress</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-top: 15px;">
+        <div class="form-group">
+          <label for="projTimeLimit">Time Limit</label>
+          <input id="projTimeLimit" type="text" [(ngModel)]="projectData.timeLimit" placeholder="Site Up To 4 Classroom - 6 Months...">
+        </div>
+        <div class="form-group">
+          <label for="projDefectsLiabilityPeriod">Defects Liability Period</label>
+          <input id="projDefectsLiabilityPeriod" type="text" [(ngModel)]="projectData.defectsLiabilityPeriod" placeholder="4 years from certified date of completion">
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
+        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 12px;">🛡️ Security Deposit Details</h4>
+        <div class="grid grid-3">
+          <div class="form-group">
+            <label for="projSdFdrNo">FDR No.</label>
+            <input id="projSdFdrNo" type="text" [(ngModel)]="projectData.sdFdrNo" placeholder="45970300031803">
+          </div>
+          <div class="form-group">
+            <label for="projSecurityDepositAmount">SD Amt in Rs.</label>
+            <input id="projSecurityDepositAmount" type="number" [(ngModel)]="projectData.securityDepositAmount" placeholder="1449000.00">
+          </div>
+          <div class="form-group">
+            <label for="projSdRabDeduction">SD RAB Deduction</label>
+            <input id="projSdRabDeduction" type="number" [(ngModel)]="projectData.sdRabDeduction" placeholder="SD RAB Deduction">
+          </div>
+        </div>
+        <div class="grid grid-2" style="margin-top: 12px;">
+          <div class="form-group">
+            <label for="projSdRabReturnAmount">SD RAB Return Amount</label>
+            <input id="projSdRabReturnAmount" type="number" [(ngModel)]="projectData.sdRabReturnAmount" placeholder="SD RAB Return">
+          </div>
+          <div class="form-group">
+            <label for="projAdditionalDeduction">Additional Deduction</label>
+            <input id="projAdditionalDeduction" type="text" [(ngModel)]="projectData.additionalDeduction" placeholder="Additional Deduction">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Details of Location Sub-Sites Table -->
+    <div class="form-section step-card" *ngIf="formStep === 4 || formViewMode === 'full'" style="margin-top: 20px;">
+      <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+        <span><i class="fas fa-map-marker-alt"></i> Step 4: Details of Location (Sub-Sites)</span>
+        <button type="button" class="btn btn-primary text-xs" (click)="openAddLocationModal()">+ Add Location Sub-Site</button>
+      </div>
+
+      <div class="table-responsive" style="margin-top: 12px; overflow-x: auto;">
+        <table class="master-table">
+          <thead>
+            <tr>
+              <th>Block</th>
+              <th>School ID</th>
+              <th>School Name</th>
+              <th>HEAD</th>
+              <th>REPAIRING</th>
+              <th>NEW ACR</th>
+              <th>NEW MDM</th>
+              <th>NEW CW</th>
+              <th>GTB</th>
+              <th>BTB</th>
+              <th>CWSN TOILET</th>
+              <th>SHED</th>
+              <th>Start Date</th>
+              <th>Closed Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let loc of projectData.locations; let i = index">
+              <td>{{ loc.block || loc.villageName || '-' }}</td>
+              <td>{{ loc.schoolId || '-' }}</td>
+              <td><strong>{{ loc.schoolName || loc.villageName || '-' }}</strong></td>
+              <td>{{ loc.head || '-' }}</td>
+              <td>{{ loc.repairing || '-' }}</td>
+              <td>{{ loc.newAcr || '-' }}</td>
+              <td>{{ loc.newMdmSqm || '-' }}</td>
+              <td>{{ loc.newCwRmt || '-' }}</td>
+              <td>{{ loc.gtb || '-' }}</td>
+              <td>{{ loc.btb || '-' }}</td>
+              <td>{{ loc.cwsnToilet || '-' }}</td>
+              <td>{{ loc.shed || '-' }}</td>
+              <td>{{ loc.startDate || '-' }}</td>
+              <td>{{ loc.closedDate || '-' }}</td>
+              <td>
+                <div class="actions-cell">
+                  <button type="button" class="btn-icon edit" (click)="openEditLocationModal(loc, $event)" title="Edit Location"><i class="fas fa-edit"></i></button>
+                  <button type="button" class="btn-icon del" (click)="deleteLocationSite(loc.id, i, $event)" title="Delete Location"><i class="fas fa-trash"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!projectData.locations || projectData.locations.length === 0">
+              <td colspan="15" class="text-center text-muted" style="padding: 20px;">
+                No location sub-sites added yet. Click "+ Add Location Sub-Site" to add school/site locations.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- STEP 5: Status & Remarks -->
+    <div class="form-section step-card" *ngIf="formStep === 5 || formViewMode === 'full'" style="margin-top: 20px;">
+      <div class="section-title"><i class="fas fa-tasks"></i> Step 5: Status & Remarks</div>
+      
+      <div class="grid grid-3">
+        <div class="form-group">
+          <label for="projWorkCompletedAmount">Work Completed Amount</label>
+          <input id="projWorkCompletedAmount" type="number" [(ngModel)]="projectData.workCompletedAmount" placeholder="Completed Amount">
+        </div>
+        <div class="form-group">
+          <label for="projPendingWorkAmount">Pending Work Amount</label>
+          <input id="projPendingWorkAmount" type="number" [(ngModel)]="projectData.pendingWorkAmount" placeholder="Pending Amount">
+        </div>
+        <div class="form-group">
+          <label for="projCompletionDateActual">Date of Work Completion</label>
+          <input id="projCompletionDateActual" type="date" [(ngModel)]="projectData.completionDateActual">
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-top: 15px;">
+        <div class="form-group">
+          <label for="projEmdReturnStatus">EMD Return Status</label>
+          <input id="projEmdReturnStatus" type="text" [(ngModel)]="projectData.emdReturnStatus" placeholder="E.g. EMD Forfeited by Dept / Pending">
+        </div>
+        <div class="form-group">
+          <label for="projSdReturnStatus">SD Return Status</label>
+          <input id="projSdReturnStatus" type="text" [(ngModel)]="projectData.sdReturnStatus" placeholder="E.g. Return / Pending">
+        </div>
+        <div class="form-group">
+          <label for="projSdRmRabReturnStatus">SD RM/RAB Return Status</label>
+          <input id="projSdRmRabReturnStatus" type="text" [(ngModel)]="projectData.sdRmRabReturnStatus" placeholder="E.g. Pending">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label for="projRemarks">Remarks</label>
+        <textarea id="projRemarks" [(ngModel)]="projectData.remarks" rows="3" placeholder="Single Copy at + 3.51 | We Nego. At + 3.50 | Tender Finalised at + 3.50"></textarea>
+      </div>
+    </div>
+
     <div class="alert-box success" *ngIf="saveSuccess" style="margin-top: 20px;">
       Project details saved successfully!
     </div>
 
-    <div class="form-submit-wrapper" style="margin-top: 20px; display: flex; gap: 12px;">
-      <button class="btn btn-primary" (click)="saveProject()">Save Project Tender</button>
-      <button class="btn btn-secondary" (click)="mode = 'list'">Cancel</button>
+    <!-- Wizard Navigation & Submit Buttons -->
+    <div class="form-submit-wrapper wizard-footer">
+      <div class="nav-btn-group">
+        <button type="button" class="btn btn-secondary" *ngIf="formViewMode === 'wizard' && formStep > 1" (click)="prevFormStep()">
+          ← Previous Step
+        </button>
+        <button type="button" class="btn btn-primary" *ngIf="formViewMode === 'wizard' && formStep < 5" (click)="nextFormStep()">
+          Next Step →
+        </button>
+      </div>
+
+      <div class="action-btn-group">
+        <button type="button" class="btn btn-primary save-btn-main" (click)="saveProject()">
+          💾 Save Project Tender
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="mode = 'list'">
+          Cancel
+        </button>
+      </div>
     </div>
+
   </div>
 </div>
 
 <!-- LOCATION SUB-SITE MODAL DIALOG -->
-<div *ngIf="showLocationModal" (click)="closeLocationModal()" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-  <div (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" style="background: var(--white); border-radius: 12px; width: 620px; max-width: 90vw; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden;">
-    <div style="padding: 16px 20px; background: var(--grey-l); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+<div *ngIf="showLocationModal" (click)="closeLocationModal()"
+  style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+  <div (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()"
+    style="background: var(--white); border-radius: 12px; width: 780px; max-width: 95vw; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden;">
+    <div
+      style="padding: 16px 20px; background: var(--grey-l); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
       <h3 style="font-size: 16px; font-weight: 700; color: var(--text); margin: 0;">{{locationModalMode === 'add' ? 'Add Location Sub-Site' : 'Edit Location Sub-Site'}}</h3>
-      <button (click)="closeLocationModal()" style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted);">✕</button>
+      <button (click)="closeLocationModal()"
+        style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted);">✕</button>
     </div>
-    
-    <div style="padding: 20px; max-height: 70vh; overflow-y: auto;">
-      <div class="grid grid-2">
-        <div class="form-group">
-          <label for="locVillageName">Village Name</label>
-          <input id="locVillageName" type="text" [(ngModel)]="editingLocation.villageName" placeholder="Village Name">
-        </div>
+
+    <div style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+      <div class="grid grid-3">
         <div class="form-group">
           <label for="locBlock">Block / Taluka</label>
-          <input id="locBlock" type="text" [(ngModel)]="editingLocation.block" placeholder="Block / Taluka">
+          <input id="locBlock" type="text" [(ngModel)]="editingLocation.block" placeholder="E.g. DWARKA">
         </div>
         <div class="form-group">
           <label for="locSchoolId">School ID</label>
-          <input id="locSchoolId" type="text" [(ngModel)]="editingLocation.schoolId" placeholder="School ID">
+          <input id="locSchoolId" type="text" [(ngModel)]="editingLocation.schoolId" placeholder="E.g. 24290204001">
         </div>
         <div class="form-group">
           <label for="locSchoolName">School Name</label>
-          <input id="locSchoolName" type="text" [(ngModel)]="editingLocation.schoolName" placeholder="School Name">
+          <input id="locSchoolName" type="text" [(ngModel)]="editingLocation.schoolName" placeholder="E.g. SURAJ KARADI TALUKA SHALA">
         </div>
         <div class="form-group">
-          <label for="locStartDate">Site Start Date (Min Date)</label>
+          <label for="locHead">HEAD</label>
+          <input id="locHead" type="text" [(ngModel)]="editingLocation.head" placeholder="E.g. NON-SOE / SOE">
+        </div>
+        <div class="form-group">
+          <label for="locRepairing">REPAIRING</label>
+          <input id="locRepairing" type="text" [(ngModel)]="editingLocation.repairing" placeholder="E.g. YES / NO">
+        </div>
+        <div class="form-group">
+          <label for="locNewAcr">NEW ACR</label>
+          <input id="locNewAcr" type="text" [(ngModel)]="editingLocation.newAcr" placeholder="E.g. 5">
+        </div>
+        <div class="form-group">
+          <label for="locNewMdmSqm">NEW MDM (SQM)</label>
+          <input id="locNewMdmSqm" type="text" [(ngModel)]="editingLocation.newMdmSqm" placeholder="E.g. 0">
+        </div>
+        <div class="form-group">
+          <label for="locNewCwRmt">NEW CW (RMT)</label>
+          <input id="locNewCwRmt" type="text" [(ngModel)]="editingLocation.newCwRmt" placeholder="E.g. 0">
+        </div>
+        <div class="form-group">
+          <label for="locGtb">GTB</label>
+          <input id="locGtb" type="text" [(ngModel)]="editingLocation.gtb" placeholder="E.g. 0">
+        </div>
+        <div class="form-group">
+          <label for="locBtb">BTB</label>
+          <input id="locBtb" type="text" [(ngModel)]="editingLocation.btb" placeholder="E.g. 2+4">
+        </div>
+        <div class="form-group">
+          <label for="locCwsnToilet">CWSN TOILET</label>
+          <input id="locCwsnToilet" type="text" [(ngModel)]="editingLocation.cwsnToilet" placeholder="E.g. 0">
+        </div>
+        <div class="form-group">
+          <label for="locShed">SHED</label>
+          <input id="locShed" type="text" [(ngModel)]="editingLocation.shed" placeholder="E.g. 0">
+        </div>
+        <div class="form-group">
+          <label for="locStartDate">Site Start Date</label>
           <input id="locStartDate" type="date" [(ngModel)]="editingLocation.startDate">
         </div>
         <div class="form-group">
-          <label for="locClosedDate">Site Closed Date (Max Date)</label>
+          <label for="locClosedDate">Site Closed Date</label>
           <input id="locClosedDate" type="date" [(ngModel)]="editingLocation.closedDate">
         </div>
         <div class="form-group">
-          <label for="locPhysicalProgress">Physical Progress (%)</label>
-          <input id="locPhysicalProgress" type="number" [(ngModel)]="editingLocation.physicalProgress" placeholder="0 - 100">
-        </div>
-        <div class="form-group">
-          <label for="locFinancialProgress">Financial Progress (%)</label>
-          <input id="locFinancialProgress" type="number" [(ngModel)]="editingLocation.financialProgress" placeholder="0 - 100">
-        </div>
-        <div class="form-group">
           <label for="locStatus">Status</label>
-          <select id="locStatus" [(ngModel)]="editingLocation.status" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--white); color: var(--text);">
+          <select id="locStatus" [(ngModel)]="editingLocation.status"
+            style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--white); color: var(--text);">
             <option value="Running">Running</option>
             <option value="In Progress">In Progress</option>
             <option value="Completed">Completed</option>
             <option value="Hold">Hold</option>
           </select>
         </div>
-        <div class="form-group">
-          <label for="locHead">Head Person</label>
-          <input id="locHead" type="text" [(ngModel)]="editingLocation.head" placeholder="Head Person">
-        </div>
       </div>
-      
-      <p style="font-size: 11px; color: var(--muted); margin-top: 10px; background: var(--grey-l); padding: 8px 12px; border-radius: 6px;">
-        💡 <strong>Auto-Date Sync:</strong> Saving this location will automatically recalculate the overall Project Start Date (MIN location start date) and Project Closed Date (MAX location closed date).
+
+      <p
+        style="font-size: 11px; color: var(--muted); margin-top: 15px; background: var(--grey-l); padding: 8px 12px; border-radius: 6px;">
+        💡 <strong>Auto-Date Sync:</strong> Saving this location will automatically recalculate the overall Project
+        Start Date (MIN location start date) and Project Closed Date (MAX location closed date).
       </p>
     </div>
 
-    <div style="padding: 16px 20px; border-top: 1px solid var(--border); background: var(--grey-l); display: flex; justify-content: flex-end; gap: 10px;">
-      <button class="btn btn-secondary" (click)="closeLocationModal()">Cancel</button>
-      <button class="btn btn-primary" (click)="saveLocationModal()">Save Sub-site Location</button>
+    <div
+      style="padding: 16px 20px; border-top: 1px solid var(--border); background: var(--grey-l); display: flex; justify-content: flex-end; gap: 10px;">
+      <button type="button" class="btn btn-secondary" (click)="closeLocationModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="saveLocationModal()">Save Sub-site Location</button>
     </div>
   </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- FULL PAGE: BULK EXCEL UPLOAD & EXECUTION HISTORY -->
+<!-- ========================================================================= -->
+<div *ngIf="mode === 'upload'"
+  style="display: flex; flex-direction: column; gap: 24px; margin-top: 10px; padding-bottom: 40px;">
+
+  <!-- TOP CARD: UPLOAD FORM & TEMPLATE -->
+  <div class="card" style="padding: 24px; border-radius: 12px;">
+
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h2 style="margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+          <span>📊</span> Bulk Project Excel Import
+        </h2>
+        <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--muted);">
+          Upload project records using Excel format (matching <code>TENDER DETAILS.xlsx</code>). Duplicate Tender IDs or
+          Notice Nos will be skipped automatically and logged in execution history below.
+        </p>
+      </div>
+
+      <button class="btn btn-secondary" (click)="downloadTemplate()"
+        style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 8px 16px;">
+        <span>📋</span> Download Excel Template (.xlsx)
+      </button>
+    </div>
+
+    <!-- Drop Zone -->
+    <div
+      style="border: 2px dashed var(--border); border-radius: 12px; padding: 36px; text-align: center; background: var(--bg); transition: border-color 0.2s;">
+      <input type="file" id="excelFileInputFull" (change)="onExcelFileSelected($event)" accept=".xlsx, .xls"
+        style="display: none;">
+      <label for="excelFileInputFull"
+        style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+        <div
+          style="width: 60px; height: 60px; border-radius: 50%; background: rgba(37, 99, 235, 0.12); display: flex; align-items: center; justify-content: center; font-size: 28px;">
+          📁
+        </div>
+        <div>
+          <span style="font-weight: 700; font-size: 15px; color: var(--accent);">Click to select Excel file</span>
+          <span style="color: var(--muted); font-size: 14px;"> or drag and drop (.xlsx / .xls)</span>
+        </div>
+        <span style="font-size: 12px; color: var(--muted);">Supports files up to 50MB (Streaming batch mode)</span>
+      </label>
+
+      <!-- Selected File Card -->
+      <div *ngIf="excelFileToUpload"
+        style="margin-top: 20px; max-width: 540px; margin-left: auto; margin-right: auto; background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+        <div style="display: flex; align-items: center; gap: 12px; text-align: left;">
+          <span style="font-size: 24px;">📄</span>
+          <div>
+            <div style="font-weight: 700; font-size: 14px;">{{excelFileToUpload.name}}</div>
+            <div style="font-size: 12px; color: var(--muted);">{{(excelFileToUpload.size / 1024).toFixed(1)}} KB</div>
+          </div>
+        </div>
+        <button type="button" (click)="excelFileToUpload = null"
+          style="background: none; border: none; color: #ef4444; font-size: 14px; font-weight: 700; cursor: pointer;">Remove</button>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 12px;">
+      <button class="btn btn-secondary" (click)="mode = 'list'">Cancel</button>
+      <button class="btn btn-primary" (click)="uploadExcelFile()" [disabled]="!excelFileToUpload || isExcelUploading"
+        style="padding: 10px 24px; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
+        <span>🚀</span> Upload & Process Excel
+      </button>
+    </div>
+
+    <!-- In Progress Indicator -->
+    <div *ngIf="isExcelUploading" style="text-align: center; padding: 24px 0;">
+      <div class="spinner" style="width: 40px; height: 40px; border-width: 4px; margin: 0 auto 14px auto;"></div>
+      <div style="font-weight: 700; font-size: 15px; color: var(--text);">Processing Excel Data in Streaming Batches...
+      </div>
+      <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Validating records and inserting to
+        database...</div>
+    </div>
+
+    <!-- Latest Execution Summary Result -->
+    <div *ngIf="uploadResult"
+      style="margin-top: 20px; border: 1px solid var(--border); border-radius: 10px; padding: 20px; background: var(--white);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="font-weight: 700; font-size: 15px;">Latest Upload Execution Result</div>
+        <span class="badge"
+          [ngClass]="uploadResult.status === 'SUCCESS' ? 'badge-completed' : (uploadResult.status === 'PARTIAL_SUCCESS' ? 'badge-amber' : 'badge-grey')"
+          style="padding: 6px 14px; font-weight: 700; font-size: 12px;">
+          {{uploadResult.status}}
+        </span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;">
+        <div
+          style="background: var(--bg); padding: 14px; border-radius: 8px; text-align: center; border: 1px solid var(--border);">
+          <div style="font-size: 12px; color: var(--muted); font-weight: 600;">Total Processed</div>
+          <div style="font-size: 22px; font-weight: 800; color: var(--text); margin-top: 2px;">
+            {{uploadResult.totalRows}}
+          </div>
+        </div>
+        <div
+          style="background: rgba(34, 197, 94, 0.1); padding: 14px; border-radius: 8px; text-align: center; border: 1px solid rgba(34, 197, 94, 0.3);">
+          <div style="font-size: 12px; color: #16a34a; font-weight: 600;">Successfully Saved</div>
+          <div style="font-size: 22px; font-weight: 800; color: #15803d; margin-top: 2px;">
+            {{uploadResult.successCount}}
+          </div>
+        </div>
+        <div
+          style="background: rgba(239, 68, 68, 0.1); padding: 14px; border-radius: 8px; text-align: center; border: 1px solid rgba(239, 68, 68, 0.3);">
+          <div style="font-size: 12px; color: #dc2626; font-weight: 600;">Failed / Skipped</div>
+          <div style="font-size: 22px; font-weight: 800; color: #b91c1c; margin-top: 2px;">
+            {{uploadResult.failedCount}}
+          </div>
+        </div>
+      </div>
+
+      <!-- Errors Box -->
+      <div *ngIf="parsedUploadErrors && parsedUploadErrors.length > 0">
+        <div
+          style="font-size: 13px; font-weight: 700; color: #dc2626; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <span>⚠️</span> Skipped / Failed Rows Log ({{parsedUploadErrors.length}} items):
+        </div>
+        <div
+          style="max-height: 200px; overflow-y: auto; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; font-size: 12px; color: #991b1b; display: flex; flex-direction: column; gap: 6px;">
+          <div *ngFor="let err of parsedUploadErrors" style="border-bottom: 1px dashed #fca5a5; padding-bottom: 4px;">
+            {{err}}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM CARD: FULL EXECUTION HISTORY TABLE -->
+  <div class="card" style="padding: 24px; border-radius: 12px;">
+    <div
+      style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h2 style="margin: 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+          <span>📜</span> Excel Upload Execution History & Audit Logs
+        </h2>
+        <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--muted);">
+          Complete record of all bulk Excel uploads (newest first), success rates, duplicate skips, and downloadable
+          report files.
+        </p>
+      </div>
+
+      <button class="btn btn-secondary" (click)="loadUploadHistory()"
+        style="font-weight: 600; font-size: 13px; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;">
+        <span>🔄</span> Refresh History
+      </button>
+    </div>
+
+    <!-- History Table -->
+    <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 10px;">
+      <table class="master-table" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="padding: 14px 16px;">Upload Time ⬇️</th>
+            <th>File Name</th>
+            <th>User</th>
+            <th class="text-center">Total Rows</th>
+            <th class="text-center">Success</th>
+            <th class="text-center">Failed</th>
+            <th class="text-center">Status</th>
+            <th class="text-center" style="min-width: 240px;">Export & Audit Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="uploadHistoryList.length === 0">
+            <td colspan="8" style="text-align: center; padding: 40px; color: var(--muted); font-size: 14px;">
+              No upload history records found. Upload an Excel file above to log runs here.
+            </td>
+          </tr>
+          <tr *ngFor="let item of paginatedUploadHistory">
+            <td style="padding: 14px 16px; font-size: 13px; font-weight: 600;">
+              {{item.uploadTime ? (item.uploadTime | date:'dd MMM yyyy, hh:mm a') : 'N/A'}}
+            </td>
+            <td style="font-weight: 600; font-size: 13px;" [title]="item.filename">
+              📁 {{item.filename}}
+            </td>
+            <td style="font-size: 13px; color: var(--muted);">
+              👤 {{item.uploadedBy}}
+            </td>
+            <td class="text-center font-weight-700" style="font-size: 14px;">
+              <div style="display: inline-flex; align-items: center; gap: 6px; justify-content: center;">
+                <span>{{item.totalRows}}</span>
+                <button type="button" (click)="downloadHistoryExport(item, 'ALL')"
+                  title="Download All {{item.totalRows}} Rows Excel (.xlsx)"
+                  style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 4px 6px; cursor: pointer; color: #3b82f6; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;"
+                  onmouseover="this.style.background='rgba(59, 130, 246, 0.3)';"
+                  onmouseout="this.style.background='rgba(59, 130, 246, 0.15)';">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </button>
+              </div>
+            </td>
+            <td class="text-center font-weight-700" style="color: #22c55e; font-size: 14px;">
+              <div style="display: inline-flex; align-items: center; gap: 6px; justify-content: center;">
+                <span>{{item.successCount}}</span>
+                <button type="button" (click)="downloadHistoryExport(item, 'SUCCESS')"
+                  title="Download {{item.successCount}} Success Rows Excel (.xlsx)"
+                  style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 6px; padding: 4px 6px; cursor: pointer; color: #22c55e; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;"
+                  onmouseover="this.style.background='rgba(34, 197, 94, 0.3)';"
+                  onmouseout="this.style.background='rgba(34, 197, 94, 0.15)';">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </button>
+              </div>
+            </td>
+            <td class="text-center font-weight-700" style="color: #ef4444; font-size: 14px;">
+              <div style="display: inline-flex; align-items: center; gap: 6px; justify-content: center;">
+                <span>{{item.failedCount || 0}}</span>
+                <button *ngIf="item.failedCount && item.failedCount > 0" type="button"
+                  (click)="downloadHistoryExport(item, 'FAILED')"
+                  title="Download {{item.failedCount}} Failed Rows Excel (.xlsx)"
+                  style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; padding: 4px 6px; cursor: pointer; color: #ef4444; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;"
+                  onmouseover="this.style.background='rgba(239, 68, 68, 0.3)';"
+                  onmouseout="this.style.background='rgba(239, 68, 68, 0.15)';">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </button>
+              </div>
+            </td>
+            <td class="text-center">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <span class="badge"
+                  [ngClass]="item.status === 'SUCCESS' ? 'badge-completed' : (item.status === 'PARTIAL_SUCCESS' ? 'badge-amber' : 'badge-danger')"
+                  [title]="getHistoryErrorReasonTooltip(item)"
+                  style="padding: 4px 10px; font-size: 11px; font-weight: 700;">
+                  {{item.status}}
+                </span>
+
+                <span *ngIf="item.status !== 'SUCCESS' || (item.failedCount && item.failedCount > 0)"
+                  [title]="getHistoryErrorReasonTooltip(item)"
+                  style="cursor: help; font-size: 12px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800;">
+                  ❗
+                </span>
+              </div>
+            </td>
+            <td class="text-center">
+              <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+                <button type="button" class="history-action-btn" (click)="viewHistoryDetails(item)"
+                  title="View detailed row error logs">
+                  🔍 Logs
+                </button>
+                <button type="button" class="history-action-btn" (click)="downloadHistoryExport(item, 'ALL')"
+                  title="Download All Rows Excel (.xlsx)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  All Rows
+                </button>
+                <button type="button" class="history-action-btn success-btn"
+                  *ngIf="item.successCount && item.successCount > 0" (click)="downloadHistoryExport(item, 'SUCCESS')"
+                  title="Download Success Rows Excel (.xlsx)">
+                  🟢 Success
+                </button>
+                <button type="button" class="history-action-btn failed-btn"
+                  *ngIf="item.failedCount && item.failedCount > 0" (click)="downloadHistoryExport(item, 'FAILED')"
+                  title="Download Failed Rows Excel (.xlsx)">
+                  🔴 Failed
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- History Table Pagination Bar (Identical to Main Project List Table) -->
+    <div class="pagination-bar"
+      style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-top: 1px solid var(--border); background-color: var(--white);">
+      <div class="limit-selector" style="display: flex; align-items: center; gap: 10px;">
+        <label for="historyRowsPerPageSelect" style="font-size: 13px; color: var(--muted); font-weight: 500;">Rows per
+          page:</label>
+        <select id="historyRowsPerPageSelect" [(ngModel)]="historyLimit" (change)="onHistoryLimitChange()"
+          class="filter-select" style="padding: 6px 10px;">
+          <option *ngFor="let opt of Constants.PAGINATION.OPTIONS" [ngValue]="opt">{{opt}}</option>
+        </select>
+      </div>
+
+      <div class="page-controls" style="display: flex; align-items: center; gap: 20px;">
+        <span style="font-size: 13px; color: var(--muted); font-weight: 500;">{{historyShowingText}}</span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" [disabled]="isHistoryPrevDisabled" (click)="prevHistoryPage()"
+            style="padding: 6px 12px; font-weight: 600;"
+            [style.opacity]="isHistoryPrevDisabled ? '0.5' : '1'">Previous</button>
+          <button class="btn btn-secondary" [disabled]="isHistoryNextDisabled" (click)="nextHistoryPage()"
+            style="padding: 6px 12px; font-weight: 600;"
+            [style.opacity]="isHistoryNextDisabled ? '0.5' : '1'">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected History Row Logs Drawer -->
+    <div *ngIf="selectedHistoryRecord"
+      style="margin-top: 20px; border: 1px solid var(--border); border-radius: 10px; padding: 20px; background: var(--bg);">
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+        <div style="font-weight: 700; font-size: 14px;">
+          Execution Details for File: <code>{{selectedHistoryRecord.filename}}</code>
+          ({{selectedHistoryRecord.uploadTime | date:'dd MMM yyyy, hh:mm a'}})
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn btn-secondary" (click)="downloadHistoryExport(selectedHistoryRecord, 'ALL')"
+            style="padding: 6px 12px; font-size: 12px; font-weight: 600;">
+            📥 Export All Rows
+          </button>
+          <button class="btn btn-secondary" (click)="downloadHistoryExport(selectedHistoryRecord, 'SUCCESS')"
+            style="padding: 6px 12px; font-size: 12px; font-weight: 600; color: #16a34a;">
+            🟢 Export Success Rows
+          </button>
+          <button class="btn btn-secondary"
+            *ngIf="selectedHistoryRecord.failedCount && selectedHistoryRecord.failedCount > 0"
+            (click)="downloadHistoryExport(selectedHistoryRecord, 'FAILED')"
+            style="padding: 6px 12px; font-size: 12px; font-weight: 600; color: #dc2626;">
+            🔴 Export Failed Rows
+          </button>
+          <button type="button" (click)="selectedHistoryRecord = null"
+            style="background: none; border: none; font-weight: 700; cursor: pointer; color: var(--muted); margin-left: 10px; font-size: 16px;">✕</button>
+        </div>
+      </div>
+
+      <div *ngIf="selectedHistoryErrors.length === 0"
+        style="color: #16a34a; font-size: 14px; font-weight: 600; padding: 14px; background: rgba(34, 197, 94, 0.1); border-radius: 8px;">
+        🎉 All {{selectedHistoryRecord.totalRows}} rows imported cleanly with zero errors!
+      </div>
+
+      <div *ngIf="selectedHistoryErrors.length > 0">
+        <div style="font-size: 13px; font-weight: 700; color: #dc2626; margin-bottom: 8px;">
+          Skipped / Failed Rows Detailed Log ({{selectedHistoryErrors.length}} items):
+        </div>
+        <div
+          style="max-height: 250px; overflow-y: auto; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px; font-size: 13px; color: #991b1b; display: flex; flex-direction: column; gap: 8px;">
+          <div *ngFor="let err of selectedHistoryErrors"
+            style="border-bottom: 1px dashed #fca5a5; padding-bottom: 6px;">
+            {{err}}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
 </div>
