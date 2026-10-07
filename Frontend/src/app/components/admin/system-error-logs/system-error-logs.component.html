@@ -32,9 +32,10 @@
       <!-- Status Code Filter -->
       <div style="display: flex; align-items: center; gap: 6px;">
         <label for="statusCodeSelect" style="font-size: 13px; color: var(--muted); font-weight: 600;">Status:</label>
-        <select id="statusCodeSelect" [(ngModel)]="selectedStatusCode" (change)="onFilterChange()" class="filter-select" style="padding: 8px 12px; min-width: 140px;">
+        <select id="statusCodeSelect" [(ngModel)]="selectedStatusCode" (change)="onFilterChange()" class="filter-select" style="padding: 8px 12px; min-width: 160px;">
           <option [ngValue]="0">All Status Codes</option>
           <option [ngValue]="500">500 Server Error</option>
+          <option [ngValue]="401">401 Unauthorized</option>
           <option [ngValue]="400">400 Bad Request</option>
           <option [ngValue]="403">403 Forbidden</option>
           <option [ngValue]="404">404 Not Found</option>
@@ -48,12 +49,12 @@
     <table class="master-table" style="width: 100%; border-collapse: collapse;">
       <thead>
         <tr>
-          <th style="padding: 14px 16px;">Timestamp ⬇️</th>
-          <th class="text-center">HTTP Status</th>
+          <th style="padding: 14px 16px;">Endpoint Path</th>
           <th>Error Type</th>
-          <th>Endpoint Path</th>
+          <th class="text-center">HTTP Status</th>
           <th class="text-center">Method</th>
           <th>User</th>
+          <th style="padding: 14px 16px; white-space: nowrap;">Timestamp ⬇️</th>
           <th>Message</th>
           <th class="text-center" style="min-width: 140px;">Action</th>
         </tr>
@@ -74,19 +75,16 @@
             </td>
           </tr>
           <tr *ngFor="let item of errorLogs">
-            <td style="padding: 14px 16px; font-size: 12px; font-weight: 600; white-space: nowrap;">
-              {{item.timestamp ? (item.timestamp | date:'dd MMM yyyy, hh:mm:ss a') : 'N/A'}}
+            <td style="font-size: 12px; font-family: monospace; padding: 14px 16px;" [title]="item.endpoint || '-'">
+              {{item.endpoint || '-'}}
+            </td>
+            <td style="font-weight: 700; font-size: 13px; color: #ef4444;">
+              {{item.errorType || 'Exception'}}
             </td>
             <td class="text-center">
               <span class="badge" [ngClass]="getStatusBadgeClass(item.statusCode)" style="padding: 4px 10px; font-size: 12px; font-weight: 800;">
                 {{item.statusCode || 500}}
               </span>
-            </td>
-            <td style="font-weight: 700; font-size: 13px; color: #ef4444;">
-              {{item.errorType || 'Exception'}}
-            </td>
-            <td style="font-size: 12px; font-family: monospace;" [title]="item.endpoint || '-'">
-              {{item.endpoint || '-'}}
             </td>
             <td class="text-center" style="font-size: 11px; font-weight: 700;">
               <span style="background: var(--bg); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border);">
@@ -95,6 +93,9 @@
             </td>
             <td style="font-size: 12px; color: var(--muted);">
               👤 {{item.userName || 'system'}}
+            </td>
+            <td style="padding: 14px 16px; font-size: 12px; font-weight: 600; white-space: nowrap;">
+              {{item.timestamp ? (item.timestamp | date:'dd MMM yyyy, hh:mm:ss a') : 'N/A'}}
             </td>
             <td style="font-size: 12px; max-width: 280px;" class="truncate-text" [title]="item.message || '-'">
               {{item.message || '-'}}
@@ -131,8 +132,8 @@
 </div>
 
 <!-- DETAILED STACK TRACE MODAL / DRAWER -->
-<div class="modal-backdrop" *ngIf="selectedLog" (click)="closeLogDetails()" style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 1200; backdrop-filter: blur(4px);">
-  <div class="modal-card card" (click)="$event.stopPropagation()" style="width: 100%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);">
+<div class="modal-backdrop" *ngIf="selectedLog" (click)="closeLogDetails()" (keydown)="closeLogDetails()" style="position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 1200; backdrop-filter: blur(4px);">
+  <div class="modal-card card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" style="width: 100%; max-width: 900px; max-height: 90vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);">
     
     <!-- Modal Header -->
     <div style="padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #0f172a; color: #fff;">
@@ -158,14 +159,24 @@
 
       <!-- Stack Trace Code Box -->
       <div>
-        <div style="font-weight: 700; font-size: 13px; color: #94a3b8; margin-bottom: 8px;">Full Exception Stack Trace:</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div style="font-weight: 700; font-size: 13px; color: #94a3b8;">Full Exception Stack Trace:</div>
+          <button type="button" class="btn btn-secondary" (click)="copyStackTrace()" 
+                  style="padding: 4px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; background: #1e293b; color: #e2e8f0; border: 1px solid #334155; cursor: pointer; border-radius: 6px; transition: all 0.2s;"
+                  title="Copy stack trace to clipboard">
+            <span>{{ isCopied ? '✅' : '📋' }}</span> {{ isCopied ? 'Copied!' : 'Copy Stack Trace' }}
+          </button>
+        </div>
         <pre style="background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 16px; font-family: 'Consolas', 'Fira Code', monospace; font-size: 12px; line-height: 1.5; color: #38bdf8; overflow-x: auto; max-height: 400px; white-space: pre-wrap; margin: 0;">{{selectedLog.stackTrace || 'No stack trace recorded.'}}</pre>
       </div>
 
     </div>
 
     <!-- Modal Footer -->
-    <div style="padding: 14px 24px; border-top: 1px solid #1e293b; background: #0f172a; display: flex; justify-content: flex-end;">
+    <div style="padding: 14px 24px; border-top: 1px solid #1e293b; background: #0f172a; display: flex; justify-content: space-between; align-items: center;">
+      <button class="btn btn-secondary" (click)="copyFullLog()" style="background: #1e293b; color: #38bdf8; border: 1px solid #334155; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;">
+        <span>📋</span> Copy Full Error Log
+      </button>
       <button class="btn btn-secondary" (click)="closeLogDetails()" style="background: #334155; color: #fff; border: none;">Close</button>
     </div>
   </div>

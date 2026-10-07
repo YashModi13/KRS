@@ -156,6 +156,14 @@ export class ProjectService {
     return this.krsService.get<ProjectResponse>(RestUrl.PROJECTS, params);
   }
 
+  checkTenderIdExists(tenderId: string, excludeId?: number): Observable<{ exists: boolean }> {
+    let params = new HttpParams().set('tenderId', tenderId);
+    if (excludeId) {
+      params = params.set('excludeId', excludeId.toString());
+    }
+    return this.krsService.get<{ exists: boolean }>(`${RestUrl.PROJECTS}/check-tender-id`, params);
+  }
+
   getProjectById(id: number): Observable<Project> {
     return this.krsService.get<Project>(`${RestUrl.PROJECTS}/${id}`);
   }

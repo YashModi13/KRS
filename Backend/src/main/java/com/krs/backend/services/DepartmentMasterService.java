@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,34 +22,44 @@ public class DepartmentMasterService {
      */
     @Transactional
     public DepartmentMaster getOrCreateDepartment(String rawName) {
-        return getOrCreateDepartment(rawName, null, null);
+        return getOrCreateDepartmentInternal(rawName, null, null);
     }
 
     @Transactional
     public DepartmentMaster getOrCreateDepartment(String rawName, String rawCityVillage, String rawState) {
+        return getOrCreateDepartmentInternal(rawName, rawCityVillage, rawState);
+    }
+
+    private DepartmentMaster getOrCreateDepartmentInternal(String rawName, String rawCityVillage, String rawState) {
         if (rawName == null || rawName.trim().isEmpty()) {
             return null;
         }
         String titleCaseName = toTitleCase(rawName);
         Optional<DepartmentMaster> existing = departmentMasterRepository.findByNameIgnoreCase(titleCaseName);
         if (existing.isPresent()) {
-            DepartmentMaster record = existing.get();
-            boolean updated = false;
-            if ((record.getState() == null || record.getState().trim().isEmpty())) {
-                record.setState("Gujarat");
-                updated = true;
-            }
-            if (rawCityVillage != null && !rawCityVillage.trim().isEmpty() && (record.getCityVillage() == null || record.getCityVillage().trim().isEmpty())) {
-                record.setCityVillage(toTitleCase(rawCityVillage));
-                updated = true;
-            }
-            if (updated) {
-                return departmentMasterRepository.save(record);
-            }
-            return record;
+            return updateExistingDepartmentIfNeeded(existing.get(), rawCityVillage);
         }
 
-        // Extract city/village from name if comma present and rawCityVillage not provided
+        return createNewDepartment(titleCaseName, rawCityVillage, rawState);
+    }
+
+    private DepartmentMaster updateExistingDepartmentIfNeeded(DepartmentMaster deptRecord, String rawCityVillage) {
+        boolean updated = false;
+        if (deptRecord.getState() == null || deptRecord.getState().trim().isEmpty()) {
+            deptRecord.setState("Gujarat");
+            updated = true;
+        }
+        if (rawCityVillage != null && !rawCityVillage.trim().isEmpty() && (deptRecord.getCityVillage() == null || deptRecord.getCityVillage().trim().isEmpty())) {
+            deptRecord.setCityVillage(toTitleCase(rawCityVillage));
+            updated = true;
+        }
+        if (updated) {
+            return departmentMasterRepository.save(deptRecord);
+        }
+        return deptRecord;
+    }
+
+    private DepartmentMaster createNewDepartment(String titleCaseName, String rawCityVillage, String rawState) {
         String cityVillage = toTitleCase(rawCityVillage);
         if ((cityVillage == null || cityVillage.isEmpty()) && titleCaseName.contains(",")) {
             String[] parts = titleCaseName.split(",");
@@ -58,13 +69,14 @@ public class DepartmentMasterService {
         }
 
         String state = (rawState != null && !rawState.trim().isEmpty()) ? toTitleCase(rawState) : "Gujarat";
+        ZoneId zone = ZoneId.systemDefault();
 
         DepartmentMaster newRecord = DepartmentMaster.builder()
                 .name(titleCaseName)
                 .cityVillage(cityVillage)
                 .state(state)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(zone))
+                .updatedAt(LocalDateTime.now(zone))
                 .build();
         return departmentMasterRepository.save(newRecord);
     }
@@ -87,19 +99,19 @@ public class DepartmentMasterService {
 
     @Transactional
     public DepartmentMaster updateDepartment(Long id, String rawName, String rawCityVillage, String rawState) {
-        DepartmentMaster record = departmentMasterRepository.findById(id)
+        DepartmentMaster deptRecord = departmentMasterRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Department Master not found with id: " + id));
         if (rawName != null && !rawName.trim().isEmpty()) {
-            record.setName(toTitleCase(rawName));
+            deptRecord.setName(toTitleCase(rawName));
         }
         if (rawCityVillage != null) {
-            record.setCityVillage(toTitleCase(rawCityVillage));
+            deptRecord.setCityVillage(toTitleCase(rawCityVillage));
         }
         if (rawState != null && !rawState.trim().isEmpty()) {
-            record.setState(toTitleCase(rawState));
+            deptRecord.setState(toTitleCase(rawState));
         }
-        record.setUpdatedAt(LocalDateTime.now());
-        return departmentMasterRepository.save(record);
+        deptRecord.setUpdatedAt(LocalDateTime.now(ZoneId.systemDefault()));
+        return departmentMasterRepository.save(deptRecord);
     }
 
     public static String toTitleCase(String text) {

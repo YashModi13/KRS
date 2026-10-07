@@ -34,6 +34,7 @@ export class SystemErrorLogsComponent implements OnInit {
 
   // Selected Log Drawer / Modal
   selectedLog: SystemErrorLog | null = null;
+  isCopied = false;
 
   private searchSubject = new Subject<void>();
 
@@ -117,10 +118,49 @@ export class SystemErrorLogsComponent implements OnInit {
 
   viewLogDetails(log: SystemErrorLog): void {
     this.selectedLog = log;
+    this.isCopied = false;
   }
 
   closeLogDetails(): void {
     this.selectedLog = null;
+    this.isCopied = false;
+  }
+
+  copyStackTrace(): void {
+    if (!this.selectedLog?.stackTrace) {
+      this.toastService.error('No stack trace available to copy');
+      return;
+    }
+    navigator.clipboard.writeText(this.selectedLog.stackTrace).then(() => {
+      this.isCopied = true;
+      this.toastService.success('Stack trace copied to clipboard!');
+      setTimeout(() => {
+        this.isCopied = false;
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy stack trace: ', err);
+      this.toastService.error('Failed to copy to clipboard');
+    });
+  }
+
+  copyFullLog(): void {
+    if (!this.selectedLog) return;
+    const fullText = `[${this.selectedLog.errorType || 'Exception'}]
+Status: ${this.selectedLog.statusCode || 500}
+Endpoint: ${this.selectedLog.httpMethod || 'GET'} ${this.selectedLog.endpoint || '-'}
+User: ${this.selectedLog.userName || 'system'}
+Timestamp: ${this.selectedLog.timestamp || '-'}
+Message: ${this.selectedLog.message || 'No message'}
+
+--- Stack Trace ---
+${this.selectedLog.stackTrace || 'No stack trace recorded.'}`;
+
+    navigator.clipboard.writeText(fullText).then(() => {
+      this.toastService.success('Full error log details copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy error log: ', err);
+      this.toastService.error('Failed to copy to clipboard');
+    });
   }
 
   clearLogs(): void {
@@ -142,7 +182,7 @@ export class SystemErrorLogsComponent implements OnInit {
 
   getStatusBadgeClass(status?: number): string {
     if (!status) return 'badge-grey';
-    if (status >= 500) return 'badge-amber';
+    if (status >= 500) return 'badge-danger';
     if (status >= 400) return 'badge-amber';
     return 'badge-completed';
   }

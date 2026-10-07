@@ -3,6 +3,7 @@ package com.krs.backend.models;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Getter
 @Setter
@@ -50,18 +51,18 @@ public class ProjectUploadHistory {
     @PrePersist
     protected void onCreate() {
         if (uploadTime == null) {
-            uploadTime = LocalDateTime.now();
+            uploadTime = LocalDateTime.now(ZoneId.systemDefault());
         }
         if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+            createdAt = LocalDateTime.now(ZoneId.systemDefault());
         }
         if (updatedAt == null) {
-            updatedAt = LocalDateTime.now();
+            updatedAt = LocalDateTime.now(ZoneId.systemDefault());
         }
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now(ZoneId.systemDefault());
     }
 }

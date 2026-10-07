@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +47,9 @@ public class SystemErrorLogService {
             if (SecurityContextHolder.getContext().getAuthentication() != null) {
                 username = SecurityContextHolder.getContext().getAuthentication().getName();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // Ignore authentication lookup errors when logged in unauthenticated context
+        }
 
         String endpoint = null;
         String httpMethod = null;
@@ -64,17 +67,29 @@ public class SystemErrorLogService {
         log.error("SYSTEM_ERROR_LOGGED [Type: {}, Endpoint: {}, User: {}, Status: {}] - {}",
                 errorType, endpoint, username, statusCode, message, throwable);
 
+        String resolvedErrorType = errorType;
+        if (resolvedErrorType == null) {
+            resolvedErrorType = (throwable != null) ? throwable.getClass().getSimpleName() : "UnknownError";
+        }
+
+        String resolvedMessage = message;
+        if (resolvedMessage == null) {
+            resolvedMessage = (throwable != null) ? throwable.getMessage() : "No message provided";
+        }
+
+        ZoneId zone = ZoneId.systemDefault();
+
         SystemErrorLog errorLog = SystemErrorLog.builder()
-                .timestamp(LocalDateTime.now())
-                .errorType(errorType != null ? errorType : (throwable != null ? throwable.getClass().getSimpleName() : "UnknownError"))
-                .message(message != null ? message : (throwable != null ? throwable.getMessage() : "No message provided"))
+                .timestamp(LocalDateTime.now(zone))
+                .errorType(resolvedErrorType)
+                .message(resolvedMessage)
                 .stackTrace(stackTrace)
                 .endpoint(endpoint)
                 .httpMethod(httpMethod)
                 .userName(username)
                 .statusCode(statusCode != null ? statusCode : 500)
                 .clientIp(clientIp)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(zone))
                 .build();
 
         try {

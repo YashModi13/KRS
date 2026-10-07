@@ -67,7 +67,7 @@
             <button class="btn-icon" (click)="toggleDropdown(user.username, $event)" title="Options">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
             </button>
-            <div class="dropdown-menu" *ngIf="openDropdownUsername === user.username" (click)="$event.stopPropagation()">
+            <div class="dropdown-menu" *ngIf="openDropdownUsername === user.username" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
               <div class="dropdown-item" (click)="editUser(user); closeDropdown()">
                 <span class="icon">✏️</span> Change Profile
               </div>
@@ -114,7 +114,7 @@
 
 <!-- Edit User Roles Modal -->
 <div class="modal-overlay" *ngIf="editingUser" (click)="isRoleDropdownOpen = false">
-  <div class="krs-modal card" style="width: 600px; padding: 35px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: visible !important; position: relative;" (click)="$event.stopPropagation()">
+  <div class="krs-modal card" style="width: 600px; padding: 35px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: visible !important; position: relative;" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
     <div style="margin-bottom: 25px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
       <h3 style="margin: 0 0 5px 0; font-size: 24px; font-weight: 700; color: var(--text);">Change Profile</h3>
       <p style="margin: 0; color: var(--muted); font-size: 15px;">Update details for <strong style="color: var(--text);">{{editingUser.username}}</strong></p>
@@ -251,7 +251,7 @@
 
 <!-- Add User Modal -->
 <div class="modal-overlay" *ngIf="addingUser">
-  <div class="krs-modal card" style="width: 700px; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: visible !important; position: relative;" (click)="$event.stopPropagation()">
+  <div class="krs-modal card" style="width: 700px; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); overflow: visible !important; position: relative;" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
     <div style="margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
       <h3 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 700; color: var(--text);">Add New User</h3>
       <p style="margin: 0; color: var(--muted); font-size: 16px;">Create a new user account and set their credentials.</p>

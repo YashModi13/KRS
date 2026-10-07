@@ -3,6 +3,7 @@ package com.krs.backend.models;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Getter
 @Setter
@@ -28,8 +29,9 @@ public abstract class BaseAuditEntity {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        ZoneId zone = ZoneId.systemDefault();
+        this.createdAt = LocalDateTime.now(zone);
+        this.updatedAt = LocalDateTime.now(zone);
         if (this.isActive == null) {
             this.isActive = true;
         }
@@ -37,6 +39,6 @@ public abstract class BaseAuditEntity {
 
     @PreUpdate
     protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(ZoneId.systemDefault());
     }
 }

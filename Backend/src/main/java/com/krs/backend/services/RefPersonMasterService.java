@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,10 +30,11 @@ public class RefPersonMasterService {
         if (existing.isPresent()) {
             return existing.get();
         }
+        ZoneId zone = ZoneId.systemDefault();
         RefPersonMaster newRecord = RefPersonMaster.builder()
                 .name(titleCaseName)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(zone))
+                .updatedAt(LocalDateTime.now(zone))
                 .build();
         return refPersonMasterRepository.save(newRecord);
     }
@@ -55,13 +57,13 @@ public class RefPersonMasterService {
 
     @Transactional
     public RefPersonMaster updateRefPerson(Long id, String rawName) {
-        RefPersonMaster record = refPersonMasterRepository.findById(id)
+        RefPersonMaster refRecord = refPersonMasterRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ref Person Master not found with id: " + id));
         if (rawName != null && !rawName.trim().isEmpty()) {
-            record.setName(toTitleCase(rawName));
+            refRecord.setName(toTitleCase(rawName));
         }
-        record.setUpdatedAt(LocalDateTime.now());
-        return refPersonMasterRepository.save(record);
+        refRecord.setUpdatedAt(LocalDateTime.now(ZoneId.systemDefault()));
+        return refPersonMasterRepository.save(refRecord);
     }
 
     public static String toTitleCase(String text) {

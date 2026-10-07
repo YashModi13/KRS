@@ -29,6 +29,8 @@ import com.krs.backend.models.ProjectUploadHistory;
 import com.krs.backend.services.ProjectExcelService;
 import com.krs.backend.services.SystemErrorLogService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -42,6 +44,11 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @RequestMapping("/api/projects")
 public class ProjectController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ProjectController.class);
+
+    private static final String EXCEL_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    private static final String PARAM_ESTIMATED_TENDER_COST = "estimatedTenderCost";
+    private static final String PARAM_TENDERED_COST = "tenderedCost";
     private static final String PARAM_TENDER_ID = "tenderId";
     private static final String PARAM_PACKAGE_NO = "packageNo";
     private static final String PARAM_NOTICE_NO = "noticeNo";
@@ -95,16 +102,19 @@ public class ProjectController {
     public ResponseEntity<ProjectUploadHistory> uploadProjectsExcel(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
         String username = "system";
         try {
-            if (SecurityContextHolder.getContext().getAuthentication() != null) {
-                username = SecurityContextHolder.getContext().getAuthentication().getName();
+            org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                username = auth.getName();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // Default to "system" if security context is not present or unauthenticated
+        }
 
         try {
             ProjectUploadHistory history = projectExcelService.uploadProjectsExcel(file, username);
             return ResponseEntity.ok(history);
         } catch (IllegalArgumentException e) {
-            e.printStackTrace();
+            logger.error("Invalid arguments for Excel upload: {}", e.getMessage(), e);
             systemErrorLogService.logError(e.getClass().getSimpleName(), e.getMessage(), e, request, HttpStatus.BAD_REQUEST.value());
             return ResponseEntity.badRequest().body(ProjectUploadHistory.builder()
                     .filename(file.getOriginalFilename())
@@ -116,7 +126,7 @@ public class ProjectController {
                     .errorDetails("[\"" + e.getMessage() + "\"]")
                     .build());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Failed to process Excel upload: {}", e.getMessage(), e);
             systemErrorLogService.logError(e.getClass().getSimpleName(), e.getMessage(), e, request, HttpStatus.INTERNAL_SERVER_ERROR.value());
             String detailMsg = e.getMessage() != null ? e.getMessage() : e.toString();
             if (e.getCause() != null && e.getCause().getMessage() != null) {
@@ -163,7 +173,7 @@ public class ProjectController {
         String filename = String.format("Upload_History_%d_%s.xlsx", id, type.toUpperCase());
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .contentType(MediaType.parseMediaType(EXCEL_MEDIA_TYPE))
                 .body(responseBody);
     }
 
@@ -183,7 +193,7 @@ public class ProjectController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Tender_Details_Template.xlsx\"")
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .contentType(MediaType.parseMediaType(EXCEL_MEDIA_TYPE))
                 .body(responseBody);
     }
 
@@ -202,7 +212,7 @@ public class ProjectController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Projects_Master_Export.xlsx\"")
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .contentType(MediaType.parseMediaType(EXCEL_MEDIA_TYPE))
                 .body(responseBody);
     }
 
@@ -266,16 +276,16 @@ public class ProjectController {
         if (projects == null || projects.isEmpty()) return;
 
         Map<String, String> deptMap = departmentMasterService.getAllDepartmentMasters().stream()
-                .filter(d -> d.getId() != null && d.getName() != null)
-                .collect(Collectors.toMap(d -> d.getId().toString(), com.krs.backend.models.DepartmentMaster::getName, (a, b) -> a));
+                .filter(d -> d != null && d.getId() != null && d.getName() != null)
+                .collect(Collectors.toMap(d -> d.getId().toString(), d -> d.getName(), (a, b) -> a));
 
         Map<String, String> relatedToMap = relatedToMasterService.getAllRelatedToMasters().stream()
-                .filter(r -> r.getId() != null && r.getName() != null)
-                .collect(Collectors.toMap(r -> r.getId().toString(), com.krs.backend.models.RelatedToMaster::getName, (a, b) -> a));
+                .filter(r -> r != null && r.getId() != null && r.getName() != null)
+                .collect(Collectors.toMap(r -> r.getId().toString(), r -> r.getName(), (a, b) -> a));
 
         Map<String, String> refPersonMap = refPersonMasterService.getAllRefPersonMasters().stream()
-                .filter(r -> r.getId() != null && r.getName() != null)
-                .collect(Collectors.toMap(r -> r.getId().toString(), com.krs.backend.models.RefPersonMaster::getName, (a, b) -> a));
+                .filter(r -> r != null && r.getId() != null && r.getName() != null)
+                .collect(Collectors.toMap(r -> r.getId().toString(), r -> r.getName(), (a, b) -> a));
 
         for (Project p : projects) {
             if (p.getDepartmentName() != null && !p.getDepartmentName().trim().isEmpty()) {
@@ -294,11 +304,11 @@ public class ProjectController {
     }
 
     private static final Set<String> TEXT_SORT_FIELDS = Set.of(
-        PARAM_TENDER_ID, PARAM_DEPARTMENT_NAME, "relatedTo", PARAM_WORK_AWARDED_STATUS, "emdReturnStatus", PARAM_STATUS
+        PARAM_TENDER_ID, PARAM_DEPARTMENT_NAME, PARAM_RELATED_TO, PARAM_WORK_AWARDED_STATUS, PARAM_EMD_RETURN_STATUS, PARAM_STATUS
     );
     private static final Set<String> SORTABLE_FIELDS = Set.of(
-        PARAM_NOTICE_NO, PARAM_TENDER_ID, PARAM_DEPARTMENT_NAME, "relatedTo", "estimatedTenderCost", "tenderedCost",
-        "aboveBelowPercentage", PARAM_WORK_AWARDED_STATUS, PARAM_WORK_ORDER_DATE, "emdReturnStatus", PARAM_STATUS
+        PARAM_NOTICE_NO, PARAM_TENDER_ID, PARAM_DEPARTMENT_NAME, PARAM_RELATED_TO, PARAM_ESTIMATED_TENDER_COST, PARAM_TENDERED_COST,
+        "aboveBelowPercentage", PARAM_WORK_AWARDED_STATUS, PARAM_WORK_ORDER_DATE, PARAM_EMD_RETURN_STATUS, PARAM_STATUS
     );
 
     private void applyColumnSort(String field, boolean ascending, Root<Project> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
@@ -411,16 +421,16 @@ public class ProjectController {
 
     private void addNumericAndDatePredicates(Map<String, String> allParams, Root<Project> root, CriteriaBuilder cb, List<Predicate> predicates) {
         if (allParams.containsKey(PARAM_TENDER_AMT_MIN) && !allParams.get(PARAM_TENDER_AMT_MIN).trim().isEmpty()) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("estimatedTenderCost"), Double.parseDouble(allParams.get(PARAM_TENDER_AMT_MIN))));
+            predicates.add(cb.greaterThanOrEqualTo(root.get(PARAM_ESTIMATED_TENDER_COST), Double.parseDouble(allParams.get(PARAM_TENDER_AMT_MIN))));
         }
         if (allParams.containsKey(PARAM_TENDER_AMT_MAX) && !allParams.get(PARAM_TENDER_AMT_MAX).trim().isEmpty()) {
-            predicates.add(cb.lessThanOrEqualTo(root.get("estimatedTenderCost"), Double.parseDouble(allParams.get(PARAM_TENDER_AMT_MAX))));
+            predicates.add(cb.lessThanOrEqualTo(root.get(PARAM_ESTIMATED_TENDER_COST), Double.parseDouble(allParams.get(PARAM_TENDER_AMT_MAX))));
         }
         if (allParams.containsKey(PARAM_AGREEMENT_AMT_MIN) && !allParams.get(PARAM_AGREEMENT_AMT_MIN).trim().isEmpty()) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("tenderedCost"), Double.parseDouble(allParams.get(PARAM_AGREEMENT_AMT_MIN))));
+            predicates.add(cb.greaterThanOrEqualTo(root.get(PARAM_TENDERED_COST), Double.parseDouble(allParams.get(PARAM_AGREEMENT_AMT_MIN))));
         }
         if (allParams.containsKey(PARAM_AGREEMENT_AMT_MAX) && !allParams.get(PARAM_AGREEMENT_AMT_MAX).trim().isEmpty()) {
-            predicates.add(cb.lessThanOrEqualTo(root.get("tenderedCost"), Double.parseDouble(allParams.get(PARAM_AGREEMENT_AMT_MAX))));
+            predicates.add(cb.lessThanOrEqualTo(root.get(PARAM_TENDERED_COST), Double.parseDouble(allParams.get(PARAM_AGREEMENT_AMT_MAX))));
         }
         if (allParams.containsKey(PARAM_START_DATE_MIN) && !allParams.get(PARAM_START_DATE_MIN).trim().isEmpty()) {
             predicates.add(cb.greaterThanOrEqualTo(root.get(PARAM_WORK_ORDER_DATE), java.time.LocalDate.parse(allParams.get(PARAM_START_DATE_MIN))));
@@ -456,8 +466,30 @@ public class ProjectController {
         }
     }
 
+    @GetMapping("/check-tender-id")
+    public ResponseEntity<Map<String, Boolean>> checkTenderIdExists(
+            @RequestParam String tenderId,
+            @RequestParam(required = false) Long excludeId) {
+        boolean exists;
+        if (tenderId == null || tenderId.trim().isEmpty()) {
+            exists = false;
+        } else if (excludeId != null && excludeId > 0) {
+            exists = projectRepository.existsByTenderIdAndIdNot(tenderId.trim(), excludeId);
+        } else {
+            exists = projectRepository.existsByTenderId(tenderId.trim());
+        }
+        return ResponseEntity.ok(Collections.singletonMap("exists", exists));
+    }
+
     @PostMapping
-    public ResponseEntity<Project> createProject(@RequestBody Project project) {
+    public ResponseEntity<Object> createProject(@RequestBody Project project) {
+        if (project.getTenderId() != null && !project.getTenderId().trim().isEmpty() &&
+                projectRepository.existsByTenderId(project.getTenderId().trim())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "DuplicateTenderId",
+                "message", "Tender ID '" + project.getTenderId() + "' already exists. Tender ID must be unique."
+            ));
+        }
         syncProjectDatesFromLocations(project);
         Project savedProject = projectRepository.save(project);
         return ResponseEntity.ok(savedProject);
@@ -468,16 +500,23 @@ public class ProjectController {
     public ResponseEntity<Project> getProjectById(@PathVariable Long id) {
         return projectRepository.findById(id).map(project -> {
             // Touch lazy-loaded collections to initialize them within the transaction
-            if (project.getLocations() != null) { project.getLocations().size(); }
-            if (project.getRaBills() != null) { project.getRaBills().size(); }
-            if (project.getApprovals() != null) { project.getApprovals().size(); }
+            if (project.getLocations() != null) { org.hibernate.Hibernate.initialize(project.getLocations()); }
+            if (project.getRaBills() != null) { org.hibernate.Hibernate.initialize(project.getRaBills()); }
+            if (project.getApprovals() != null) { org.hibernate.Hibernate.initialize(project.getApprovals()); }
             resolveMasterDisplayNames(Collections.singletonList(project));
             return ResponseEntity.ok(project);
         }).orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Project> updateProject(@PathVariable Long id, @RequestBody Project projectDetails) {
+    public ResponseEntity<Object> updateProject(@PathVariable Long id, @RequestBody Project projectDetails) {
+        if (projectDetails.getTenderId() != null && !projectDetails.getTenderId().trim().isEmpty() &&
+                projectRepository.existsByTenderIdAndIdNot(projectDetails.getTenderId().trim(), id)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "DuplicateTenderId",
+                "message", "Tender ID '" + projectDetails.getTenderId() + "' already exists. Tender ID must be unique."
+            ));
+        }
         return projectRepository.findById(id).map(project -> {
             project.setWorkOrderNumber(projectDetails.getWorkOrderNumber());
             project.setDepartmentName(projectDetails.getDepartmentName());
@@ -528,15 +567,15 @@ public class ProjectController {
 
             syncProjectDatesFromLocations(project);
             Project updated = projectRepository.save(project);
-            return ResponseEntity.ok(updated);
+            return ResponseEntity.ok((Object) updated);
         }).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteProject(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
         return projectRepository.findById(id).map(project -> {
             projectRepository.delete(project);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().<Void>build();
         }).orElse(ResponseEntity.notFound().build());
     }
 
@@ -606,14 +645,14 @@ public class ProjectController {
 
     @Transactional
     @DeleteMapping("/{id}/locations/{locationId}")
-    public ResponseEntity<?> deleteLocation(@PathVariable Long id, @PathVariable Long locationId) {
+    public ResponseEntity<Void> deleteLocation(@PathVariable Long id, @PathVariable Long locationId) {
         return projectRepository.findById(id).map(project -> {
             if (project.getLocations() != null) {
                 project.getLocations().removeIf(loc -> loc.getId() != null && loc.getId().equals(locationId));
             }
             syncProjectDatesFromLocations(project);
             projectRepository.save(project);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().<Void>build();
         }).orElse(ResponseEntity.notFound().build());
     }
 }

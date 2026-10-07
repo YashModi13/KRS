@@ -1,5 +1,6 @@
 package com.krs.backend.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.krs.backend.enums.ProjectExcelColumn;
 import com.krs.backend.models.BulkUploadProjectsData;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -28,7 +30,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,9 +40,14 @@ public class ProjectExcelService {
     private static final int BATCH_SIZE = 100;
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    private static final String STATUS_SUCCESS = "SUCCESS";
+    private static final String STATUS_FAILED = "FAILED";
+    private static final String STATUS_PROCESSING = "PROCESSING";
+    private static final String STATUS_PARTIAL_SUCCESS = "PARTIAL_SUCCESS";
+
     private static final List<String> HEADERS = Arrays.stream(ProjectExcelColumn.values())
-            .map(ProjectExcelColumn::getHeaderName)
-            .collect(Collectors.toList());
+            .map(col -> col.getHeaderName())
+            .toList();
 
     private static final List<DateTimeFormatter> DATE_FORMATTERS = Arrays.asList(
             DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH),
@@ -79,24 +85,10 @@ public class ProjectExcelService {
     /**
      * Generate standard Excel Template for Projects
      */
-    public void generateTemplate(OutputStream outputStream) throws Exception {
+    public void generateTemplate(OutputStream outputStream) throws IOException {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Tender Details Template");
-
-            CellStyle headerStyle = workbook.createCellStyle();
-            Font font = workbook.createFont();
-            font.setBold(true);
-            font.setColor(IndexedColors.WHITE.getIndex());
-            headerStyle.setFont(font);
-            headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-            Row headerRow = sheet.createRow(0);
-            for (int i = 0; i < HEADERS.size(); i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(HEADERS.get(i));
-                cell.setCellStyle(headerStyle);
-            }
+            writeHeaderRow(sheet, workbook, HEADERS);
 
             for (int i = 0; i < HEADERS.size(); i++) {
                 sheet.setColumnWidth(i, 20 * 256);
@@ -110,65 +102,18 @@ public class ProjectExcelService {
      * Download Excel Report for All Projects in Database
      */
     @Transactional(readOnly = true)
-    public void exportProjectsToExcel(OutputStream outputStream) throws Exception {
+    public void exportProjectsToExcel(OutputStream outputStream) throws IOException {
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
             workbook.setCompressTempFiles(true);
             Sheet sheet = workbook.createSheet("Projects Export");
-
-            CellStyle headerStyle = workbook.createCellStyle();
-            Font font = workbook.createFont();
-            font.setBold(true);
-            font.setColor(IndexedColors.WHITE.getIndex());
-            headerStyle.setFont(font);
-            headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-            Row headerRow = sheet.createRow(0);
-            for (int i = 0; i < HEADERS.size(); i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(HEADERS.get(i));
-                cell.setCellStyle(headerStyle);
-            }
+            writeHeaderRow(sheet, workbook, HEADERS);
 
             List<Project> projects = projectRepository.findAll();
             int rowIndex = 1;
 
             for (Project p : projects) {
                 Row row = sheet.createRow(rowIndex++);
-                row.createCell(0).setCellValue(formatDate(p.getDateOfSub()));
-                row.createCell(1).setCellValue(resolveDepartmentDisplay(p.getDepartmentName()));
-                row.createCell(2).setCellValue(p.getTenderId() != null ? p.getTenderId() : "");
-                row.createCell(3).setCellValue(p.getNoticeNo() != null ? p.getNoticeNo() : (p.getPackageNo() != null ? p.getPackageNo() : ""));
-                row.createCell(4).setCellValue(p.getNameOfWork() != null ? p.getNameOfWork() : "");
-                row.createCell(5).setCellValue(resolveRelatedToDisplay(p.getRelatedTo()));
-                row.createCell(6).setCellValue(p.getTenderFee() != null ? p.getTenderFee().doubleValue() : 0);
-                row.createCell(7).setCellValue(p.getTenderFeeNo() != null ? p.getTenderFeeNo() : "");
-                row.createCell(8).setCellValue(p.getEmdAmt() != null ? p.getEmdAmt().doubleValue() : 0);
-                row.createCell(9).setCellValue(p.getEmdNo() != null ? p.getEmdNo() : "");
-                row.createCell(10).setCellValue(p.getEstimatedTenderCost() != null ? p.getEstimatedTenderCost().doubleValue() : 0);
-                row.createCell(11).setCellValue(p.getTenderedCost() != null ? p.getTenderedCost().doubleValue() : 0);
-                row.createCell(12).setCellValue(p.getAboveBelowPercentage() != null ? p.getAboveBelowPercentage().toString() : "");
-                row.createCell(13).setCellValue(resolveRefPersonDisplay(p.getRefPerson()));
-                row.createCell(14).setCellValue(p.getWorkAwardedStatus() != null ? p.getWorkAwardedStatus() : "");
-                row.createCell(15).setCellValue(p.getWorkOrderNumber() != null ? p.getWorkOrderNumber() : "");
-                row.createCell(16).setCellValue(formatDate(p.getWorkOrderDate()));
-                row.createCell(17).setCellValue(p.getTimeLimit() != null ? p.getTimeLimit() : "");
-                row.createCell(18).setCellValue(p.getSecurityDepositAmount() != null ? p.getSecurityDepositAmount().doubleValue() : 0);
-                row.createCell(19).setCellValue(p.getSdFdrNo() != null ? p.getSdFdrNo() : "");
-                row.createCell(20).setCellValue(p.getRemarks() != null ? p.getRemarks() : "");
-                row.createCell(21).setCellValue(p.getSdRabDeduction() != null ? p.getSdRabDeduction().doubleValue() : 0);
-                row.createCell(22).setCellValue(p.getSdRabReturnAmount() != null ? p.getSdRabReturnAmount().doubleValue() : 0);
-                row.createCell(23).setCellValue(p.getAdditionalDeduction() != null ? p.getAdditionalDeduction() : "");
-                row.createCell(24).setCellValue(p.getWorkCompletedAmount() != null ? p.getWorkCompletedAmount().doubleValue() : 0);
-                row.createCell(25).setCellValue(p.getPendingWorkAmount() != null ? p.getPendingWorkAmount().doubleValue() : 0);
-                row.createCell(26).setCellValue(formatDate(p.getCompletionDateActual()));
-                row.createCell(27).setCellValue(p.getDefectsLiabilityPeriod() != null ? p.getDefectsLiabilityPeriod() : "");
-                row.createCell(28).setCellValue(formatDate(p.getDlpEndedOn()));
-                row.createCell(29).setCellValue(p.getEmdReturnStatus() != null ? p.getEmdReturnStatus() : "");
-                row.createCell(30).setCellValue(p.getSdReturnStatus() != null ? p.getSdReturnStatus() : "");
-                row.createCell(31).setCellValue(p.getSdRmRabReturnStatus() != null ? p.getSdRmRabReturnStatus() : "");
-                row.createCell(32).setCellValue(p.getStatus() != null ? p.getStatus() : "");
-
+                populateProjectRow(row, p);
                 entityManager.detach(p);
             }
 
@@ -180,25 +125,12 @@ public class ProjectExcelService {
     /**
      * Batch & Stream Bulk Excel Upload storing row records in bulk_upload_projects_data and projects tables.
      */
-    @Transactional
-    public ProjectUploadHistory uploadProjectsExcel(MultipartFile file, String uploadedBy) throws Exception {
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null || (!originalFilename.toLowerCase().endsWith(".xlsx") && !originalFilename.toLowerCase().endsWith(".xls"))) {
-            throw new IllegalArgumentException("Invalid file format. Please upload a valid Excel file (.xlsx or .xls).");
-        }
+    @Transactional(rollbackFor = Exception.class)
+    public ProjectUploadHistory uploadProjectsExcel(MultipartFile file, String uploadedBy) throws IOException {
+        validateFileFormat(file);
 
-        ProjectUploadHistory history = ProjectUploadHistory.builder()
-                .filename(originalFilename)
-                .uploadedBy(uploadedBy != null ? uploadedBy : "system")
-                .uploadTime(LocalDateTime.now())
-                .totalRows(0)
-                .successCount(0)
-                .failedCount(0)
-                .status("PROCESSING")
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-        history = uploadHistoryRepository.saveAndFlush(history);
+        ZoneId zone = ZoneId.systemDefault();
+        ProjectUploadHistory history = createInitialHistoryRecord(file.getOriginalFilename(), uploadedBy, zone);
         Long masterId = history.getId();
 
         Set<String> existingTenderIds = projectRepository.findAllExistingTenderIds();
@@ -215,11 +147,7 @@ public class ProjectExcelService {
         try (InputStream inputStream = file.getInputStream();
              Workbook workbook = WorkbookFactory.create(inputStream)) {
 
-            Sheet sheet = workbook.getSheetAt(0);
-            if (sheet == null || sheet.getLastRowNum() < 1) {
-                throw new IllegalArgumentException("Excel file is empty or missing data rows.");
-            }
-
+            Sheet sheet = getValidSheet(workbook);
             Row headerRow = sheet.getRow(0);
             Map<ProjectExcelColumn, Integer> colMap = buildColumnMap(headerRow);
             int lastRowNum = sheet.getLastRowNum();
@@ -232,281 +160,354 @@ public class ProjectExcelService {
 
                 totalRows++;
                 int displayRow = r + 1;
+                BulkUploadProjectsData detailRow = parseRowToDetail(row, colMap, masterId, zone);
 
-                LocalDate dateOfSub = getCellDate(row, colMap, ProjectExcelColumn.TENDER_SUB_DATE);
-                String rawDepartment = getCellString(row, colMap, ProjectExcelColumn.DEPARTMENT_NAME);
-                DepartmentMaster masterDept = departmentMasterService.getOrCreateDepartment(rawDepartment);
-                String departmentName = masterDept != null ? masterDept.getId().toString() : (rawDepartment != null ? DepartmentMasterService.toTitleCase(rawDepartment) : null);
-
-                String tenderId = getCellString(row, colMap, ProjectExcelColumn.TENDER_ID);
-                String noticeNo = getCellString(row, colMap, ProjectExcelColumn.NOTICE_NO);
-                String packageNo = noticeNo;
-                String nameOfWork = getCellString(row, colMap, ProjectExcelColumn.NAME_OF_WORK);
-                String rawRelatedTo = getCellString(row, colMap, ProjectExcelColumn.RELATED_TO);
-                RelatedToMaster masterRelatedTo = relatedToMasterService.getOrCreateRelatedTo(rawRelatedTo);
-                String relatedTo = masterRelatedTo != null ? masterRelatedTo.getId().toString() : (rawRelatedTo != null ? RelatedToMasterService.toTitleCase(rawRelatedTo) : null);
-
-                BigDecimal tenderFee = getCellBigDecimal(row, colMap, ProjectExcelColumn.TENDER_FEE);
-                String tenderFeeNo = getCellString(row, colMap, ProjectExcelColumn.TENDER_FEE_NO);
-                BigDecimal emdAmt = getCellBigDecimal(row, colMap, ProjectExcelColumn.EMD);
-                String emdNo = getCellString(row, colMap, ProjectExcelColumn.EMD_NO);
-                BigDecimal estimatedTenderCost = getCellBigDecimal(row, colMap, ProjectExcelColumn.ESTIMATED_COST);
-                BigDecimal tenderedCost = getCellBigDecimal(row, colMap, ProjectExcelColumn.TENDERED_COST);
-                BigDecimal aboveBelowPercentage = getCellBigDecimal(row, colMap, ProjectExcelColumn.ABOVE_BELOW);
-
-                String rawRefPerson = getCellString(row, colMap, ProjectExcelColumn.REF);
-                RefPersonMaster masterRef = refPersonMasterService.getOrCreateRefPerson(rawRefPerson);
-                String refPerson = masterRef != null ? masterRef.getId().toString() : (rawRefPerson != null ? RefPersonMasterService.toTitleCase(rawRefPerson) : null);
-
-                String workAwardedStatus = getCellString(row, colMap, ProjectExcelColumn.WORK_AWARDED_STATUS);
-                String workOrderNumber = getCellString(row, colMap, ProjectExcelColumn.WORK_ORDER_NO);
-                LocalDate workOrderDate = getCellDate(row, colMap, ProjectExcelColumn.WORK_ORDER_DATE);
-                String timeLimit = getCellString(row, colMap, ProjectExcelColumn.TIME_LIMIT);
-                BigDecimal securityDepositAmount = getCellBigDecimal(row, colMap, ProjectExcelColumn.SECURITY_DEPOSIT);
-                String sdFdrNo = getCellString(row, colMap, ProjectExcelColumn.SD_FDR_NO);
-                String remarks = getCellString(row, colMap, ProjectExcelColumn.REMARKS);
-                BigDecimal sdRabDeduction = getCellBigDecimal(row, colMap, ProjectExcelColumn.SD_RAB_DEDUCTION);
-                BigDecimal sdRabReturnAmount = getCellBigDecimal(row, colMap, ProjectExcelColumn.SD_RAB_RETURN_AMOUNT);
-                String additionalDeduction = getCellString(row, colMap, ProjectExcelColumn.ANY_ADDITIONAL_DEDUCTION);
-                BigDecimal workCompletedAmount = getCellBigDecimal(row, colMap, ProjectExcelColumn.WORK_COMPLETED_AMOUNT);
-                BigDecimal pendingWorkAmount = getCellBigDecimal(row, colMap, ProjectExcelColumn.PENDING_WORK_AMOUNT);
-                LocalDate completionDateActual = getCellDate(row, colMap, ProjectExcelColumn.COMPLETION_DATE_ACTUAL);
-                String defectsLiabilityPeriod = getCellString(row, colMap, ProjectExcelColumn.DEFECTS_LIABILITY_PERIOD);
-                LocalDate dlpEndedOn = getCellDate(row, colMap, ProjectExcelColumn.DLP_ENDED_ON);
-                String emdReturnStatus = getCellString(row, colMap, ProjectExcelColumn.EMD_RETURN_STATUS);
-                String sdReturnStatus = getCellString(row, colMap, ProjectExcelColumn.SD_RETURN_STATUS);
-                String sdRmRabReturnStatus = getCellString(row, colMap, ProjectExcelColumn.SD_RM_RAB_RETURN_STATUS);
-                String status = getCellString(row, colMap, ProjectExcelColumn.STATUS);
-
-                // Duplication and Validation Checks
-                boolean isDuplicate = false;
                 StringBuilder rowErr = new StringBuilder();
-
-                if (tenderId == null || tenderId.trim().isEmpty()) {
-                    isDuplicate = true;
-                    rowErr.append(String.format("Row %d: Tender ID is mandatory and cannot be null or empty. ", displayRow));
-                } else {
-                    String cleanTenderId = tenderId.trim();
-                    if (existingTenderIds.contains(cleanTenderId)) {
-                        isDuplicate = true;
-                        rowErr.append(String.format("Row %d: Tender ID '%s' already exists in system. ", displayRow, cleanTenderId));
-                    } else if (fileTenderIds.contains(cleanTenderId)) {
-                        isDuplicate = true;
-                        rowErr.append(String.format("Row %d: Duplicate Tender ID '%s' found in same file. ", displayRow, cleanTenderId));
-                    }
-                }
-
-                if (departmentName == null || departmentName.trim().isEmpty()) {
-                    isDuplicate = true;
-                    rowErr.append(String.format("Row %d: Department Name is mandatory and cannot be null or empty. ", displayRow));
-                }
-
-                BulkUploadProjectsData detailRow = BulkUploadProjectsData.builder()
-                        .masterId(masterId)
-                        .dateOfSub(dateOfSub)
-                        .departmentName(departmentName)
-                        .tenderId(tenderId)
-                        .noticeNo(noticeNo)
-                        .packageNo(packageNo != null ? packageNo : noticeNo)
-                        .nameOfWork(nameOfWork)
-                        .relatedTo(relatedTo)
-                        .tenderFee(tenderFee)
-                        .tenderFeeNo(tenderFeeNo)
-                        .emdAmt(emdAmt)
-                        .emdNo(emdNo)
-                        .estimatedTenderCost(estimatedTenderCost)
-                        .tenderedCost(tenderedCost)
-                        .aboveBelowPercentage(aboveBelowPercentage)
-                        .refPerson(refPerson)
-                        .workAwardedStatus(workAwardedStatus)
-                        .workOrderNumber(workOrderNumber)
-                        .workOrderDate(workOrderDate)
-                        .timeLimit(timeLimit)
-                        .securityDepositAmount(securityDepositAmount)
-                        .sdFdrNo(sdFdrNo)
-                        .remarks(remarks)
-                        .sdRabDeduction(sdRabDeduction)
-                        .sdRabReturnAmount(sdRabReturnAmount)
-                        .additionalDeduction(additionalDeduction)
-                        .workCompletedAmount(workCompletedAmount)
-                        .pendingWorkAmount(pendingWorkAmount)
-                        .completionDateActual(completionDateActual)
-                        .defectsLiabilityPeriod(defectsLiabilityPeriod)
-                        .dlpEndedOn(dlpEndedOn)
-                        .emdReturnStatus(emdReturnStatus)
-                        .sdReturnStatus(sdReturnStatus)
-                        .sdRmRabReturnStatus(sdRmRabReturnStatus)
-                        .status(status)
-                        .createdAt(LocalDateTime.now())
-                        .build();
+                boolean isDuplicate = validateRow(displayRow, detailRow.getTenderId(), detailRow.getDepartmentName(), existingTenderIds, fileTenderIds, rowErr);
 
                 if (isDuplicate) {
                     failedCount++;
-                    String errMessage = rowErr.toString().trim();
-                    errorLogs.add(errMessage);
-
-                    detailRow.setIsFailed(true);
-                    detailRow.setFailedReason(errMessage);
-                    detailSaveBatch.add(detailRow);
+                    handleFailedRow(detailRow, rowErr.toString().trim(), errorLogs, detailSaveBatch);
+                } else if (trySaveProjectRow(detailRow, displayRow, projectSaveBatch, detailSaveBatch, fileTenderIds, errorLogs)) {
+                    successCount++;
                 } else {
-                    try {
-                        Project p = Project.builder()
-                                .dateOfSub(dateOfSub)
-                                .departmentName(departmentName)
-                                .tenderId(tenderId)
-                                .noticeNo(noticeNo)
-                                .packageNo(packageNo != null ? packageNo : noticeNo)
-                                .nameOfWork(nameOfWork)
-                                .relatedTo(relatedTo)
-                                .tenderFee(tenderFee)
-                                .tenderFeeNo(tenderFeeNo)
-                                .emdAmt(emdAmt)
-                                .emdNo(emdNo)
-                                .estimatedTenderCost(estimatedTenderCost)
-                                .tenderedCost(tenderedCost)
-                                .aboveBelowPercentage(aboveBelowPercentage)
-                                .refPerson(refPerson)
-                                .workAwardedStatus(workAwardedStatus)
-                                .workOrderNumber(workOrderNumber)
-                                .workOrderDate(workOrderDate)
-                                .timeLimit(timeLimit)
-                                .securityDepositAmount(securityDepositAmount)
-                                .sdFdrNo(sdFdrNo)
-                                .remarks(remarks)
-                                .sdRabDeduction(sdRabDeduction)
-                                .sdRabReturnAmount(sdRabReturnAmount)
-                                .additionalDeduction(additionalDeduction)
-                                .workCompletedAmount(workCompletedAmount)
-                                .pendingWorkAmount(pendingWorkAmount)
-                                .completionDateActual(completionDateActual)
-                                .defectsLiabilityPeriod(defectsLiabilityPeriod)
-                                .dlpEndedOn(dlpEndedOn)
-                                .emdReturnStatus(emdReturnStatus)
-                                .sdReturnStatus(sdReturnStatus)
-                                .sdRmRabReturnStatus(sdRmRabReturnStatus)
-                                .status(status)
-                                .build();
-
-                        // Create project_locations split by semicolon (;)
-                        List<com.krs.backend.models.ProjectLocation> locList = new ArrayList<>();
-                        String rawLocSource = (noticeNo != null && noticeNo.contains(";")) ? noticeNo : nameOfWork;
-                        if (rawLocSource != null && rawLocSource.contains(";")) {
-                            String[] parts = rawLocSource.split(";");
-                            for (String part : parts) {
-                                String cleanLoc = part.trim();
-                                if (!cleanLoc.isEmpty()) {
-                                    locList.add(com.krs.backend.models.ProjectLocation.builder()
-                                            .project(p)
-                                            .villageName(cleanLoc)
-                                            .tenderId(tenderId)
-                                            .startDate(workOrderDate != null ? workOrderDate : dateOfSub)
-                                            .closedDate(completionDateActual)
-                                            .status(status != null ? status : "Running")
-                                            .createdAt(LocalDateTime.now())
-                                            .updatedAt(LocalDateTime.now())
-                                            .build());
-                                }
-                            }
-                        } else {
-                            String cleanLoc = rawLocSource != null ? rawLocSource.trim() : null;
-                            locList.add(com.krs.backend.models.ProjectLocation.builder()
-                                    .project(p)
-                                    .villageName(cleanLoc)
-                                    .tenderId(tenderId)
-                                    .startDate(workOrderDate != null ? workOrderDate : dateOfSub)
-                                    .closedDate(completionDateActual)
-                                    .status(status != null ? status : "Running")
-                                    .createdAt(LocalDateTime.now())
-                                    .updatedAt(LocalDateTime.now())
-                                    .build());
-                        }
-                        p.setLocations(locList);
-
-                        projectSaveBatch.add(p);
-
-                        detailRow.setIsFailed(false);
-                        detailRow.setFailedReason(null);
-                        detailSaveBatch.add(detailRow);
-
-                        successCount++;
-
-                        if (tenderId != null && !tenderId.trim().isEmpty()) {
-                            fileTenderIds.add(tenderId.trim());
-                        }
-
-                    } catch (Exception ex) {
-                        failedCount++;
-                        String errMessage = String.format("Row %d: Parse error - %s", displayRow, ex.getMessage());
-                        errorLogs.add(errMessage);
-
-                        detailRow.setIsFailed(true);
-                        detailRow.setFailedReason(errMessage);
-                        detailSaveBatch.add(detailRow);
-                    }
+                    failedCount++;
                 }
 
-                if (projectSaveBatch.size() >= BATCH_SIZE) {
-                    projectRepository.saveAll(projectSaveBatch);
-                    projectRepository.flush();
-                    projectSaveBatch.clear();
-                }
-                if (detailSaveBatch.size() >= BATCH_SIZE) {
-                    bulkUploadDataRepository.saveAll(detailSaveBatch);
-                    bulkUploadDataRepository.flush();
-                    detailSaveBatch.clear();
+                if (projectSaveBatch.size() >= BATCH_SIZE || detailSaveBatch.size() >= BATCH_SIZE) {
+                    flushBatches(projectSaveBatch, detailSaveBatch);
                 }
             }
 
-            if (!projectSaveBatch.isEmpty()) {
-                projectRepository.saveAll(projectSaveBatch);
-                projectRepository.flush();
-                projectSaveBatch.clear();
-            }
-            if (!detailSaveBatch.isEmpty()) {
-                bulkUploadDataRepository.saveAll(detailSaveBatch);
-                bulkUploadDataRepository.flush();
-                detailSaveBatch.clear();
-            }
+            flushBatches(projectSaveBatch, detailSaveBatch);
 
-            String finalStatus;
-            if (failedCount == 0 && successCount > 0) {
-                finalStatus = "SUCCESS";
-            } else if (successCount > 0 && failedCount > 0) {
-                finalStatus = "PARTIAL_SUCCESS";
-            } else {
-                finalStatus = "FAILED";
-            }
-
-            history.setTotalRows(totalRows);
-            history.setSuccessCount(successCount);
-            history.setFailedCount(failedCount);
-            history.setStatus(finalStatus);
-            history.setErrorDetails(OBJECT_MAPPER.writeValueAsString(errorLogs));
-            history.setUpdatedAt(LocalDateTime.now());
-
-            return uploadHistoryRepository.saveAndFlush(history);
+            String finalStatus = determineFinalStatus(successCount, failedCount);
+            return finalizeHistoryRecord(history, totalRows, successCount, failedCount, finalStatus, errorLogs, zone);
 
         } catch (Exception e) {
-            history.setStatus("FAILED");
-            history.setErrorDetails("[\"Failed to process excel file: " + (e.getMessage() != null ? e.getMessage().replace("\"", "'") : "Unknown error") + "\"]");
-            history.setUpdatedAt(LocalDateTime.now());
-            uploadHistoryRepository.saveAndFlush(history);
-            throw e;
+            return handleUploadError(history, e, zone);
         }
+    }
+
+    private void validateFileFormat(MultipartFile file) {
+        String filename = file.getOriginalFilename();
+        if (filename == null || (!filename.toLowerCase().endsWith(".xlsx") && !filename.toLowerCase().endsWith(".xls"))) {
+            throw new IllegalArgumentException("Invalid file format. Please upload a valid Excel file (.xlsx or .xls).");
+        }
+    }
+
+    private Sheet getValidSheet(Workbook workbook) {
+        Sheet sheet = workbook.getSheetAt(0);
+        if (sheet == null || sheet.getLastRowNum() < 1) {
+            throw new IllegalArgumentException("Excel file is empty or missing data rows.");
+        }
+        return sheet;
+    }
+
+    private ProjectUploadHistory createInitialHistoryRecord(String filename, String uploadedBy, ZoneId zone) {
+        ProjectUploadHistory history = ProjectUploadHistory.builder()
+                .filename(filename)
+                .uploadedBy(uploadedBy != null ? uploadedBy : "system")
+                .uploadTime(LocalDateTime.now(zone))
+                .totalRows(0)
+                .successCount(0)
+                .failedCount(0)
+                .status(STATUS_PROCESSING)
+                .createdAt(LocalDateTime.now(zone))
+                .updatedAt(LocalDateTime.now(zone))
+                .build();
+        return uploadHistoryRepository.saveAndFlush(history);
+    }
+
+    private BulkUploadProjectsData parseRowToDetail(Row row, Map<ProjectExcelColumn, Integer> colMap, Long masterId, ZoneId zone) {
+        LocalDate dateOfSub = getCellDate(row, colMap, ProjectExcelColumn.TENDER_SUB_DATE);
+        String rawDepartment = getCellString(row, colMap, ProjectExcelColumn.DEPARTMENT_NAME);
+        DepartmentMaster masterDept = departmentMasterService.getOrCreateDepartment(rawDepartment);
+        String departmentName = resolveDepartmentName(masterDept, rawDepartment);
+
+        String tenderId = getCellString(row, colMap, ProjectExcelColumn.TENDER_ID);
+        String noticeNo = getCellString(row, colMap, ProjectExcelColumn.NOTICE_NO);
+        String nameOfWork = getCellString(row, colMap, ProjectExcelColumn.NAME_OF_WORK);
+        String rawRelatedTo = getCellString(row, colMap, ProjectExcelColumn.RELATED_TO);
+        RelatedToMaster masterRelatedTo = relatedToMasterService.getOrCreateRelatedTo(rawRelatedTo);
+        String relatedTo = resolveRelatedToName(masterRelatedTo, rawRelatedTo);
+
+        BigDecimal tenderFee = getCellBigDecimal(row, colMap, ProjectExcelColumn.TENDER_FEE);
+        String tenderFeeNo = getCellString(row, colMap, ProjectExcelColumn.TENDER_FEE_NO);
+        BigDecimal emdAmt = getCellBigDecimal(row, colMap, ProjectExcelColumn.EMD);
+        String emdNo = getCellString(row, colMap, ProjectExcelColumn.EMD_NO);
+        BigDecimal estimatedTenderCost = getCellBigDecimal(row, colMap, ProjectExcelColumn.ESTIMATED_COST);
+        BigDecimal tenderedCost = getCellBigDecimal(row, colMap, ProjectExcelColumn.TENDERED_COST);
+        BigDecimal aboveBelowPercentage = getCellBigDecimal(row, colMap, ProjectExcelColumn.ABOVE_BELOW);
+
+        String rawRefPerson = getCellString(row, colMap, ProjectExcelColumn.REF);
+        RefPersonMaster masterRef = refPersonMasterService.getOrCreateRefPerson(rawRefPerson);
+        String refPerson = resolveRefPersonName(masterRef, rawRefPerson);
+
+        String workAwardedStatus = getCellString(row, colMap, ProjectExcelColumn.WORK_AWARDED_STATUS);
+        String workOrderNumber = getCellString(row, colMap, ProjectExcelColumn.WORK_ORDER_NO);
+        LocalDate workOrderDate = getCellDate(row, colMap, ProjectExcelColumn.WORK_ORDER_DATE);
+        String timeLimit = getCellString(row, colMap, ProjectExcelColumn.TIME_LIMIT);
+        BigDecimal securityDepositAmount = getCellBigDecimal(row, colMap, ProjectExcelColumn.SECURITY_DEPOSIT);
+        String sdFdrNo = getCellString(row, colMap, ProjectExcelColumn.SD_FDR_NO);
+        String remarks = getCellString(row, colMap, ProjectExcelColumn.REMARKS);
+        BigDecimal sdRabDeduction = getCellBigDecimal(row, colMap, ProjectExcelColumn.SD_RAB_DEDUCTION);
+        BigDecimal sdRabReturnAmount = getCellBigDecimal(row, colMap, ProjectExcelColumn.SD_RAB_RETURN_AMOUNT);
+        String additionalDeduction = getCellString(row, colMap, ProjectExcelColumn.ANY_ADDITIONAL_DEDUCTION);
+        BigDecimal workCompletedAmount = getCellBigDecimal(row, colMap, ProjectExcelColumn.WORK_COMPLETED_AMOUNT);
+        BigDecimal pendingWorkAmount = getCellBigDecimal(row, colMap, ProjectExcelColumn.PENDING_WORK_AMOUNT);
+        LocalDate completionDateActual = getCellDate(row, colMap, ProjectExcelColumn.COMPLETION_DATE_ACTUAL);
+        String defectsLiabilityPeriod = getCellString(row, colMap, ProjectExcelColumn.DEFECTS_LIABILITY_PERIOD);
+        LocalDate dlpEndedOn = getCellDate(row, colMap, ProjectExcelColumn.DLP_ENDED_ON);
+        String emdReturnStatus = getCellString(row, colMap, ProjectExcelColumn.EMD_RETURN_STATUS);
+        String sdReturnStatus = getCellString(row, colMap, ProjectExcelColumn.SD_RETURN_STATUS);
+        String sdRmRabReturnStatus = getCellString(row, colMap, ProjectExcelColumn.SD_RM_RAB_RETURN_STATUS);
+        String status = getCellString(row, colMap, ProjectExcelColumn.STATUS);
+
+        return BulkUploadProjectsData.builder()
+                .masterId(masterId)
+                .dateOfSub(dateOfSub)
+                .departmentName(departmentName)
+                .tenderId(tenderId)
+                .noticeNo(noticeNo)
+                .packageNo(noticeNo)
+                .nameOfWork(nameOfWork)
+                .relatedTo(relatedTo)
+                .tenderFee(tenderFee)
+                .tenderFeeNo(tenderFeeNo)
+                .emdAmt(emdAmt)
+                .emdNo(emdNo)
+                .estimatedTenderCost(estimatedTenderCost)
+                .tenderedCost(tenderedCost)
+                .aboveBelowPercentage(aboveBelowPercentage)
+                .refPerson(refPerson)
+                .workAwardedStatus(workAwardedStatus)
+                .workOrderNumber(workOrderNumber)
+                .workOrderDate(workOrderDate)
+                .timeLimit(timeLimit)
+                .securityDepositAmount(securityDepositAmount)
+                .sdFdrNo(sdFdrNo)
+                .remarks(remarks)
+                .sdRabDeduction(sdRabDeduction)
+                .sdRabReturnAmount(sdRabReturnAmount)
+                .additionalDeduction(additionalDeduction)
+                .workCompletedAmount(workCompletedAmount)
+                .pendingWorkAmount(pendingWorkAmount)
+                .completionDateActual(completionDateActual)
+                .defectsLiabilityPeriod(defectsLiabilityPeriod)
+                .dlpEndedOn(dlpEndedOn)
+                .emdReturnStatus(emdReturnStatus)
+                .sdReturnStatus(sdReturnStatus)
+                .sdRmRabReturnStatus(sdRmRabReturnStatus)
+                .status(status)
+                .createdAt(LocalDateTime.now(zone))
+                .build();
+    }
+
+    private String resolveDepartmentName(DepartmentMaster master, String raw) {
+        String idStr = (master != null && master.getId() != null) ? master.getId().toString() : null;
+        return resolveMasterIdOrTitleCase(idStr, raw, DepartmentMasterService.toTitleCase(raw));
+    }
+
+    private String resolveRelatedToName(RelatedToMaster master, String raw) {
+        String idStr = (master != null && master.getId() != null) ? master.getId().toString() : null;
+        return resolveMasterIdOrTitleCase(idStr, raw, RelatedToMasterService.toTitleCase(raw));
+    }
+
+    private String resolveRefPersonName(RefPersonMaster master, String raw) {
+        String idStr = (master != null && master.getId() != null) ? master.getId().toString() : null;
+        return resolveMasterIdOrTitleCase(idStr, raw, RefPersonMasterService.toTitleCase(raw));
+    }
+
+    private void handleFailedRow(BulkUploadProjectsData detailRow, String errMessage, List<String> errorLogs, List<BulkUploadProjectsData> detailSaveBatch) {
+        errorLogs.add(errMessage);
+        detailRow.setIsFailed(true);
+        detailRow.setFailedReason(errMessage);
+        detailSaveBatch.add(detailRow);
+    }
+
+    private void flushBatches(List<Project> projectSaveBatch, List<BulkUploadProjectsData> detailSaveBatch) {
+        if (!projectSaveBatch.isEmpty()) {
+            projectRepository.saveAll(projectSaveBatch);
+            projectRepository.flush();
+            projectSaveBatch.clear();
+        }
+        if (!detailSaveBatch.isEmpty()) {
+            bulkUploadDataRepository.saveAll(detailSaveBatch);
+            bulkUploadDataRepository.flush();
+            detailSaveBatch.clear();
+        }
+    }
+
+    private String determineFinalStatus(int successCount, int failedCount) {
+        if (failedCount == 0 && successCount > 0) {
+            return STATUS_SUCCESS;
+        }
+        if (successCount > 0) {
+            return STATUS_PARTIAL_SUCCESS;
+        }
+        return STATUS_FAILED;
+    }
+
+    private ProjectUploadHistory finalizeHistoryRecord(ProjectUploadHistory history, int totalRows, int successCount, int failedCount, String finalStatus, List<String> errorLogs, ZoneId zone) throws JsonProcessingException {
+        history.setTotalRows(totalRows);
+        history.setSuccessCount(successCount);
+        history.setFailedCount(failedCount);
+        history.setStatus(finalStatus);
+        history.setErrorDetails(OBJECT_MAPPER.writeValueAsString(errorLogs));
+        history.setUpdatedAt(LocalDateTime.now(zone));
+        return uploadHistoryRepository.saveAndFlush(history);
+    }
+
+    private ProjectUploadHistory handleUploadError(ProjectUploadHistory history, Exception e, ZoneId zone) throws IOException {
+        history.setStatus(STATUS_FAILED);
+        history.setErrorDetails("[\"Failed to process excel file: " + (e.getMessage() != null ? e.getMessage().replace("\"", "'") : "Unknown error") + "\"]");
+        history.setUpdatedAt(LocalDateTime.now(zone));
+        uploadHistoryRepository.saveAndFlush(history);
+        if (e instanceof IOException ioException) {
+            throw ioException;
+        }
+        throw new IOException("Failed to process Excel file", e);
+    }
+
+    private boolean trySaveProjectRow(BulkUploadProjectsData detailRow, int displayRow, List<Project> projectSaveBatch,
+                                      List<BulkUploadProjectsData> detailSaveBatch, Set<String> fileTenderIds,
+                                      List<String> errorLogs) {
+        try {
+            Project p = buildProjectFromDetail(detailRow);
+            p.setLocations(buildLocations(p));
+            projectSaveBatch.add(p);
+
+            detailRow.setIsFailed(false);
+            detailRow.setFailedReason(null);
+            detailSaveBatch.add(detailRow);
+
+            if (detailRow.getTenderId() != null && !detailRow.getTenderId().trim().isEmpty()) {
+                fileTenderIds.add(detailRow.getTenderId().trim());
+            }
+            return true;
+        } catch (Exception ex) {
+            String errMessage = String.format("Row %d: Parse error - %s", displayRow, ex.getMessage());
+            errorLogs.add(errMessage);
+
+            detailRow.setIsFailed(true);
+            detailRow.setFailedReason(errMessage);
+            detailSaveBatch.add(detailRow);
+            return false;
+        }
+    }
+
+    private Project buildProjectFromDetail(BulkUploadProjectsData d) {
+        return Project.builder()
+                .dateOfSub(d.getDateOfSub())
+                .departmentName(d.getDepartmentName())
+                .tenderId(d.getTenderId())
+                .noticeNo(d.getNoticeNo())
+                .packageNo(d.getPackageNo())
+                .nameOfWork(d.getNameOfWork())
+                .relatedTo(d.getRelatedTo())
+                .tenderFee(d.getTenderFee())
+                .tenderFeeNo(d.getTenderFeeNo())
+                .emdAmt(d.getEmdAmt())
+                .emdNo(d.getEmdNo())
+                .estimatedTenderCost(d.getEstimatedTenderCost())
+                .tenderedCost(d.getTenderedCost())
+                .aboveBelowPercentage(d.getAboveBelowPercentage())
+                .refPerson(d.getRefPerson())
+                .workAwardedStatus(d.getWorkAwardedStatus())
+                .workOrderNumber(d.getWorkOrderNumber())
+                .workOrderDate(d.getWorkOrderDate())
+                .timeLimit(d.getTimeLimit())
+                .securityDepositAmount(d.getSecurityDepositAmount())
+                .sdFdrNo(d.getSdFdrNo())
+                .remarks(d.getRemarks())
+                .sdRabDeduction(d.getSdRabDeduction())
+                .sdRabReturnAmount(d.getSdRabReturnAmount())
+                .additionalDeduction(d.getAdditionalDeduction())
+                .workCompletedAmount(d.getWorkCompletedAmount())
+                .pendingWorkAmount(d.getPendingWorkAmount())
+                .completionDateActual(d.getCompletionDateActual())
+                .defectsLiabilityPeriod(d.getDefectsLiabilityPeriod())
+                .dlpEndedOn(d.getDlpEndedOn())
+                .emdReturnStatus(d.getEmdReturnStatus())
+                .sdReturnStatus(d.getSdReturnStatus())
+                .sdRmRabReturnStatus(d.getSdRmRabReturnStatus())
+                .status(d.getStatus())
+                .build();
+    }
+
+    private boolean validateRow(int displayRow, String tenderId, String departmentName,
+                                Set<String> existingTenderIds, Set<String> fileTenderIds,
+                                StringBuilder rowErr) {
+        boolean isDuplicate = false;
+        if (tenderId == null || tenderId.trim().isEmpty()) {
+            isDuplicate = true;
+            rowErr.append(String.format("Row %d: Tender ID is mandatory and cannot be null or empty. ", displayRow));
+        } else {
+            String cleanTenderId = tenderId.trim();
+            if (existingTenderIds.contains(cleanTenderId)) {
+                isDuplicate = true;
+                rowErr.append(String.format("Row %d: Tender ID '%s' already exists in system. ", displayRow, cleanTenderId));
+            } else if (fileTenderIds.contains(cleanTenderId)) {
+                isDuplicate = true;
+                rowErr.append(String.format("Row %d: Duplicate Tender ID '%s' found in same file. ", displayRow, cleanTenderId));
+            }
+        }
+
+        if (departmentName == null || departmentName.trim().isEmpty()) {
+            isDuplicate = true;
+            rowErr.append(String.format("Row %d: Department Name is mandatory and cannot be null or empty. ", displayRow));
+        }
+        return isDuplicate;
+    }
+
+    private List<com.krs.backend.models.ProjectLocation> buildLocations(Project p) {
+        ZoneId zone = ZoneId.systemDefault();
+        List<com.krs.backend.models.ProjectLocation> locList = new ArrayList<>();
+        String noticeNo = p.getNoticeNo();
+        String nameOfWork = p.getNameOfWork();
+        String rawLocSource = (noticeNo != null && noticeNo.contains(";")) ? noticeNo : nameOfWork;
+        if (rawLocSource != null && rawLocSource.contains(";")) {
+            String[] parts = rawLocSource.split(";");
+            for (String part : parts) {
+                String cleanLoc = part.trim();
+                if (!cleanLoc.isEmpty()) {
+                    locList.add(createProjectLocation(p, cleanLoc, zone));
+                }
+            }
+        } else {
+            String cleanLoc = rawLocSource != null ? rawLocSource.trim() : null;
+            locList.add(createProjectLocation(p, cleanLoc, zone));
+        }
+        return locList;
+    }
+
+    private com.krs.backend.models.ProjectLocation createProjectLocation(Project p, String villageName, ZoneId zone) {
+        return com.krs.backend.models.ProjectLocation.builder()
+                .project(p)
+                .villageName(villageName)
+                .tenderId(p.getTenderId())
+                .startDate(p.getWorkOrderDate() != null ? p.getWorkOrderDate() : p.getDateOfSub())
+                .closedDate(p.getCompletionDateActual())
+                .status(p.getStatus() != null ? p.getStatus() : "Running")
+                .createdAt(LocalDateTime.now(zone))
+                .updatedAt(LocalDateTime.now(zone))
+                .build();
     }
 
     /**
      * Download Excel Report for a specific Bulk Upload execution (ALL, SUCCESS, or FAILED rows)
      */
     @Transactional(readOnly = true)
-    public void exportUploadHistoryDataToExcel(Long masterId, String filterType, OutputStream outputStream) throws Exception {
-        ProjectUploadHistory history = uploadHistoryRepository.findById(masterId)
-                .orElseThrow(() -> new IllegalArgumentException("Upload history record not found with ID: " + masterId));
+    public void exportUploadHistoryDataToExcel(Long masterId, String filterType, OutputStream outputStream) throws IOException {
+        if (!uploadHistoryRepository.existsById(masterId)) {
+            throw new IllegalArgumentException("Upload history record not found with ID: " + masterId);
+        }
 
         List<BulkUploadProjectsData> list;
-        if ("SUCCESS".equalsIgnoreCase(filterType)) {
+        if (STATUS_SUCCESS.equalsIgnoreCase(filterType)) {
             list = bulkUploadDataRepository.findByMasterIdAndIsFailedOrderByIdAsc(masterId, false);
-        } else if ("FAILED".equalsIgnoreCase(filterType)) {
+        } else if (STATUS_FAILED.equalsIgnoreCase(filterType)) {
             list = bulkUploadDataRepository.findByMasterIdAndIsFailedOrderByIdAsc(masterId, true);
         } else {
             list = bulkUploadDataRepository.findByMasterIdOrderByIdAsc(masterId);
@@ -516,63 +517,17 @@ public class ProjectExcelService {
             workbook.setCompressTempFiles(true);
             Sheet sheet = workbook.createSheet("Upload Report - " + filterType.toUpperCase());
 
-            CellStyle headerStyle = workbook.createCellStyle();
-            Font font = workbook.createFont();
-            font.setBold(true);
-            font.setColor(IndexedColors.WHITE.getIndex());
-            headerStyle.setFont(font);
-            headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
             List<String> reportHeaders = new ArrayList<>(HEADERS);
             reportHeaders.add("UPLOAD STATUS");
             reportHeaders.add("FAILURE REASON");
-
-            Row headerRow = sheet.createRow(0);
-            for (int i = 0; i < reportHeaders.size(); i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(reportHeaders.get(i));
-                cell.setCellStyle(headerStyle);
-            }
+            writeHeaderRow(sheet, workbook, reportHeaders);
 
             int rowIndex = 1;
             for (BulkUploadProjectsData p : list) {
                 Row row = sheet.createRow(rowIndex++);
-                row.createCell(0).setCellValue(formatDate(p.getDateOfSub()));
-                row.createCell(1).setCellValue(resolveDepartmentDisplay(p.getDepartmentName()));
-                row.createCell(2).setCellValue(p.getTenderId() != null ? p.getTenderId() : "");
-                row.createCell(3).setCellValue(p.getNoticeNo() != null ? p.getNoticeNo() : (p.getPackageNo() != null ? p.getPackageNo() : ""));
-                row.createCell(4).setCellValue(p.getNameOfWork() != null ? p.getNameOfWork() : "");
-                row.createCell(5).setCellValue(resolveRelatedToDisplay(p.getRelatedTo()));
-                row.createCell(6).setCellValue(p.getTenderFee() != null ? p.getTenderFee().doubleValue() : 0);
-                row.createCell(7).setCellValue(p.getTenderFeeNo() != null ? p.getTenderFeeNo() : "");
-                row.createCell(8).setCellValue(p.getEmdAmt() != null ? p.getEmdAmt().doubleValue() : 0);
-                row.createCell(9).setCellValue(p.getEmdNo() != null ? p.getEmdNo() : "");
-                row.createCell(10).setCellValue(p.getEstimatedTenderCost() != null ? p.getEstimatedTenderCost().doubleValue() : 0);
-                row.createCell(11).setCellValue(p.getTenderedCost() != null ? p.getTenderedCost().doubleValue() : 0);
-                row.createCell(12).setCellValue(p.getAboveBelowPercentage() != null ? p.getAboveBelowPercentage().toString() : "");
-                row.createCell(13).setCellValue(resolveRefPersonDisplay(p.getRefPerson()));
-                row.createCell(14).setCellValue(p.getWorkAwardedStatus() != null ? p.getWorkAwardedStatus() : "");
-                row.createCell(15).setCellValue(p.getWorkOrderNumber() != null ? p.getWorkOrderNumber() : "");
-                row.createCell(16).setCellValue(formatDate(p.getWorkOrderDate()));
-                row.createCell(17).setCellValue(p.getTimeLimit() != null ? p.getTimeLimit() : "");
-                row.createCell(18).setCellValue(p.getSecurityDepositAmount() != null ? p.getSecurityDepositAmount().doubleValue() : 0);
-                row.createCell(19).setCellValue(p.getSdFdrNo() != null ? p.getSdFdrNo() : "");
-                row.createCell(20).setCellValue(p.getRemarks() != null ? p.getRemarks() : "");
-                row.createCell(21).setCellValue(p.getSdRabDeduction() != null ? p.getSdRabDeduction().doubleValue() : 0);
-                row.createCell(22).setCellValue(p.getSdRabReturnAmount() != null ? p.getSdRabReturnAmount().doubleValue() : 0);
-                row.createCell(23).setCellValue(p.getAdditionalDeduction() != null ? p.getAdditionalDeduction() : "");
-                row.createCell(24).setCellValue(p.getWorkCompletedAmount() != null ? p.getWorkCompletedAmount().doubleValue() : 0);
-                row.createCell(25).setCellValue(p.getPendingWorkAmount() != null ? p.getPendingWorkAmount().doubleValue() : 0);
-                row.createCell(26).setCellValue(formatDate(p.getCompletionDateActual()));
-                row.createCell(27).setCellValue(p.getDefectsLiabilityPeriod() != null ? p.getDefectsLiabilityPeriod() : "");
-                row.createCell(28).setCellValue(formatDate(p.getDlpEndedOn()));
-                row.createCell(29).setCellValue(p.getEmdReturnStatus() != null ? p.getEmdReturnStatus() : "");
-                row.createCell(30).setCellValue(p.getSdReturnStatus() != null ? p.getSdReturnStatus() : "");
-                row.createCell(31).setCellValue(p.getSdRmRabReturnStatus() != null ? p.getSdRmRabReturnStatus() : "");
-                row.createCell(32).setCellValue(p.getStatus() != null ? p.getStatus() : "");
+                populateUploadDataRow(row, p);
 
-                row.createCell(33).setCellValue(Boolean.TRUE.equals(p.getIsFailed()) ? "FAILED" : "SUCCESS");
+                row.createCell(33).setCellValue(Boolean.TRUE.equals(p.getIsFailed()) ? STATUS_FAILED : STATUS_SUCCESS);
                 row.createCell(34).setCellValue(p.getFailedReason() != null ? p.getFailedReason() : "");
 
                 entityManager.detach(p);
@@ -589,13 +544,124 @@ public class ProjectExcelService {
 
     // --- Private Helper Methods ---
 
+    private static void setCellString(Row row, int colIndex, String val) {
+        row.createCell(colIndex).setCellValue(val != null ? val : "");
+    }
+
+    private static void setCellDouble(Row row, int colIndex, BigDecimal val) {
+        row.createCell(colIndex).setCellValue(val != null ? val.doubleValue() : 0.0);
+    }
+
+    private void writeHeaderRow(Sheet sheet, Workbook workbook, List<String> headers) {
+        CellStyle headerStyle = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setColor(IndexedColors.WHITE.getIndex());
+        headerStyle.setFont(font);
+        headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        Row headerRow = sheet.createRow(0);
+        for (int i = 0; i < headers.size(); i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers.get(i));
+            cell.setCellStyle(headerStyle);
+        }
+    }
+
+    private void populateProjectRow(Row row, Project p) {
+        setCellString(row, 0, formatDate(p.getDateOfSub()));
+        setCellString(row, 1, resolveDepartmentDisplay(p.getDepartmentName()));
+        setCellString(row, 2, p.getTenderId());
+        setCellString(row, 3, resolveNoticeOrPackage(p.getNoticeNo(), p.getPackageNo()));
+        setCellString(row, 4, p.getNameOfWork());
+        setCellString(row, 5, resolveRelatedToDisplay(p.getRelatedTo()));
+        setCellDouble(row, 6, p.getTenderFee());
+        setCellString(row, 7, p.getTenderFeeNo());
+        setCellDouble(row, 8, p.getEmdAmt());
+        setCellString(row, 9, p.getEmdNo());
+        setCellDouble(row, 10, p.getEstimatedTenderCost());
+        setCellDouble(row, 11, p.getTenderedCost());
+        setCellString(row, 12, p.getAboveBelowPercentage() != null ? p.getAboveBelowPercentage().toString() : null);
+        setCellString(row, 13, resolveRefPersonDisplay(p.getRefPerson()));
+        setCellString(row, 14, p.getWorkAwardedStatus());
+        setCellString(row, 15, p.getWorkOrderNumber());
+        setCellString(row, 16, formatDate(p.getWorkOrderDate()));
+        setCellString(row, 17, p.getTimeLimit());
+        setCellDouble(row, 18, p.getSecurityDepositAmount());
+        setCellString(row, 19, p.getSdFdrNo());
+        setCellString(row, 20, p.getRemarks());
+        setCellDouble(row, 21, p.getSdRabDeduction());
+        setCellDouble(row, 22, p.getSdRabReturnAmount());
+        setCellString(row, 23, p.getAdditionalDeduction());
+        setCellDouble(row, 24, p.getWorkCompletedAmount());
+        setCellDouble(row, 25, p.getPendingWorkAmount());
+        setCellString(row, 26, formatDate(p.getCompletionDateActual()));
+        setCellString(row, 27, p.getDefectsLiabilityPeriod());
+        setCellString(row, 28, formatDate(p.getDlpEndedOn()));
+        setCellString(row, 29, p.getEmdReturnStatus());
+        setCellString(row, 30, p.getSdReturnStatus());
+        setCellString(row, 31, p.getSdRmRabReturnStatus());
+        setCellString(row, 32, p.getStatus());
+    }
+
+    private void populateUploadDataRow(Row row, BulkUploadProjectsData p) {
+        setCellString(row, 0, formatDate(p.getDateOfSub()));
+        setCellString(row, 1, resolveDepartmentDisplay(p.getDepartmentName()));
+        setCellString(row, 2, p.getTenderId());
+        setCellString(row, 3, resolveNoticeOrPackage(p.getNoticeNo(), p.getPackageNo()));
+        setCellString(row, 4, p.getNameOfWork());
+        setCellString(row, 5, resolveRelatedToDisplay(p.getRelatedTo()));
+        setCellDouble(row, 6, p.getTenderFee());
+        setCellString(row, 7, p.getTenderFeeNo());
+        setCellDouble(row, 8, p.getEmdAmt());
+        setCellString(row, 9, p.getEmdNo());
+        setCellDouble(row, 10, p.getEstimatedTenderCost());
+        setCellDouble(row, 11, p.getTenderedCost());
+        setCellString(row, 12, p.getAboveBelowPercentage() != null ? p.getAboveBelowPercentage().toString() : null);
+        setCellString(row, 13, resolveRefPersonDisplay(p.getRefPerson()));
+        setCellString(row, 14, p.getWorkAwardedStatus());
+        setCellString(row, 15, p.getWorkOrderNumber());
+        setCellString(row, 16, formatDate(p.getWorkOrderDate()));
+        setCellString(row, 17, p.getTimeLimit());
+        setCellDouble(row, 18, p.getSecurityDepositAmount());
+        setCellString(row, 19, p.getSdFdrNo());
+        setCellString(row, 20, p.getRemarks());
+        setCellDouble(row, 21, p.getSdRabDeduction());
+        setCellDouble(row, 22, p.getSdRabReturnAmount());
+        setCellString(row, 23, p.getAdditionalDeduction());
+        setCellDouble(row, 24, p.getWorkCompletedAmount());
+        setCellDouble(row, 25, p.getPendingWorkAmount());
+        setCellString(row, 26, formatDate(p.getCompletionDateActual()));
+        setCellString(row, 27, p.getDefectsLiabilityPeriod());
+        setCellString(row, 28, formatDate(p.getDlpEndedOn()));
+        setCellString(row, 29, p.getEmdReturnStatus());
+        setCellString(row, 30, p.getSdReturnStatus());
+        setCellString(row, 31, p.getSdRmRabReturnStatus());
+        setCellString(row, 32, p.getStatus());
+    }
+
+    private String resolveNoticeOrPackage(String noticeNo, String packageNo) {
+        if (noticeNo != null && !noticeNo.isEmpty()) {
+            return noticeNo;
+        }
+        return packageNo != null ? packageNo : "";
+    }
+
+    private String resolveMasterIdOrTitleCase(String masterIdStr, String rawVal, String titleCaseVal) {
+        if (masterIdStr != null) {
+            return masterIdStr;
+        }
+        return rawVal != null ? titleCaseVal : null;
+    }
+
     private String resolveDepartmentDisplay(String val) {
         if (val == null || val.trim().isEmpty()) return "";
         String trimmed = val.trim();
         try {
             Long id = Long.parseLong(trimmed);
             return departmentMasterService.findById(id)
-                    .map(DepartmentMaster::getName)
+                    .map(dept -> dept.getName())
                     .orElse(trimmed);
         } catch (NumberFormatException e) {
             return DepartmentMasterService.toTitleCase(trimmed);
@@ -608,7 +674,7 @@ public class ProjectExcelService {
         try {
             Long id = Long.parseLong(trimmed);
             return refPersonMasterService.findById(id)
-                    .map(RefPersonMaster::getName)
+                    .map(ref -> ref.getName())
                     .orElse(trimmed);
         } catch (NumberFormatException e) {
             return RefPersonMasterService.toTitleCase(trimmed);
@@ -623,7 +689,7 @@ public class ProjectExcelService {
         try {
             Long id = Long.parseLong(trimmed);
             return relatedToMasterService.findById(id)
-                    .map(RelatedToMaster::getName)
+                    .map(rel -> rel.getName())
                     .orElse(trimmed);
         } catch (NumberFormatException e) {
             return RelatedToMasterService.toTitleCase(trimmed);
@@ -702,7 +768,9 @@ public class ProjectExcelService {
         for (DateTimeFormatter formatter : DATE_FORMATTERS) {
             try {
                 return LocalDate.parse(str.trim(), formatter);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                // Ignore date parsing exception for non-matching date format
+            }
         }
         return null;
     }
@@ -735,14 +803,12 @@ public class ProjectExcelService {
             case BOOLEAN:
                 rawVal = String.valueOf(cell.getBooleanCellValue());
                 break;
-            case ERROR:
-            case BLANK:
+            case ERROR, BLANK:
             default:
                 return null;
         }
 
         if (rawVal != null) {
-            // Replace newline characters with spaces and sanitize extra spaces
             rawVal = rawVal.replace("\r\n", " ").replace("\n", " ").replace("\r", " ");
             rawVal = rawVal.replaceAll("\\s+", " ").trim();
             if (rawVal.isEmpty()) {

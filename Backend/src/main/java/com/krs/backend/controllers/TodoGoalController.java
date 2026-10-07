@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @RestController
@@ -41,15 +42,17 @@ public class TodoGoalController {
     @PostMapping
     public ResponseEntity<TodoGoal> createTodo(@RequestBody TodoGoal todo) {
         User currentUser = getCurrentUser();
+        ZoneId zone = ZoneId.systemDefault();
         todo.setCreatedBy(currentUser);
-        todo.setUpdatedAt(LocalDateTime.now());
+        todo.setUpdatedAt(LocalDateTime.now(zone));
         todo.setUpdatedBy(currentUser);
-        todo.setCreatedAt(LocalDateTime.now());
+        todo.setCreatedAt(LocalDateTime.now(zone));
         return ResponseEntity.ok(todoGoalRepository.save(todo));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<TodoGoal> updateTodo(@PathVariable Long id, @RequestBody TodoGoal todoDetails) {
+        ZoneId zone = ZoneId.systemDefault();
         return todoGoalRepository.findById(id).map(todo -> {
             // Partial update: only overwrite fields that were explicitly provided
             if (todoDetails.getTaskDescription() != null) {
@@ -64,7 +67,7 @@ public class TodoGoalController {
             if (todoDetails.getIsDone() != null) {
                 todo.setIsDone(todoDetails.getIsDone());
             }
-            todo.setUpdatedAt(LocalDateTime.now());
+            todo.setUpdatedAt(LocalDateTime.now(zone));
             todo.setUpdatedBy(getCurrentUser());
             return ResponseEntity.ok(todoGoalRepository.save(todo));
         }).orElse(ResponseEntity.notFound().build());
@@ -72,10 +75,11 @@ public class TodoGoalController {
     
     @PutMapping("/{id}/toggle-done")
     public ResponseEntity<TodoGoal> toggleDone(@PathVariable Long id, @RequestBody(required = false) java.util.Map<String, String> payload) {
+        ZoneId zone = ZoneId.systemDefault();
         return todoGoalRepository.findById(id).map(todo -> {
             todo.setIsDone(!todo.getIsDone());
             if (todo.getIsDone()) {
-                todo.setDoneDate(LocalDateTime.now());
+                todo.setDoneDate(LocalDateTime.now(zone));
                 todo.setDoneBy(getCurrentUser());
                 if (payload != null && payload.containsKey("doneNote")) {
                     todo.setDoneNote(payload.get("doneNote"));
@@ -85,7 +89,7 @@ public class TodoGoalController {
                 todo.setDoneBy(null);
                 todo.setDoneNote(null);
             }
-            todo.setUpdatedAt(LocalDateTime.now());
+            todo.setUpdatedAt(LocalDateTime.now(zone));
             todo.setUpdatedBy(getCurrentUser());
             return ResponseEntity.ok(todoGoalRepository.save(todo));
         }).orElse(ResponseEntity.notFound().build());
@@ -93,9 +97,10 @@ public class TodoGoalController {
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTodo(@PathVariable Long id) {
+        ZoneId zone = ZoneId.systemDefault();
         return todoGoalRepository.findById(id).map(todo -> {
             todo.setIsActive(false);
-            todo.setUpdatedAt(LocalDateTime.now());
+            todo.setUpdatedAt(LocalDateTime.now(zone));
             todo.setUpdatedBy(getCurrentUser());
             todoGoalRepository.save(todo);
             return ResponseEntity.ok().<Void>build();

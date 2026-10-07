@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -80,16 +81,17 @@ public class ProjectDocumentService {
         Path targetLocation = storageDirectory.resolve(candidateFileName);
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
+        ZoneId zone = ZoneId.systemDefault();
         ProjectDocument doc = ProjectDocument.builder()
                 .project(project)
                 .documentName(finalDocName)
                 .fileName(candidateFileName)
                 .notes(notes)
                 .locationPath(targetLocation.toString())
-                .uploadedDate(LocalDateTime.now())
-                .createdDate(LocalDateTime.now())
+                .uploadedDate(LocalDateTime.now(zone))
+                .createdDate(LocalDateTime.now(zone))
                 .createdBy(currentUser != null ? currentUser : "System Admin")
-                .updateDate(LocalDateTime.now())
+                .updateDate(LocalDateTime.now(zone))
                 .updatedBy(currentUser != null ? currentUser : "System Admin")
                 .isActive(true)
                 .build();
@@ -119,7 +121,7 @@ public class ProjectDocumentService {
     public void deleteDocument(Long documentId, String currentUser) {
         ProjectDocument doc = getDocumentById(documentId);
         doc.setIsActive(false);
-        doc.setUpdateDate(LocalDateTime.now());
+        doc.setUpdateDate(LocalDateTime.now(ZoneId.systemDefault()));
         doc.setUpdatedBy(currentUser != null ? currentUser : "System Admin");
         documentRepository.save(doc);
     }

@@ -19,6 +19,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, JpaSpec
 
     boolean existsByTenderId(String tenderId);
 
+    boolean existsByTenderIdAndIdNot(String tenderId, Long id);
+
     boolean existsByNoticeNo(String noticeNo);
 
     @Query("SELECT DISTINCT p.tenderId FROM Project p WHERE p.tenderId IS NOT NULL AND p.tenderId != ''")

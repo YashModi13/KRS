@@ -3,6 +3,7 @@ package com.krs.backend.models;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Getter
 @Setter
@@ -29,5 +30,5 @@ public class UserNotificationRead {
     private LocalDateTime readAt;
 
     @PrePersist
-    protected void onCreate() { readAt = LocalDateTime.now(); }
+    protected void onCreate() { readAt = LocalDateTime.now(ZoneId.systemDefault()); }
 }

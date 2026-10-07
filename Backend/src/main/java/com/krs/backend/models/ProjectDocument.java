@@ -3,6 +3,7 @@ package com.krs.backend.models;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Getter
@@ -56,14 +57,15 @@ public class ProjectDocument {
 
     @PrePersist
     protected void onCreate() {
-        if (uploadedDate == null) uploadedDate = LocalDateTime.now();
-        if (createdDate == null) createdDate = LocalDateTime.now();
-        if (updateDate == null) updateDate = LocalDateTime.now();
+        ZoneId zone = ZoneId.systemDefault();
+        if (uploadedDate == null) uploadedDate = LocalDateTime.now(zone);
+        if (createdDate == null) createdDate = LocalDateTime.now(zone);
+        if (updateDate == null) updateDate = LocalDateTime.now(zone);
         if (isActive == null) isActive = true;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updateDate = LocalDateTime.now();
+        updateDate = LocalDateTime.now(ZoneId.systemDefault());
     }
 }

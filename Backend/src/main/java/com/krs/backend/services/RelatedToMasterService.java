@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,10 +30,11 @@ public class RelatedToMasterService {
         if (existing.isPresent()) {
             return existing.get();
         }
+        ZoneId zone = ZoneId.systemDefault();
         RelatedToMaster newRecord = RelatedToMaster.builder()
                 .name(titleCaseName)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(zone))
+                .updatedAt(LocalDateTime.now(zone))
                 .build();
         return relatedToMasterRepository.save(newRecord);
     }
@@ -55,13 +57,13 @@ public class RelatedToMasterService {
 
     @Transactional
     public RelatedToMaster updateRelatedTo(Long id, String rawName) {
-        RelatedToMaster record = relatedToMasterRepository.findById(id)
+        RelatedToMaster relatedRecord = relatedToMasterRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Related To Master not found with id: " + id));
         if (rawName != null && !rawName.trim().isEmpty()) {
-            record.setName(toTitleCase(rawName));
+            relatedRecord.setName(toTitleCase(rawName));
         }
-        record.setUpdatedAt(LocalDateTime.now());
-        return relatedToMasterRepository.save(record);
+        relatedRecord.setUpdatedAt(LocalDateTime.now(ZoneId.systemDefault()));
+        return relatedToMasterRepository.save(relatedRecord);
     }
 
     /**

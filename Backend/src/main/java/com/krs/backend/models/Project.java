@@ -5,6 +5,7 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -191,10 +192,10 @@ public class Project {
 
     @PrePersist
     protected void onCreate() { 
-        createdAt = LocalDateTime.now(); 
-        updatedAt = LocalDateTime.now(); 
+        createdAt = LocalDateTime.now(ZoneId.systemDefault()); 
+        updatedAt = LocalDateTime.now(ZoneId.systemDefault()); 
     }
 
     @PreUpdate
-    protected void onUpdate() { updatedAt = LocalDateTime.now(); }
+    protected void onUpdate() { updatedAt = LocalDateTime.now(ZoneId.systemDefault()); }
 }

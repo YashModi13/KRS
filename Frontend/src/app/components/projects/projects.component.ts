@@ -123,6 +123,12 @@ export class ProjectsComponent implements OnInit {
   private filterSubject = new Subject<void>();
   private loadSub?: Subscription;
 
+  // Tender ID Uniqueness Check State
+  tenderIdExists = false;
+  tenderIdChecking = false;
+  tenderIdErrorMsg = '';
+  private tenderIdSubject = new Subject<string>();
+
   // Form Wizard & Navigation State
   formStep: number = 1;
   formViewMode: 'wizard' | 'full' = 'wizard';
@@ -274,6 +280,73 @@ export class ProjectsComponent implements OnInit {
     });
   }
 
+  onlyNumeric(event: KeyboardEvent): boolean {
+    const charCode = event.which ? event.which : event.keyCode;
+    if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+      event.preventDefault();
+      return false;
+    }
+    return true;
+  }
+
+  onTenderIdInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input) {
+      const sanitized = input.value.replace(/[^0-9]/g, '');
+      input.value = sanitized;
+      this.projectData.tenderId = sanitized;
+      if (sanitized.trim()) {
+        this.tenderIdSubject.next(sanitized.trim());
+      } else {
+        this.tenderIdExists = false;
+        this.tenderIdErrorMsg = '';
+      }
+    }
+  }
+
+  validateTenderIdUniqueness(tenderId: string): void {
+    if (!tenderId || !tenderId.trim()) {
+      this.tenderIdExists = false;
+      this.tenderIdErrorMsg = '';
+      return;
+    }
+    this.tenderIdChecking = true;
+    this.projectService.checkTenderIdExists(tenderId.trim(), this.projectData.id).subscribe({
+      next: (res) => {
+        this.tenderIdChecking = false;
+        if (res.exists) {
+          this.tenderIdExists = true;
+          this.tenderIdErrorMsg = `Tender ID "${tenderId}" already exists! Tender ID must be unique.`;
+        } else {
+          this.tenderIdExists = false;
+          this.tenderIdErrorMsg = '';
+        }
+      },
+      error: () => {
+        this.tenderIdChecking = false;
+      }
+    });
+  }
+
+  onNoticeNoInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input) {
+      const upper = input.value.toUpperCase();
+      input.value = upper;
+      this.projectData.noticeNo = upper;
+    }
+  }
+
+  onFilterNoticeNoInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input) {
+      const upper = input.value.toUpperCase();
+      input.value = upper;
+      this.filters['noticeNo'] = upper;
+      this.onSearchInput();
+    }
+  }
+
   ngOnInit() {
     this.pageTitle = Constants.PROJECTS.PAGE_TITLE;
     this.pageSubTitle = Constants.PROJECTS.PAGE_SUBTITLE;
@@ -282,6 +355,12 @@ export class ProjectsComponent implements OnInit {
       debounceTime(400)
     ).subscribe(() => {
       this.applyFilters();
+    });
+
+    this.tenderIdSubject.pipe(
+      debounceTime(350)
+    ).subscribe(tenderId => {
+      this.validateTenderIdUniqueness(tenderId);
     });
 
     this.loadProjects();
@@ -763,6 +842,9 @@ export class ProjectsComponent implements OnInit {
   openCreateMode() {
     this.loadMasterData();
     this.formStep = 1;
+    this.tenderIdExists = false;
+    this.tenderIdChecking = false;
+    this.tenderIdErrorMsg = '';
     this.projectData = {
       workOrderNumber: '', departmentName: '', tenderId: '', noticeNo: '', nameOfWork: '',
       relatedTo: '', refPerson: '', workAwardedStatus: 'Running', estimatedTenderCost: 0,
@@ -775,6 +857,9 @@ export class ProjectsComponent implements OnInit {
     event.stopPropagation();
     this.loadMasterData();
     this.formStep = 1;
+    this.tenderIdExists = false;
+    this.tenderIdChecking = false;
+    this.tenderIdErrorMsg = '';
     this.projectData = { ...project };
     this.mode = 'edit';
   }
@@ -897,6 +982,16 @@ export class ProjectsComponent implements OnInit {
   }
 
   saveProject() {
+    if (this.tenderIdExists) {
+      this.toastService.error(this.tenderIdErrorMsg || 'Tender ID already exists. Please enter a unique Tender ID.');
+      return;
+    }
+    if (this.projectData.tenderId) {
+      this.projectData.tenderId = this.projectData.tenderId.toString().replace(/[^0-9]/g, '');
+    }
+    if (this.projectData.noticeNo) {
+      this.projectData.noticeNo = this.projectData.noticeNo.toUpperCase();
+    }
     if (this.mode === 'edit' && this.projectData.id) {
       this.projectService.updateProject(this.projectData.id, this.projectData).subscribe({
         next: (res) => {

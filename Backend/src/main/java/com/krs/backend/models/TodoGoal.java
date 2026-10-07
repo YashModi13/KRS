@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Entity
 @Table(name = "todo_goals", schema = "krs_schema")
@@ -38,14 +39,14 @@ public class TodoGoal {
     private Boolean isActive = true;
 
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by")
     private User createdBy;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "updated_by")
@@ -57,4 +58,20 @@ public class TodoGoal {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "done_by")
     private User doneBy;
+
+    @PrePersist
+    protected void onCreate() {
+        ZoneId zone = ZoneId.systemDefault();
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now(zone);
+        }
+        if (this.updatedAt == null) {
+            this.updatedAt = LocalDateTime.now(zone);
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now(ZoneId.systemDefault());
+    }
 }

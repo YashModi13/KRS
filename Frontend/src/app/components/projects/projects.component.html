@@ -135,14 +135,14 @@
             <label for="filterTenderId" class="sr-only"
               style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter
               Tender ID</label>
-            <input id="filterTenderId" type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()"
+            <input id="filterTenderId" type="text" inputmode="numeric" (keypress)="onlyNumeric($event)" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()"
               [(ngModel)]="filters['tenderId']" placeholder="🔍 Tender ID" class="col-filter">
           </td>
           <td>
             <label for="filterNoticeNo" class="sr-only"
               style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">Filter
               Notice/Pkg</label>
-            <input id="filterNoticeNo" type="text" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()"
+            <input id="filterNoticeNo" type="text" style="text-transform: uppercase;" (input)="onFilterNoticeNoInput($event)" (keyup.enter)="applyFilters()" (ngModelChange)="onSearchInput()"
               [(ngModel)]="filters['noticeNo']" placeholder="🔍 Notice/Pkg" class="col-filter">
           </td>
           <td>
@@ -898,7 +898,7 @@
 </div>
 
 <!-- UPLOAD DOCUMENT MODAL DIALOG -->
-<div class="modal-backdrop" *ngIf="showUploadModal" (click)="closeUploadModal()"
+<div class="modal-backdrop" *ngIf="showUploadModal" (click)="closeUploadModal()" (keydown)="closeUploadModal()"
   style="position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px);">
   <div class="modal-card" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()"
     style="background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 500px; max-width: 90vw; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
@@ -1027,14 +1027,14 @@
             (input)="showDeptDropdown = true"
             placeholder="E.g. Gujarat Council of School Education Samagra Shiksha" autocomplete="off">
 
-          <div class="autocomplete-dropdown" *ngIf="showDeptDropdown" (click)="$event.stopPropagation()">
-            <div class="dropdown-item create-new-item" (click)="createDepartment(projectData.departmentName)">
+          <div class="autocomplete-dropdown" *ngIf="showDeptDropdown" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+            <button type="button" class="dropdown-item create-new-item" (click)="createDepartment(projectData.departmentName)">
               <span>+ Create New "{{ projectData.departmentName || 'Department' }}"</span>
-            </div>
-            <div class="dropdown-item" *ngFor="let dept of filteredDepartments" (click)="selectDepartment(dept)">
+            </button>
+            <button type="button" class="dropdown-item" *ngFor="let dept of filteredDepartments" (click)="selectDepartment(dept)">
               <span>{{ dept.name }}</span>
               <span class="badge-sub" *ngIf="dept.cityVillage">({{ dept.cityVillage }})</span>
-            </div>
+            </button>
             <div class="dropdown-empty" *ngIf="filteredDepartments.length === 0 && !projectData.departmentName">
               No matching departments
             </div>
@@ -1048,12 +1048,25 @@
 
         <div class="form-group">
           <label for="projNoticeNo">Package No. / Notice No.</label>
-          <input id="projNoticeNo" type="text" [(ngModel)]="projectData.noticeNo" placeholder="E.g. SS/SOE/DEV/4338">
+          <input id="projNoticeNo" type="text" style="text-transform: uppercase;"
+                 (input)="onNoticeNoInput($event)"
+                 [(ngModel)]="projectData.noticeNo" placeholder="E.g. SS/SOE/DEV/4338">
         </div>
 
         <div class="form-group">
           <label for="projTenderId">Tender ID <span class="req-star">*</span></label>
-          <input id="projTenderId" type="text" [(ngModel)]="projectData.tenderId" placeholder="E.g. 125497">
+          <input id="projTenderId" type="text" inputmode="numeric" pattern="[0-9]*"
+                 (keypress)="onlyNumeric($event)"
+                 (input)="onTenderIdInput($event)"
+                 [style.border-color]="tenderIdExists ? '#ef4444' : ''"
+                 [style.box-shadow]="tenderIdExists ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : ''"
+                 [(ngModel)]="projectData.tenderId" placeholder="E.g. 125497">
+          <div *ngIf="tenderIdExists" style="color: #f87171; font-size: 12px; font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+            <span>⚠️</span> {{ tenderIdErrorMsg }}
+          </div>
+          <div *ngIf="tenderIdChecking" style="color: #60a5fa; font-size: 12px; margin-top: 4px;">
+            Checking Tender ID availability...
+          </div>
         </div>
 
         <div class="form-group autocomplete-container">
@@ -1063,13 +1076,13 @@
             (input)="showRelatedToDropdown = true"
             placeholder="E.g. Gokulbhai" autocomplete="off">
 
-          <div class="autocomplete-dropdown" *ngIf="showRelatedToDropdown" (click)="$event.stopPropagation()">
-            <div class="dropdown-item create-new-item" (click)="createRelatedTo(projectData.relatedTo)">
+          <div class="autocomplete-dropdown" *ngIf="showRelatedToDropdown" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+            <button type="button" class="dropdown-item create-new-item" (click)="createRelatedTo(projectData.relatedTo)">
               <span>+ Create New "{{ projectData.relatedTo || 'Related To' }}"</span>
-            </div>
-            <div class="dropdown-item" *ngFor="let rel of filteredRelatedTos" (click)="selectRelatedTo(rel)">
+            </button>
+            <button type="button" class="dropdown-item" *ngFor="let rel of filteredRelatedTos" (click)="selectRelatedTo(rel)">
               <span>{{ rel.name }}</span>
-            </div>
+            </button>
             <div class="dropdown-empty" *ngIf="filteredRelatedTos.length === 0 && !projectData.relatedTo">
               No matching records
             </div>
@@ -1083,13 +1096,13 @@
             (input)="showRefPersonDropdown = true"
             placeholder="E.g. Narenra Nakum" autocomplete="off">
 
-          <div class="autocomplete-dropdown" *ngIf="showRefPersonDropdown" (click)="$event.stopPropagation()">
-            <div class="dropdown-item create-new-item" (click)="createRefPerson(projectData.refPerson)">
+          <div class="autocomplete-dropdown" *ngIf="showRefPersonDropdown" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+            <button type="button" class="dropdown-item create-new-item" (click)="createRefPerson(projectData.refPerson)">
               <span>+ Create New "{{ projectData.refPerson || 'Ref Person' }}"</span>
-            </div>
-            <div class="dropdown-item" *ngFor="let ref of filteredRefPersons" (click)="selectRefPerson(ref)">
+            </button>
+            <button type="button" class="dropdown-item" *ngFor="let ref of filteredRefPersons" (click)="selectRefPerson(ref)">
               <span>{{ ref.name }}</span>
-            </div>
+            </button>
             <div class="dropdown-empty" *ngIf="filteredRefPersons.length === 0 && !projectData.refPerson">
               No matching reference persons
             </div>
@@ -1341,7 +1354,7 @@
 </div>
 
 <!-- LOCATION SUB-SITE MODAL DIALOG -->
-<div *ngIf="showLocationModal" (click)="closeLocationModal()"
+<div *ngIf="showLocationModal" (click)="closeLocationModal()" (keydown)="closeLocationModal()"
   style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
   <div (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()"
     style="background: var(--white); border-radius: 12px; width: 780px; max-width: 95vw; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden;">

@@ -45,7 +45,9 @@ public class NotificationController {
                 User u = userRepository.findUserByUsername(username);
                 if (u != null) return u.getId();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // Ignore security context lookup exceptions for unauthenticated context
+        }
         return 1L; // Fallback for default user
     }
 

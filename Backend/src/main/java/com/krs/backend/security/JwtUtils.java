@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Date;
 
@@ -36,7 +37,7 @@ public class JwtUtils {
         String fingerprint = passwordHash != null && passwordHash.length() > 8
                 ? passwordHash.substring(passwordHash.length() - 8)
                 : "";
-        Instant now = Instant.now();
+        Instant now = Instant.now(Clock.systemUTC());
         return Jwts.builder()
                 .setSubject(username)
                 .claim("role", role)
