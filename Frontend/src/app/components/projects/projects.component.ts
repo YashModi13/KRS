@@ -9,6 +9,14 @@ import { debounceTime } from 'rxjs/operators';
 
 import { ToastService } from '../../services/toast.service';
 
+export type TimeLimitUnit = 'Years' | 'Months' | 'Days';
+
+export interface TimeLimitItem {
+  scope: string;
+  duration: number | null;
+  unit: TimeLimitUnit;
+}
+
 @Component({
   selector: 'app-projects',
   standalone: true,
@@ -21,7 +29,7 @@ export class ProjectsComponent implements OnInit {
   readonly masterDataService = inject(MasterDataService);
   readonly toastService = inject(ToastService);
   readonly Constants = Constants;
-  
+
   pageTitle = '';
   pageSubTitle = '';
 
@@ -120,14 +128,14 @@ export class ProjectsComponent implements OnInit {
   sortDir = 'desc';
   filters: any = { status: '', workAwardedStatus: '' };
 
-  private filterSubject = new Subject<void>();
+  private readonly filterSubject = new Subject<void>();
   private loadSub?: Subscription;
 
   // Tender ID Uniqueness Check State
   tenderIdExists = false;
   tenderIdChecking = false;
   tenderIdErrorMsg = '';
-  private tenderIdSubject = new Subject<string>();
+  private readonly tenderIdSubject = new Subject<string>();
 
   // Form Wizard & Navigation State
   formStep: number = 1;
@@ -170,19 +178,19 @@ export class ProjectsComponent implements OnInit {
   get filteredDepartments(): DepartmentMaster[] {
     const search = (this.projectData.departmentName || '').trim().toLowerCase();
     if (!search) return this.departmentMasters;
-    return this.departmentMasters.filter(d => d.name && d.name.toLowerCase().includes(search));
+    return this.departmentMasters.filter(d => d.name?.toLowerCase().includes(search));
   }
 
   get filteredRelatedTos(): RelatedToMaster[] {
     const search = (this.projectData.relatedTo || '').trim().toLowerCase();
     if (!search) return this.relatedToMasters;
-    return this.relatedToMasters.filter(r => r.name && r.name.toLowerCase().includes(search));
+    return this.relatedToMasters.filter(r => r.name?.toLowerCase().includes(search));
   }
 
   get filteredRefPersons(): RefPersonMaster[] {
     const search = (this.projectData.refPerson || '').trim().toLowerCase();
     if (!search) return this.refPersonMasters;
-    return this.refPersonMasters.filter(r => r.name && r.name.toLowerCase().includes(search));
+    return this.refPersonMasters.filter(r => r.name?.toLowerCase().includes(search));
   }
 
   loadMasterData() {
@@ -281,8 +289,11 @@ export class ProjectsComponent implements OnInit {
   }
 
   onlyNumeric(event: KeyboardEvent): boolean {
-    const charCode = event.which ? event.which : event.keyCode;
-    if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+    const key = event.key;
+    if (event.isComposing || key === 'Backspace' || key === 'Tab' || key === 'ArrowLeft' || key === 'ArrowRight' || key === 'Delete') {
+      return true;
+    }
+    if (!/^\d$/.test(key)) {
       event.preventDefault();
       return false;
     }
@@ -292,7 +303,7 @@ export class ProjectsComponent implements OnInit {
   onTenderIdInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input) {
-      const sanitized = input.value.replace(/[^0-9]/g, '');
+      const sanitized = input.value.replace(/\D/g, '');
       input.value = sanitized;
       this.projectData.tenderId = sanitized;
       if (sanitized.trim()) {
@@ -305,7 +316,7 @@ export class ProjectsComponent implements OnInit {
   }
 
   validateTenderIdUniqueness(tenderId: string): void {
-    if (!tenderId || !tenderId.trim()) {
+    if (!tenderId?.trim()) {
       this.tenderIdExists = false;
       this.tenderIdErrorMsg = '';
       return;
@@ -350,7 +361,7 @@ export class ProjectsComponent implements OnInit {
   ngOnInit() {
     this.pageTitle = Constants.PROJECTS.PAGE_TITLE;
     this.pageSubTitle = Constants.PROJECTS.PAGE_SUBTITLE;
-    
+
     this.filterSubject.pipe(
       debounceTime(400)
     ).subscribe(() => {
@@ -566,7 +577,7 @@ export class ProjectsComponent implements OnInit {
       next: (res) => {
         this.projects = res.data;
         this.totalRecords = res.total;
-        
+
         this.projects.forEach(p => {
           if (!p.status) {
             if (p.workAwardedStatus === 'Work Completed') {
@@ -850,6 +861,7 @@ export class ProjectsComponent implements OnInit {
       relatedTo: '', refPerson: '', workAwardedStatus: 'Running', estimatedTenderCost: 0,
       tenderedCost: 0, securityDepositAmount: 0, retentionMoneyPerBill: 0, extraExcessAmount: 0
     };
+    this.initTimeLimitItemsFromProject();
     this.mode = 'create';
   }
 
@@ -861,7 +873,17 @@ export class ProjectsComponent implements OnInit {
     this.tenderIdChecking = false;
     this.tenderIdErrorMsg = '';
     this.projectData = { ...project };
+    this.initTimeLimitItemsFromProject(project);
     this.mode = 'edit';
+
+    if (project.id) {
+      this.projectService.getProjectById(project.id).subscribe({
+        next: (fullProject) => {
+          this.projectData = { ...fullProject };
+          this.initTimeLimitItemsFromProject(fullProject);
+        }
+      });
+    }
   }
 
   deleteProject(id: number, event: Event) {
@@ -981,13 +1003,262 @@ export class ProjectsComponent implements OnInit {
     }
   }
 
+  // Cost Validation & Auto-calculation Handlers
+  onCostChange() {
+    const est = Number(this.projectData.estimatedTenderCost) || 0;
+    const ted = Number(this.projectData.tenderedCost) || 0;
+    if (est > 0 && ted > 0) {
+      const pct = ((ted - est) / est) * 100;
+      this.projectData.aboveBelowPercentage = Number(pct.toFixed(2));
+    }
+  }
+
+  onAboveBelowChange() {
+    const est = Number(this.projectData.estimatedTenderCost) || 0;
+    const pct = Number(this.projectData.aboveBelowPercentage) || 0;
+    if (est > 0) {
+      const ted = est * (1 + (pct / 100));
+      this.projectData.tenderedCost = Number(ted.toFixed(2));
+    }
+  }
+
+  hasCostInput(): boolean {
+    const est = Number(this.projectData?.estimatedTenderCost) || 0;
+    const ted = Number(this.projectData?.tenderedCost) || 0;
+    return est > 0 || ted > 0;
+  }
+
+  isCostExceeded(): boolean {
+    const est = Number(this.projectData?.estimatedTenderCost) || 0;
+    const ted = Number(this.projectData?.tenderedCost) || 0;
+    if (ted > 0 && (est <= 0 || ted > est)) {
+      return true;
+    }
+    return false;
+  }
+
+  getCostDifferencePercentage(): string {
+    const est = Number(this.projectData?.estimatedTenderCost) || 0;
+    const ted = Number(this.projectData?.tenderedCost) || 0;
+    if (est <= 0) {
+      return ted > 0 ? 'N/A (Est. Cost is ₹0)' : '0.00%';
+    }
+    const pct = Math.abs(((ted - est) / est) * 100);
+    return pct.toFixed(2) + '%';
+  }
+
+  getCostDifferenceAmount(): number {
+    const est = Number(this.projectData?.estimatedTenderCost) || 0;
+    const ted = Number(this.projectData?.tenderedCost) || 0;
+    return Math.abs(ted - est);
+  }
+
+  // --- Time Limit Table & Target Close Date Calculation ---
+  readonly timeLimitUnits = Constants.TIME_LIMIT.UNITS;
+
+  timeLimitItems: TimeLimitItem[] = [];
+
+  addTimeLimitRow() {
+    this.timeLimitItems.push({ scope: '', duration: null, unit: 'Months' });
+    this.updateProjectTimeLimitSummary();
+  }
+
+  removeTimeLimitRow(index: number) {
+    if (this.timeLimitItems.length > 0) {
+      this.timeLimitItems.splice(index, 1);
+      this.updateProjectTimeLimitSummary();
+    }
+  }
+
+  getTotalTimeLimitYears(): number {
+    return this.timeLimitItems
+      .filter(item => item.unit === 'Years' && item.duration)
+      .reduce((sum, item) => sum + (Number(item.duration) || 0), 0);
+  }
+
+  getTotalTimeLimitMonths(): number {
+    return this.timeLimitItems
+      .filter(item => item.unit === 'Months' && item.duration)
+      .reduce((sum, item) => sum + (Number(item.duration) || 0), 0);
+  }
+
+  getTotalTimeLimitDays(): number {
+    return this.timeLimitItems
+      .filter(item => item.unit === 'Days' && item.duration)
+      .reduce((sum, item) => sum + (Number(item.duration) || 0), 0);
+  }
+
+  getTargetCloseDate(): Date | null {
+    if (!this.projectData.workOrderDate) {
+      return null;
+    }
+    const startDate = new Date(this.projectData.workOrderDate);
+    if (Number.isNaN(startDate.getTime())) {
+      return null;
+    }
+    const totalYears = this.getTotalTimeLimitYears();
+    const totalMonths = this.getTotalTimeLimitMonths();
+    const totalDays = this.getTotalTimeLimitDays();
+
+    const target = new Date(startDate);
+    if (totalYears > 0) {
+      target.setFullYear(target.getFullYear() + totalYears);
+    }
+    if (totalMonths > 0) {
+      target.setMonth(target.getMonth() + totalMonths);
+    }
+    if (totalDays > 0) {
+      target.setDate(target.getDate() + totalDays);
+    }
+    return target;
+  }
+
+  getFormattedTargetCloseDate(): string {
+    const target = this.getTargetCloseDate();
+    if (!target) {
+      return 'Select Work Order Date to calculate target close date';
+    }
+    const yyyy = target.getFullYear();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthStr = monthNames[target.getMonth()];
+    const dd = String(target.getDate()).padStart(2, '0');
+    return `${dd} ${monthStr} ${yyyy}`;
+  }
+
+  private buildTimeLimitSummaryString(parts: string[], totalStr: string, targetDateStr: string): string {
+    let summary = parts.join('; ');
+    if (summary) {
+      summary += ` (Total: ${totalStr}`;
+      if (this.projectData.workOrderDate && targetDateStr && !targetDateStr.includes('Select')) {
+        summary += ` | Target Close: ${targetDateStr}`;
+      }
+      summary += `)`;
+    } else {
+      summary = `Total Time Limit: ${totalStr}`;
+    }
+    return summary;
+  }
+
+  updateProjectTimeLimitSummary() {
+    if (!this.timeLimitItems || this.timeLimitItems.length === 0) {
+      this.projectData.timeLimit = '';
+      this.projectData.timeLimitItems = [];
+      return;
+    }
+    this.projectData.timeLimitItems = this.timeLimitItems.map((item, idx) => ({
+      scope: item.scope,
+      duration: item.duration,
+      unit: item.unit,
+      sortOrder: idx + 1
+    }));
+
+    const parts = this.timeLimitItems
+      .filter(i => i.scope && i.duration)
+      .map(i => `${i.scope} - ${i.duration} ${i.unit}`);
+
+    const totalYears = this.getTotalTimeLimitYears();
+    const totalMonths = this.getTotalTimeLimitMonths();
+    const totalDays = this.getTotalTimeLimitDays();
+    const totals: string[] = [];
+    if (totalYears > 0) totals.push(`${totalYears} ${totalYears === 1 ? 'Year' : 'Years'}`);
+    if (totalMonths > 0) totals.push(`${totalMonths} ${totalMonths === 1 ? 'Month' : 'Months'}`);
+    if (totalDays > 0) totals.push(`${totalDays} ${totalDays === 1 ? 'Day' : 'Days'}`);
+
+    const totalStr = totals.length > 0 ? totals.join(', ') : '0 Days';
+    const targetDateStr = this.getFormattedTargetCloseDate();
+    this.projectData.timeLimit = this.buildTimeLimitSummaryString(parts, totalStr, targetDateStr);
+
+    const target = this.getTargetCloseDate();
+    if (target) {
+      const yyyy = target.getFullYear();
+      const mm = String(target.getMonth() + 1).padStart(2, '0');
+      const dd = String(target.getDate()).padStart(2, '0');
+      this.projectData.completionDateActual = `${yyyy}-${mm}-${dd}`;
+    }
+  }
+
+  private parseSingleTimeLimitRow(trimmed: string): TimeLimitItem {
+    const dashIdx = trimmed.lastIndexOf('-');
+    if (dashIdx > 0) {
+      const scope = trimmed.substring(0, dashIdx).trim();
+      const right = trimmed.substring(dashIdx + 1).trim();
+      const durMatch = /^(\d+)\s*([a-zA-Z]+)$/.exec(right);
+      if (durMatch) {
+        const duration = Number.parseInt(durMatch[1], 10);
+        const unitRaw = durMatch[2].toLowerCase();
+        let unit: TimeLimitUnit = 'Months';
+        if (unitRaw.startsWith('year')) unit = 'Years';
+        else if (unitRaw.startsWith('day')) unit = 'Days';
+        return { scope, duration, unit };
+      }
+    }
+
+    const digitsOnly = trimmed.replace(/\D/g, '');
+    if (digitsOnly) {
+      const duration = Number.parseInt(digitsOnly, 10);
+      const lower = trimmed.toLowerCase();
+      let unit: TimeLimitUnit = 'Months';
+      if (lower.includes('year')) unit = 'Years';
+      else if (lower.includes('day')) unit = 'Days';
+      return { scope: 'General Scope', duration, unit };
+    }
+
+    return { scope: trimmed, duration: null, unit: 'Months' };
+  }
+
+  initTimeLimitItemsFromProject(project?: Project) {
+    this.timeLimitItems = [];
+    if (project?.timeLimitItems && project.timeLimitItems.length > 0) {
+      this.timeLimitItems = project.timeLimitItems.map(item => ({
+        scope: item.scope || '',
+        duration: item.duration || null,
+        unit: (item.unit as TimeLimitUnit) || 'Months'
+      }));
+      this.updateProjectTimeLimitSummary();
+      return;
+    }
+
+    const timeLimitStr = project?.timeLimit;
+    if (!timeLimitStr?.trim()) {
+      const def = Constants.TIME_LIMIT.DEFAULT_ITEM;
+      this.timeLimitItems = [{ scope: def.scope, duration: def.duration, unit: def.unit as TimeLimitUnit }];
+      this.updateProjectTimeLimitSummary();
+      return;
+    }
+
+    const cleanStr = timeLimitStr.replace(/\(Total:.*\)/i, '').trim();
+    const rows = cleanStr.split(';');
+    for (const r of rows) {
+      const trimmed = r.trim();
+      if (trimmed) {
+        this.timeLimitItems.push(this.parseSingleTimeLimitRow(trimmed));
+      }
+    }
+
+    if (this.timeLimitItems.length === 0) {
+      const def = Constants.TIME_LIMIT.DEFAULT_ITEM;
+      this.timeLimitItems = [{ scope: def.scope, duration: def.duration, unit: def.unit as TimeLimitUnit }];
+    }
+    this.updateProjectTimeLimitSummary();
+  }
+
   saveProject() {
+    this.updateProjectTimeLimitSummary();
     if (this.tenderIdExists) {
       this.toastService.error(this.tenderIdErrorMsg || 'Tender ID already exists. Please enter a unique Tender ID.');
       return;
     }
+    if (this.isCostExceeded()) {
+      const est = Number(this.projectData.estimatedTenderCost) || 0;
+      const ted = Number(this.projectData.tenderedCost) || 0;
+      this.toastService.error(
+        Constants.MESSAGES.VALIDATION?.TENDER_COST_EXCEEDED ||
+        `Validation Error: Tendered Cost (₹${ted.toLocaleString('en-IN')}) cannot exceed Estimated Tender Cost (₹${est.toLocaleString('en-IN')}).`
+      );
+      return;
+    }
     if (this.projectData.tenderId) {
-      this.projectData.tenderId = this.projectData.tenderId.toString().replace(/[^0-9]/g, '');
+      this.projectData.tenderId = this.projectData.tenderId.toString().replace(/\D/g, '');
     }
     if (this.projectData.noticeNo) {
       this.projectData.noticeNo = this.projectData.noticeNo.toUpperCase();

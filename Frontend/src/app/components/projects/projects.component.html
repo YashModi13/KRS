@@ -583,7 +583,14 @@
           <div class="detail-item"><strong>Work Order No:</strong> {{selectedProject.workOrderNumber || 'N/A'}}</div>
           <div class="detail-item"><strong>Work Order Date:</strong> {{selectedProject.workOrderDate ?
             (selectedProject.workOrderDate | date:'dd MMM yyyy') : 'N/A'}}</div>
-          <div class="detail-item"><strong>Time Limit:</strong> {{selectedProject.timeLimit || 'N/A'}}</div>
+          <div class="detail-item">
+            <strong>Time Limit Summary:</strong> {{selectedProject.timeLimit || 'N/A'}}
+            <div *ngIf="selectedProject.timeLimitItems && selectedProject.timeLimitItems.length > 0" style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
+              <span *ngFor="let item of selectedProject.timeLimitItems" class="badge badge-blue" style="font-size: 0.8rem;">
+                {{ item.scope }}: {{ item.duration }} {{ item.unit }}
+              </span>
+            </div>
+          </div>
           <div class="detail-item"><strong>Target Completion Date:</strong> {{selectedProject.completionDateActual ?
             (selectedProject.completionDateActual | date:'dd MMM yyyy') : 'N/A'}}</div>
           <div class="detail-item"><strong>Defects Liability Period (DLP):</strong>
@@ -1147,15 +1154,62 @@
       <div class="grid grid-3" style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
         <div class="form-group">
           <label for="projEstCost">Estimated Tender Cost (EST. COST)</label>
-          <input id="projEstCost" type="number" [(ngModel)]="projectData.estimatedTenderCost" placeholder="27980700.00">
+          <input id="projEstCost" type="number" [(ngModel)]="projectData.estimatedTenderCost" (ngModelChange)="onCostChange()" placeholder="27980700.00">
         </div>
         <div class="form-group">
-          <label for="projTedCost">Tendered Cost (After Negotiation)</label>
-          <input id="projTedCost" type="number" [(ngModel)]="projectData.tenderedCost" placeholder="28960024.50">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label for="projTedCost" style="margin-bottom: 0;">Tendered Cost (After Negotiation)</label>
+            <span *ngIf="isCostExceeded()" class="field-error-pill"><i class="fas fa-exclamation-triangle"></i> Exceeds Limit</span>
+            <span *ngIf="!isCostExceeded() && (projectData.estimatedTenderCost || 0) > 0 && (projectData.tenderedCost || 0) > 0" class="field-success-pill"><i class="fas fa-check-circle"></i> Within Budget</span>
+          </div>
+          <input id="projTedCost" type="number" [(ngModel)]="projectData.tenderedCost" (ngModelChange)="onCostChange()" [class.input-invalid]="isCostExceeded()" placeholder="28960024.50">
         </div>
         <div class="form-group">
           <label for="projAboveBelow">Rate / Above Below %</label>
-          <input id="projAboveBelow" type="number" [(ngModel)]="projectData.aboveBelowPercentage" placeholder="E.g. 3.50 or -5.2">
+          <input id="projAboveBelow" type="number" [(ngModel)]="projectData.aboveBelowPercentage" (ngModelChange)="onAboveBelowChange()" placeholder="E.g. 3.50 or -5.2">
+        </div>
+      </div>
+
+      <!-- Real-time Premium Cost Validation Banner Card -->
+      <div *ngIf="hasCostInput()" class="cost-validation-banner" style="margin-top: 16px;">
+        <!-- DANGER / COST EXCEEDED -->
+        <div *ngIf="isCostExceeded()" class="cost-alert cost-alert-danger">
+          <div class="cost-alert-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="cost-alert-content">
+            <div class="cost-alert-title">
+              <span *ngIf="(projectData.estimatedTenderCost || 0) <= 0">⚠️ Validation Error: Estimated Tender Cost Missing (₹0.00)</span>
+              <span *ngIf="(projectData.estimatedTenderCost || 0) > 0">⚠️ Validation Error: Maximum Cost Limit Exceeded</span>
+            </div>
+            <div class="cost-alert-body">
+              <ng-container *ngIf="(projectData.estimatedTenderCost || 0) <= 0">
+                Tendered Cost <strong>(₹{{ (projectData.tenderedCost || 0) | number:'1.2-2' }})</strong> was entered, but Estimated Tender Cost is set to <strong>₹0.00</strong>. Excess Amount: <strong>+₹{{ getCostDifferenceAmount() | number:'1.2-2' }}</strong>.
+              </ng-container>
+              <ng-container *ngIf="(projectData.estimatedTenderCost || 0) > 0">
+                Tendered Cost <strong>(₹{{ (projectData.tenderedCost || 0) | number:'1.2-2' }})</strong> exceeds Estimated Cost <strong>(₹{{ (projectData.estimatedTenderCost || 0) | number:'1.2-2' }})</strong> by <strong>+{{ getCostDifferencePercentage() }}</strong> (+₹{{ getCostDifferenceAmount() | number:'1.2-2' }}).
+              </ng-container>
+            </div>
+            <div class="cost-alert-hint-badge">
+              <i class="fas fa-lock"></i> Estimated Tender Cost must be greater than or equal to Tendered Cost (After Negotiation). Project saving is blocked until corrected.
+            </div>
+          </div>
+        </div>
+
+        <!-- SUCCESS / VALID BUDGET -->
+        <div *ngIf="!isCostExceeded() && (projectData.estimatedTenderCost || 0) > 0" class="cost-alert cost-alert-success">
+          <div class="cost-alert-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="cost-alert-content">
+            <div class="cost-alert-title">
+              ✓ Cost Validation Passed
+            </div>
+            <div class="cost-alert-body">
+              Tendered Cost <strong>(₹{{ (projectData.tenderedCost || 0) | number:'1.2-2' }})</strong> is within Estimated Cost budget <strong>(₹{{ (projectData.estimatedTenderCost || 0) | number:'1.2-2' }})</strong>
+              <span *ngIf="getCostDifferencePercentage()">({{ (projectData.aboveBelowPercentage || 0) <= 0 ? (getCostDifferencePercentage() + ' below estimate') : (getCostDifferencePercentage() + ' above estimate') }})</span>.
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1170,7 +1224,7 @@
         </div>
         <div class="form-group">
           <label for="projWorkOrderDate">Work Order Date</label>
-          <input id="projWorkOrderDate" type="date" [(ngModel)]="projectData.workOrderDate">
+          <input id="projWorkOrderDate" type="date" [(ngModel)]="projectData.workOrderDate" (ngModelChange)="updateProjectTimeLimitSummary()">
         </div>
         <div class="form-group">
           <label for="projWorkAwardedStatus">Work Awarded Status</label>
@@ -1184,15 +1238,139 @@
         </div>
       </div>
 
-      <div class="grid grid-2" style="margin-top: 15px;">
-        <div class="form-group">
-          <label for="projTimeLimit">Time Limit</label>
-          <input id="projTimeLimit" type="text" [(ngModel)]="projectData.timeLimit" placeholder="Site Up To 4 Classroom - 6 Months...">
+      <!-- Executive Dynamic Time Limit Container & Target Close Date Calculation -->
+      <div class="tl-section-card">
+        <!-- Header -->
+        <div class="tl-section-header">
+          <div class="tl-header-title-group">
+            <div class="tl-header-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div>
+              <h4 class="tl-header-title">Scope-wise Time Limits</h4>
+              <p class="tl-header-subtitle">Configure custom work scope items dynamically. Total duration auto-calculates Target Close Date.</p>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary tl-add-btn" (click)="addTimeLimitRow()">
+            <span>➕</span> Add Time Limit Scope Row
+          </button>
         </div>
-        <div class="form-group">
-          <label for="projDefectsLiabilityPeriod">Defects Liability Period</label>
-          <input id="projDefectsLiabilityPeriod" type="text" [(ngModel)]="projectData.defectsLiabilityPeriod" placeholder="4 years from certified date of completion">
+
+        <!-- Dynamic Table -->
+        <div class="tl-table-container">
+          <table class="tl-master-table">
+            <thead>
+              <tr>
+                <th class="text-center" style="width: 50px;">#</th>
+                <th>WORK SCOPE / ITEM CATEGORY</th>
+                <th style="width: 140px;">DURATION</th>
+                <th style="width: 130px;">UNIT</th>
+                <th class="text-center" style="width: 160px;">CALCULATED TIME</th>
+                <th class="text-center" style="width: 70px;">ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of timeLimitItems; let i = index" class="tl-row">
+                <td class="text-center tl-index-cell">{{ i + 1 }}</td>
+                <td>
+                  <input [id]="'timeLimitScope_' + i" aria-label="Work Scope Category" type="text"
+                    class="tl-control-input" [(ngModel)]="item.scope" (ngModelChange)="updateProjectTimeLimitSummary()"
+                    placeholder="E.g. Site Up To 4 Classroom">
+                </td>
+                <td>
+                  <input [id]="'timeLimitDuration_' + i" aria-label="Duration" type="number"
+                    class="tl-control-input text-center" [(ngModel)]="item.duration" (ngModelChange)="updateProjectTimeLimitSummary()"
+                    min="1" placeholder="Duration">
+                </td>
+                <td>
+                  <select [id]="'timeLimitUnit_' + i" aria-label="Duration Unit"
+                    class="tl-control-select" [(ngModel)]="item.unit" (ngModelChange)="updateProjectTimeLimitSummary()">
+                    <option *ngFor="let u of timeLimitUnits" [value]="u">{{ u }}</option>
+                  </select>
+                </td>
+                <td class="text-center">
+                  <span class="tl-calc-pill">
+                    ⏱️ {{ item.duration || 0 }} {{ item.unit }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button type="button" class="tl-btn-delete" (click)="removeTimeLimitRow(i)" title="Remove Scope Item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="timeLimitItems.length === 0">
+                <td colspan="6" class="tl-empty-state">
+                  ℹ️ No time limit scopes configured yet. Click <strong>"+ Add Time Limit Scope Row"</strong> above to begin.
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+
+        <!-- Target Close Date Calculation Dashboard Grid -->
+        <div class="tl-dashboard-grid">
+          <!-- Card 1: Formula & Duration Breakdown -->
+          <div class="tl-dash-card tl-dash-formula-card">
+            <div class="tl-dash-card-header">
+              <span class="tl-dash-badge">FORMULA LOGIC</span>
+              <span class="tl-formula-code">Start Date (WO Date) + Sum(Scope Time Limits)</span>
+            </div>
+            <div class="tl-dash-card-body">
+              <div class="tl-stat-group">
+                <span class="tl-stat-label">Total Time Limit:</span>
+                <span class="tl-stat-value-gold">
+                  <ng-container *ngIf="getTotalTimeLimitYears() > 0">{{ getTotalTimeLimitYears() }} Yrs </ng-container>
+                  <ng-container *ngIf="getTotalTimeLimitMonths() > 0">{{ getTotalTimeLimitMonths() }} Mths </ng-container>
+                  <ng-container *ngIf="getTotalTimeLimitDays() > 0">{{ getTotalTimeLimitDays() }} Days</ng-container>
+                  <ng-container *ngIf="getTotalTimeLimitYears() === 0 && getTotalTimeLimitMonths() === 0 && getTotalTimeLimitDays() === 0">0 Days</ng-container>
+                </span>
+              </div>
+              <div class="tl-stat-group">
+                <span class="tl-stat-label">Work Order Start Date:</span>
+                <span class="tl-stat-value-white">
+                  📅 {{ projectData.workOrderDate ? (projectData.workOrderDate | date:'dd MMM yyyy') : 'Not Set' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Calculated Target Close Date Display -->
+          <div class="tl-dash-card tl-dash-target-card">
+            <div class="tl-dash-card-header">
+              <span class="tl-dash-badge green">TARGET COMPLETION DATE</span>
+            </div>
+            <div class="tl-dash-card-body align-center">
+              <div *ngIf="projectData.workOrderDate" class="tl-target-date-emerald">
+                <span>🎯 {{ getFormattedTargetCloseDate() }}</span>
+              </div>
+              <div *ngIf="!projectData.workOrderDate" class="tl-target-date-warning">
+                <span>⚠️ Select Work Order Date to calculate target date</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Read-only Summary Bar for Tender Database -->
+        <div class="tl-summary-container">
+          <label for="projTimeLimit" class="tl-summary-label">
+            📋 Generated Time Limit Summary (Auto-saved to Tender Database)
+          </label>
+          <input id="projTimeLimit" type="text" class="tl-summary-input" [(ngModel)]="projectData.timeLimit" readonly>
+        </div>
+      </div>
+
+      <!-- Defects Liability Period Field -->
+      <div class="form-group" style="margin-top: 15px;">
+        <label for="projDefectsLiabilityPeriod">Defects Liability Period (DLP)</label>
+        <input id="projDefectsLiabilityPeriod" type="text" [(ngModel)]="projectData.defectsLiabilityPeriod" placeholder="4 years from certified date of completion">
       </div>
 
       <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);">
@@ -1354,96 +1532,120 @@
 </div>
 
 <!-- LOCATION SUB-SITE MODAL DIALOG -->
-<div *ngIf="showLocationModal" (click)="closeLocationModal()" (keydown)="closeLocationModal()"
-  style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-  <div (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()"
-    style="background: var(--white); border-radius: 12px; width: 780px; max-width: 95vw; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden;">
-    <div
-      style="padding: 16px 20px; background: var(--grey-l); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="font-size: 16px; font-weight: 700; color: var(--text); margin: 0;">{{locationModalMode === 'add' ? 'Add Location Sub-Site' : 'Edit Location Sub-Site'}}</h3>
-      <button (click)="closeLocationModal()"
-        style="background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted);">✕</button>
+<div *ngIf="showLocationModal" class="location-modal-overlay" (click)="closeLocationModal()" (keydown)="closeLocationModal()">
+  <div class="location-modal-dialog" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+    <div class="location-modal-header">
+      <h3>
+        <i class="fas fa-map-marker-alt" style="color: var(--accent);"></i>
+        {{locationModalMode === 'add' ? 'Add Location Sub-Site' : 'Edit Location Sub-Site'}}
+      </h3>
+      <button type="button" class="close-btn" (click)="closeLocationModal()" title="Close Modal">✕</button>
     </div>
 
-    <div style="padding: 20px; max-height: 75vh; overflow-y: auto;">
-      <div class="grid grid-3">
-        <div class="form-group">
-          <label for="locBlock">Block / Taluka</label>
-          <input id="locBlock" type="text" [(ngModel)]="editingLocation.block" placeholder="E.g. DWARKA">
+    <div class="location-modal-body">
+      <!-- Section 1: School & Location Master Info -->
+      <div>
+        <div class="modal-section-divider">
+          <i class="fas fa-school"></i> School & Location Identification
         </div>
-        <div class="form-group">
-          <label for="locSchoolId">School ID</label>
-          <input id="locSchoolId" type="text" [(ngModel)]="editingLocation.schoolId" placeholder="E.g. 24290204001">
-        </div>
-        <div class="form-group">
-          <label for="locSchoolName">School Name</label>
-          <input id="locSchoolName" type="text" [(ngModel)]="editingLocation.schoolName" placeholder="E.g. SURAJ KARADI TALUKA SHALA">
-        </div>
-        <div class="form-group">
-          <label for="locHead">HEAD</label>
-          <input id="locHead" type="text" [(ngModel)]="editingLocation.head" placeholder="E.g. NON-SOE / SOE">
-        </div>
-        <div class="form-group">
-          <label for="locRepairing">REPAIRING</label>
-          <input id="locRepairing" type="text" [(ngModel)]="editingLocation.repairing" placeholder="E.g. YES / NO">
-        </div>
-        <div class="form-group">
-          <label for="locNewAcr">NEW ACR</label>
-          <input id="locNewAcr" type="text" [(ngModel)]="editingLocation.newAcr" placeholder="E.g. 5">
-        </div>
-        <div class="form-group">
-          <label for="locNewMdmSqm">NEW MDM (SQM)</label>
-          <input id="locNewMdmSqm" type="text" [(ngModel)]="editingLocation.newMdmSqm" placeholder="E.g. 0">
-        </div>
-        <div class="form-group">
-          <label for="locNewCwRmt">NEW CW (RMT)</label>
-          <input id="locNewCwRmt" type="text" [(ngModel)]="editingLocation.newCwRmt" placeholder="E.g. 0">
-        </div>
-        <div class="form-group">
-          <label for="locGtb">GTB</label>
-          <input id="locGtb" type="text" [(ngModel)]="editingLocation.gtb" placeholder="E.g. 0">
-        </div>
-        <div class="form-group">
-          <label for="locBtb">BTB</label>
-          <input id="locBtb" type="text" [(ngModel)]="editingLocation.btb" placeholder="E.g. 2+4">
-        </div>
-        <div class="form-group">
-          <label for="locCwsnToilet">CWSN TOILET</label>
-          <input id="locCwsnToilet" type="text" [(ngModel)]="editingLocation.cwsnToilet" placeholder="E.g. 0">
-        </div>
-        <div class="form-group">
-          <label for="locShed">SHED</label>
-          <input id="locShed" type="text" [(ngModel)]="editingLocation.shed" placeholder="E.g. 0">
-        </div>
-        <div class="form-group">
-          <label for="locStartDate">Site Start Date</label>
-          <input id="locStartDate" type="date" [(ngModel)]="editingLocation.startDate">
-        </div>
-        <div class="form-group">
-          <label for="locClosedDate">Site Closed Date</label>
-          <input id="locClosedDate" type="date" [(ngModel)]="editingLocation.closedDate">
-        </div>
-        <div class="form-group">
-          <label for="locStatus">Status</label>
-          <select id="locStatus" [(ngModel)]="editingLocation.status"
-            style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--white); color: var(--text);">
-            <option value="Running">Running</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Hold">Hold</option>
-          </select>
+        <div class="grid grid-3">
+          <div class="form-group">
+            <label for="locBlock">Block / Taluka</label>
+            <input id="locBlock" type="text" [(ngModel)]="editingLocation.block" placeholder="E.g. DWARKA">
+          </div>
+          <div class="form-group">
+            <label for="locSchoolId">School ID</label>
+            <input id="locSchoolId" type="text" [(ngModel)]="editingLocation.schoolId" placeholder="E.g. 24290204001">
+          </div>
+          <div class="form-group">
+            <label for="locSchoolName">School Name</label>
+            <input id="locSchoolName" type="text" [(ngModel)]="editingLocation.schoolName" placeholder="E.g. SURAJ KARADI TALUKA SHALA">
+          </div>
         </div>
       </div>
 
-      <p
-        style="font-size: 11px; color: var(--muted); margin-top: 15px; background: var(--grey-l); padding: 8px 12px; border-radius: 6px;">
-        💡 <strong>Auto-Date Sync:</strong> Saving this location will automatically recalculate the overall Project
-        Start Date (MIN location start date) and Project Closed Date (MAX location closed date).
-      </p>
+      <!-- Section 2: Work Items & Asset Scope -->
+      <div>
+        <div class="modal-section-divider">
+          <i class="fas fa-cubes"></i> Asset Quantities & Work Scope
+        </div>
+        <div class="grid grid-3">
+          <div class="form-group">
+            <label for="locHead">HEAD</label>
+            <input id="locHead" type="text" [(ngModel)]="editingLocation.head" placeholder="E.g. NON-SOE / SOE">
+          </div>
+          <div class="form-group">
+            <label for="locRepairing">REPAIRING</label>
+            <input id="locRepairing" type="text" [(ngModel)]="editingLocation.repairing" placeholder="E.g. YES / NO">
+          </div>
+          <div class="form-group">
+            <label for="locNewAcr">NEW ACR</label>
+            <input id="locNewAcr" type="text" [(ngModel)]="editingLocation.newAcr" placeholder="E.g. 5">
+          </div>
+          <div class="form-group">
+            <label for="locNewMdmSqm">NEW MDM (SQM)</label>
+            <input id="locNewMdmSqm" type="text" [(ngModel)]="editingLocation.newMdmSqm" placeholder="E.g. 0">
+          </div>
+          <div class="form-group">
+            <label for="locNewCwRmt">NEW CW (RMT)</label>
+            <input id="locNewCwRmt" type="text" [(ngModel)]="editingLocation.newCwRmt" placeholder="E.g. 0">
+          </div>
+          <div class="form-group">
+            <label for="locGtb">GTB</label>
+            <input id="locGtb" type="text" [(ngModel)]="editingLocation.gtb" placeholder="E.g. 0">
+          </div>
+          <div class="form-group">
+            <label for="locBtb">BTB</label>
+            <input id="locBtb" type="text" [(ngModel)]="editingLocation.btb" placeholder="E.g. 2+4">
+          </div>
+          <div class="form-group">
+            <label for="locCwsnToilet">CWSN TOILET</label>
+            <input id="locCwsnToilet" type="text" [(ngModel)]="editingLocation.cwsnToilet" placeholder="E.g. 0">
+          </div>
+          <div class="form-group">
+            <label for="locShed">SHED</label>
+            <input id="locShed" type="text" [(ngModel)]="editingLocation.shed" placeholder="E.g. 0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Timeline & Work Status -->
+      <div>
+        <div class="modal-section-divider">
+          <i class="fas fa-calendar-alt"></i> Timeline & Site Status
+        </div>
+        <div class="grid grid-3">
+          <div class="form-group">
+            <label for="locStartDate">Site Start Date</label>
+            <input id="locStartDate" type="date" [(ngModel)]="editingLocation.startDate">
+          </div>
+          <div class="form-group">
+            <label for="locClosedDate">Site Closed Date</label>
+            <input id="locClosedDate" type="date" [(ngModel)]="editingLocation.closedDate">
+          </div>
+          <div class="form-group">
+            <label for="locStatus">Status</label>
+            <select id="locStatus" [(ngModel)]="editingLocation.status"
+              style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--white); color: var(--text);">
+              <option value="Running">Running</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Hold">Hold</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto-Sync Info Banner -->
+      <div class="modal-info-banner">
+        <i class="fas fa-sync-alt" style="font-size: 1.1rem;"></i>
+        <div>
+          <strong>Auto-Date Sync Enabled:</strong> Saving this sub-site location will automatically recalculate the overall Project Start Date (min start date) and Project Closed Date (max completion date).
+        </div>
+      </div>
     </div>
 
-    <div
-      style="padding: 16px 20px; border-top: 1px solid var(--border); background: var(--grey-l); display: flex; justify-content: flex-end; gap: 10px;">
+    <div class="location-modal-footer">
       <button type="button" class="btn btn-secondary" (click)="closeLocationModal()">Cancel</button>
       <button type="button" class="btn btn-primary" (click)="saveLocationModal()">Save Sub-site Location</button>
     </div>
@@ -1635,11 +1837,8 @@
             <td class="text-center font-weight-700" style="font-size: 14px;">
               <div style="display: inline-flex; align-items: center; gap: 6px; justify-content: center;">
                 <span>{{item.totalRows}}</span>
-                <button type="button" (click)="downloadHistoryExport(item, 'ALL')"
-                  title="Download All {{item.totalRows}} Rows Excel (.xlsx)"
-                  style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 6px; padding: 4px 6px; cursor: pointer; color: #3b82f6; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;"
-                  onmouseover="this.style.background='rgba(59, 130, 246, 0.3)';"
-                  onmouseout="this.style.background='rgba(59, 130, 246, 0.15)';">
+                <button type="button" class="btn-history-dl dl-all" (click)="downloadHistoryExport(item, 'ALL')"
+                  title="Download All {{item.totalRows}} Rows Excel (.xlsx)">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1649,14 +1848,11 @@
                 </button>
               </div>
             </td>
-            <td class="text-center font-weight-700" style="color: #22c55e; font-size: 14px;">
+            <td class="text-center font-weight-700" style="font-size: 14px;">
               <div style="display: inline-flex; align-items: center; gap: 6px; justify-content: center;">
                 <span>{{item.successCount}}</span>
-                <button type="button" (click)="downloadHistoryExport(item, 'SUCCESS')"
-                  title="Download {{item.successCount}} Success Rows Excel (.xlsx)"
-                  style="background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 6px; padding: 4px 6px; cursor: pointer; color: #22c55e; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;"
-                  onmouseover="this.style.background='rgba(34, 197, 94, 0.3)';"
-                  onmouseout="this.style.background='rgba(34, 197, 94, 0.15)';">
+                <button type="button" class="btn-history-dl dl-success" (click)="downloadHistoryExport(item, 'SUCCESS')"
+                  title="Download {{item.successCount}} Success Rows Excel (.xlsx)">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1666,15 +1862,12 @@
                 </button>
               </div>
             </td>
-            <td class="text-center font-weight-700" style="color: #ef4444; font-size: 14px;">
+            <td class="text-center font-weight-700" style="font-size: 14px;">
               <div style="display: inline-flex; align-items: center; gap: 6px; justify-content: center;">
                 <span>{{item.failedCount || 0}}</span>
-                <button *ngIf="item.failedCount && item.failedCount > 0" type="button"
+                <button *ngIf="item.failedCount && item.failedCount > 0" type="button" class="btn-history-dl dl-failed"
                   (click)="downloadHistoryExport(item, 'FAILED')"
-                  title="Download {{item.failedCount}} Failed Rows Excel (.xlsx)"
-                  style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 6px; padding: 4px 6px; cursor: pointer; color: #ef4444; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease;"
-                  onmouseover="this.style.background='rgba(239, 68, 68, 0.3)';"
-                  onmouseout="this.style.background='rgba(239, 68, 68, 0.15)';">
+                  title="Download {{item.failedCount}} Failed Rows Excel (.xlsx)">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1694,8 +1887,8 @@
                 </span>
 
                 <span *ngIf="item.status !== 'SUCCESS' || (item.failedCount && item.failedCount > 0)"
-                  [title]="getHistoryErrorReasonTooltip(item)"
-                  style="cursor: help; font-size: 12px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800;">
+                  class="badge-history-error-icon"
+                  [title]="getHistoryErrorReasonTooltip(item)">
                   ❗
                 </span>
               </div>
@@ -1787,8 +1980,7 @@
         </div>
       </div>
 
-      <div *ngIf="selectedHistoryErrors.length === 0"
-        style="color: #16a34a; font-size: 14px; font-weight: 600; padding: 14px; background: rgba(34, 197, 94, 0.1); border-radius: 8px;">
+      <div *ngIf="selectedHistoryErrors.length === 0" class="history-clean-banner">
         🎉 All {{selectedHistoryRecord.totalRows}} rows imported cleanly with zero errors!
       </div>
 

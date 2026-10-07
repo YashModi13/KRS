@@ -34,6 +34,10 @@ export const Constants = {
     STATUS_OPTIONS: ["Running", "Completed", "Work Completed", "Delayed", "Hold", "Not Started"],
     CONSTRUCTION_TYPES: ["School", "Hospital", "Road", "Bridge", "Residential"]
   },
+  TIME_LIMIT: {
+    UNITS: ['Years', 'Months', 'Days'] as const,
+    DEFAULT_ITEM: { scope: '', duration: null, unit: 'Months' as const }
+  },
   MASTER_DATA: {
     DEFAULT_STATE: "Gujarat",
     TABS: {
@@ -75,6 +79,9 @@ export const Constants = {
       PROFILE_CHANGED_SELF: "Your profile was updated successfully. Please login again to apply the changes.",
       LOGIN_SUCCESS: "Login successful for {{USERNAME}} [{{ROLE}}]",
       LOGOUT_SUCCESS: "Sign out complete for {{USERNAME}}"
+    },
+    VALIDATION: {
+      TENDER_COST_EXCEEDED: "Validation Error: Tendered Cost (After Negotiation) cannot exceed Estimated Tender Cost."
     }
   }
 };

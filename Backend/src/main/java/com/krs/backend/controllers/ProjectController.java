@@ -2,6 +2,7 @@ package com.krs.backend.controllers;
 
 import com.krs.backend.models.Project;
 import com.krs.backend.models.ProjectLocation;
+import com.krs.backend.models.ProjectTimeLimit;
 import com.krs.backend.repositories.ProjectRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -262,6 +263,7 @@ public class ProjectController {
             p.setLocations(null);
             p.setRaBills(null);
             p.setApprovals(null);
+            p.setTimeLimitItems(null);
         }
 
         resolveMasterDisplayNames(projects);
@@ -491,6 +493,11 @@ public class ProjectController {
             ));
         }
         syncProjectDatesFromLocations(project);
+        if (project.getTimeLimitItems() != null) {
+            for (ProjectTimeLimit item : project.getTimeLimitItems()) {
+                item.setProject(project);
+            }
+        }
         Project savedProject = projectRepository.save(project);
         return ResponseEntity.ok(savedProject);
     }
@@ -503,6 +510,7 @@ public class ProjectController {
             if (project.getLocations() != null) { org.hibernate.Hibernate.initialize(project.getLocations()); }
             if (project.getRaBills() != null) { org.hibernate.Hibernate.initialize(project.getRaBills()); }
             if (project.getApprovals() != null) { org.hibernate.Hibernate.initialize(project.getApprovals()); }
+            if (project.getTimeLimitItems() != null) { org.hibernate.Hibernate.initialize(project.getTimeLimitItems()); }
             resolveMasterDisplayNames(Collections.singletonList(project));
             return ResponseEntity.ok(project);
         }).orElse(ResponseEntity.notFound().build());
@@ -557,18 +565,33 @@ public class ProjectController {
             project.setExtraExcessAmount(projectDetails.getExtraExcessAmount());
             project.setTimeLimitExtension(projectDetails.getTimeLimitExtension());
             
-            if (projectDetails.getLocations() != null) {
-                project.getLocations().clear();
-                for (ProjectLocation loc : projectDetails.getLocations()) {
-                    loc.setProject(project);
-                    project.getLocations().add(loc);
-                }
-            }
-
+            updateProjectChildCollections(project, projectDetails);
             syncProjectDatesFromLocations(project);
             Project updated = projectRepository.save(project);
             return ResponseEntity.ok((Object) updated);
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    private static void updateProjectChildCollections(Project project, Project projectDetails) {
+        if (projectDetails.getLocations() != null) {
+            project.getLocations().clear();
+            for (ProjectLocation loc : projectDetails.getLocations()) {
+                loc.setProject(project);
+                project.getLocations().add(loc);
+            }
+        }
+
+        if (projectDetails.getTimeLimitItems() != null) {
+            if (project.getTimeLimitItems() == null) {
+                project.setTimeLimitItems(new ArrayList<>());
+            } else {
+                project.getTimeLimitItems().clear();
+            }
+            for (ProjectTimeLimit item : projectDetails.getTimeLimitItems()) {
+                item.setProject(project);
+                project.getTimeLimitItems().add(item);
+            }
+        }
     }
 
     @DeleteMapping("/{id}")

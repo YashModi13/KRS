@@ -17,6 +17,13 @@ export const RestUrl = {
   },
   PROJECTS: '/projects',
   PROJECTS_CONFIG: '/projects/config',
+  PROJECT_CHECK_TENDER_ID: '/projects/check-tender-id',
+  PROJECT_LOCATIONS: (projectId: number | string) => `/projects/${projectId}/locations`,
+  PROJECT_LOCATION_DETAIL: (projectId: number | string, locationId: number | string) => `/projects/${projectId}/locations/${locationId}`,
+  PROJECT_DOCUMENTS: (projectId: number | string) => `/projects/${projectId}/documents`,
+  PROJECT_DOCUMENT_UPLOAD: (projectId: number | string) => `/projects/${projectId}/documents/upload`,
+  PROJECT_DOCUMENT_DOWNLOAD: (documentId: number | string) => `/projects/documents/download/${documentId}`,
+  PROJECT_DOCUMENT_DELETE: (documentId: number | string) => `/projects/documents/${documentId}`,
   PROJECTS_EXCEL: {
     UPLOAD: '/projects/upload',
     HISTORY: '/projects/upload-history',

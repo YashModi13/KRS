@@ -96,6 +96,7 @@ export interface Project {
   workOrderNumber?: string;
   workOrderDate?: string;
   timeLimit?: string;
+  timeLimitItems?: any[];
   securityDepositAmount?: number;
   securityDepositDate?: string;
   securityDepositType?: string;
@@ -131,7 +132,7 @@ export interface ProjectResponse {
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
-  private krsService = inject(KrsService);
+  private readonly krsService = inject(KrsService);
 
   getDashboardConfig(): Observable<{ maxTimeLimitDays: number }> {
     return this.krsService.get<{ maxTimeLimitDays: number }>(RestUrl.PROJECTS_CONFIG);
@@ -161,7 +162,7 @@ export class ProjectService {
     if (excludeId) {
       params = params.set('excludeId', excludeId.toString());
     }
-    return this.krsService.get<{ exists: boolean }>(`${RestUrl.PROJECTS}/check-tender-id`, params);
+    return this.krsService.get<{ exists: boolean }>(RestUrl.PROJECT_CHECK_TENDER_ID, params);
   }
 
   getProjectById(id: number): Observable<Project> {
@@ -181,20 +182,20 @@ export class ProjectService {
   }
 
   addLocation(projectId: number, location: ProjectLocation): Observable<ProjectLocation> {
-    return this.krsService.post<ProjectLocation>(`${RestUrl.PROJECTS}/${projectId}/locations`, location);
+    return this.krsService.post<ProjectLocation>(RestUrl.PROJECT_LOCATIONS(projectId), location);
   }
 
   updateLocation(projectId: number, locationId: number, location: ProjectLocation): Observable<ProjectLocation> {
-    return this.krsService.put<ProjectLocation>(`${RestUrl.PROJECTS}/${projectId}/locations/${locationId}`, location);
+    return this.krsService.put<ProjectLocation>(RestUrl.PROJECT_LOCATION_DETAIL(projectId, locationId), location);
   }
 
   deleteLocation(projectId: number, locationId: number): Observable<void> {
-    return this.krsService.delete<void>(`${RestUrl.PROJECTS}/${projectId}/locations/${locationId}`);
+    return this.krsService.delete<void>(RestUrl.PROJECT_LOCATION_DETAIL(projectId, locationId));
   }
 
   // --- Document Management Methods ---
   getProjectDocuments(projectId: number): Observable<ProjectDocument[]> {
-    return this.krsService.get<ProjectDocument[]>(`${RestUrl.PROJECTS}/${projectId}/documents`);
+    return this.krsService.get<ProjectDocument[]>(RestUrl.PROJECT_DOCUMENTS(projectId));
   }
 
   uploadProjectDocument(projectId: number, file: File, documentName?: string, notes?: string): Observable<ProjectDocument> {
@@ -206,19 +207,19 @@ export class ProjectService {
     if (notes) {
       formData.append('notes', notes);
     }
-    return this.krsService.post<ProjectDocument>(`${RestUrl.PROJECTS}/${projectId}/documents/upload`, formData, 'Document uploaded successfully');
+    return this.krsService.post<ProjectDocument>(RestUrl.PROJECT_DOCUMENT_UPLOAD(projectId), formData, 'Document uploaded successfully');
   }
 
   getDownloadDocumentUrl(documentId: number): string {
-    return `${RestUrl.PROJECTS}/documents/download/${documentId}`;
+    return `${RestUrl.API_BASE_URL}${RestUrl.PROJECT_DOCUMENT_DOWNLOAD(documentId)}`;
   }
 
   deleteProjectDocument(documentId: number): Observable<any> {
-    return this.krsService.delete<any>(`${RestUrl.PROJECTS}/documents/${documentId}`, 'Document deleted successfully');
+    return this.krsService.delete<any>(RestUrl.PROJECT_DOCUMENT_DELETE(documentId), 'Document deleted successfully');
   }
 
   // --- Bulk Excel Import & Export Methods ---
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
   uploadExcel(file: File): Observable<ProjectUploadHistory> {
     const formData = new FormData();

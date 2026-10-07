@@ -36,8 +36,27 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex, HttpServletRequest request) {
+        if (isClientAbortException(ex)) {
+            log.debug("Client closed connection prematurely for path: {}", request.getRequestURI());
+            return null;
+        }
         systemErrorLogService.logError(ex.getClass().getSimpleName(), ex.getMessage(), ex, request, HttpStatus.INTERNAL_SERVER_ERROR.value());
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", ex.getMessage(), request);
+    }
+
+    private boolean isClientAbortException(Throwable ex) {
+        Throwable current = ex;
+        while (current != null) {
+            String className = current.getClass().getName();
+            String msg = current.getMessage();
+            if (className.contains("ClientAbortException") ||
+                className.contains("AsyncRequestNotUsableException") ||
+                (msg != null && msg.contains("aborted by the software in your host machine"))) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String error, String message, HttpServletRequest request) {

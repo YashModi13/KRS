@@ -181,6 +181,9 @@ public class Project {
     private List<Approval> approvals;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectTimeLimit> timeLimitItems;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<ProjectDocument> documents;
 

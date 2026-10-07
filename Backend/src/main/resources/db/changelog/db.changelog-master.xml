@@ -33,5 +33,6 @@
     <include file="db/changelog/changes/v26_projects_not_null_tender_and_dept.sql" />
     <include file="db/changelog/changes/v27_project_locations_tender_id_and_remove_project_village_name.sql" />
     <include file="db/changelog/changes/v28_increase_column_lengths_to_text.sql" />
+    <include file="db/changelog/changes/v29_create_project_time_limits.sql" />
 
 </databaseChangeLog>
